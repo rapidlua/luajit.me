@@ -25,7 +25,7 @@ local function json_array(a, len)
 end
 local function json_map(m) return setmetatable(m or {}, __json_map__) end
 
--- (after JSON decode) " -> ", " -> ", \ -> \\, NL -> \n, \? -> \\?
+-- (after JSON decode) " -> ", \ -> \\, NL -> \n, \? -> \\?
 local _json_str_esc_map = { ['\\"'] = '\\"', ['\\\\'] = '\\\\\\\\', ['\\\n'] = '\\\\n' }
 local function _json_str_esc(s) return _json_str_esc_map[s] or '\\'..s end
 local function _json_str(str)
@@ -117,8 +117,6 @@ _dissect = function(func, res, M)
                 insert(items, fmt('[%s] = %s', k, v))
             end
             k_gc[-i] = '{'..concat(items, ', ')..'}'
-        elseif t == 'string' then
-            k_gc[-i] = fmt('%q',k)
         else
             k_gc[-i] = tostring(k)
         end
