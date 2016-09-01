@@ -160,7 +160,10 @@ local __out__ = { __index = { flush = function() end, close = function() end } }
 local function run_code(source, ...)
     local traces = json_array({})
     local result, M = json_map({source = json_array(split(source)), traces = traces})
-    local code = loadstring(source)
+    local code, err = loadstring(source)
+    if not code then
+        result.error = err; return json_unparse(result)
+    end
     result.protos, M = dissect(code)
     local dump_texit, dump_record, dump_trace, fmterr
     local out = setmetatable({
@@ -236,10 +239,13 @@ local function run_code(source, ...)
     fmterr = assert(um[um.fmterr])
     jit.attach(my_dump_trace, 'trace')
     jit.attach(my_dump_record, 'record')
-    code(...)
+    local start_ts, ok, err = os.clock(), pcall(code, ...)
+    local elapsed_time = os.clock() - start_ts
     jdump.off()
     jit.attach(my_dump_trace)
     jit.attach(my_dump_record)
+    if not ok then result.error = tostring(err) end
+    result.elapsed_time = elapsed_time
     return json_unparse(result)
 end
 
