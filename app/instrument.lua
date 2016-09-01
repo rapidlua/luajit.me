@@ -220,7 +220,7 @@ local function run_code(source, ...)
         if pc > 0 then
             local info = funcinfo(func)
             local proto = M[info.proto or info.linedefined] or ''
-            insert(cur_trace_trace, fmt('%s:%d:%d', proto, pc, depth)) -- proto:bc:depth
+            insert(cur_trace_trace, fmt('BR%s:%d', proto, pc)) -- proto:bc (Bytecode Ref)
             if band(funcbc(func, pc), 0xff) < 16 then -- ORDER BC
                 insert(cur_trace_trace, fmt('%s:%d:%d', proto, pc+1, depth))
                 -- Write JMP for cond.
