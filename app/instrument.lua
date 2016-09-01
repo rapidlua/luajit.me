@@ -35,6 +35,7 @@ local _json_append_thing
 local function json_unparse(thing)
     local chunks = {}
     _json_append_thing(chunks, thing)
+    insert(chunks, '\n')
     return concat(chunks, '')
 end
 _json_append_thing = function(chunks, thing)
@@ -160,7 +161,7 @@ local __out__ = { __index = { flush = function() end, close = function() end } }
 local function run_code(source, ...)
     local traces = json_array({})
     local result, M = json_map({source = json_array(split(source)), traces = traces})
-    local code, err = loadstring(source)
+    local code, err = loadstring(source, '@<source>')
     if not code then
         result.error = err; return json_unparse(result)
     end
@@ -249,26 +250,15 @@ local function run_code(source, ...)
     return json_unparse(result)
 end
 
-io.stderr:write(run_code([[
-local write, char, unpack = io.write, string.char, unpack
-local N = tonumber(arg and arg[1]) or 100
-local M, ba, bb, buf = 2/N, 2^(N%8+1)-1, 2^(8-N%8), {}
-write("P4\n", N, " ", N, "\n")
-for y=0,N-1 do
-  local Ci, b, p = y*M-1, 1, 0
-  for x=0,N-1 do
-    local Cr = x*M-1.5
-    local Zr, Zi, Zrq, Ziq = Cr, Ci, Cr*Cr, Ci*Ci
-    b = b + b
-    for i=1,49 do
-      Zi = Zr*Zi*2 + Ci
-      Zr = Zrq-Ziq + Cr
-      Ziq = Zi*Zi
-      Zrq = Zr*Zr
-      if Zrq+Ziq > 4.0 then b = b + 1; break; end
-    end
-    if b >= 256 then p = p + 1; buf[p] = 511 - b; b = 1; end
-  end
-  if b ~= 1 then p = p + 1; buf[p] = (ba-b)*bb; end
-  write(char(unpack(buf, 1, p)))
-end]]))
+local args = args or {'', ...}
+local meta_fd = args and args[2] or '1'
+local write
+if meta_fd == '1' then
+    write = function(str) io.stdout:write(str) end
+else
+    -- Can't reopen a fd that's already open (Linux).
+    ffi = require('ffi')
+    ffi.cdef('size_t write(int, const char *, size_t)')
+    write = function(str) ffi.C.write(tonumber(meta_fd), str, #str) end
+end
+write(run_code(io.stdin:read('*a')))
