@@ -91,7 +91,9 @@ _dissect = function(func, res, M)
         k_number  = k_number,
         k_gc      = k_gc,
         n_slots   = info.stackslots,
-        n_params  = info.params
+        n_params  = info.params,
+        n_params  = info.isvararg and '...' or info.params,
+        extra     = json_map(info)
     })
     for i = 1,HUGE_VAL do
         local code = bcline(func, i)
@@ -118,6 +120,8 @@ _dissect = function(func, res, M)
                 insert(items, fmt('[%s] = %s', k, v))
             end
             k_gc[-i] = '{'..concat(items, ', ')..'}'
+        elseif t == 'string' then
+            k_gc[-i] = fmt('%q', k)
         else
             k_gc[-i] = tostring(k)
         end

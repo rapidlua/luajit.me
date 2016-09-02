@@ -1,0 +1,11 @@
+div.jumbotron{padding:1em; }
+
+textarea { width:100%; padding:.7em;}
+
+.plaqueWrapper { min-height:1em;}
+
+.toplevelCategory { padding:2.5%;}
+
+.gutter { display:inline-block; width: 3em; padding:.1em; text-align:right; margin:.1em; background-color:#eee;}
+
+.codeUl { list-style-type: none; margin-left:-1em;}
