@@ -202,6 +202,7 @@ local function run_code(source, ...)
             out.chunks = nil
             local ir_and_asm = split(concat(chunks, ''), '---- TRACE %d[^\n]*\n')
             local ir = split(ir_and_asm[2]); ir[#ir] = nil
+            for i,item in ipairs(ir) do ir[i] = sub(item, 6) end -- remove #### prefix
             local asm = split(ir_and_asm[3]); asm[#asm] = nil
             cur_trace.ir = json_array(ir)
             cur_trace.asm = json_array(asm)
