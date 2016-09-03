@@ -4,7 +4,7 @@ import {render} from "react-dom";
 class SubmitForm extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {input: "for i = 1,10000 do\n  g = 42\nend", error: null}
+    this.state = {input: "local sum = 0\nfor i = 1,10000 do\n  sum = sum + i\nend", error: null}
   }
   handleTextChange(e) {
     var text = e.target.firstChild.data;
@@ -48,25 +48,26 @@ class SubmitForm extends React.Component {
       plaque = <div className="alert alert-danger" role="alert">
           <strong>Something wrong!</strong> {this.state.error}
       </div>
-    else if (this.state.elapsed != null)
-      plaque = <div className="alert alert-success alert-dismissible" role="alert">
-        <button type="button" className="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <strong>Exec time:</strong> {this.state.elapsed}
-      </div>
     else
       plaque = ''
     return (
       <form onSubmit={this.handleSubmit.bind(this)}>
         <div className="plaqueWrapper">{plaque}</div>
         <div className="form-group">
-          <textarea rows="10" cols="80" onChange={this.handleTextChange.bind(this)} value={this.state.input}/>
+          <textarea
+						rows="8" onChange={this.handleTextChange.bind(this)}
+						value={this.state.input}
+					/>
         </div>
         <div className="form-group">
           <div className="btn-toolbar">
-            <button type="submit" className="btn btn-primary">Run</button>
-            <button type="button" className="btn btn-secondary" onClick={this.handleClear.bind(this)}>Clear</button>
+            <button type="submit" className="btn btn-success">Run</button>
+            <button
+							type="button" className="btn btn-danger"
+							onClick={this.handleClear.bind(this)}
+						>
+							Clear
+						</button>
           </div>
         </div>
       </form>
@@ -74,22 +75,48 @@ class SubmitForm extends React.Component {
   }
 }
 
+class PreserveWhiteSpace extends React.Component {
+		render() {
+				var text = this.props.data
+						.replace(/&/g, "&amp;")
+				    .replace(/</g, "&lt;")
+						.replace(/>/g, "&gt;")
+				return <span
+						style={{ whiteSpace: 'pre-wrap' }}
+						dangerouslySetInnerHTML={{__html:text}}/>
+		}
+}
+
 function visIndex(i) {
   var s = "0000"+i
   return s.substr(s.length-4)
 }
 
+class BytecodeLineView extends React.Component {
+	render() {
+		var bc = this.props.data;
+		return (
+      <li>
+				<div className="codeWrap bc">
+						<span className="gutter">{visIndex(bc.index)}</span>
+						<span className={bc.id}>{bc.code}</span>
+				</div>
+      </li>
+		);
+	}
+}
+
 class SourceLineView extends React.Component {
   render() {
     var line = this.props.data
-    var codes = line.codes && line.codes.map((bc, i) => (
-      <li key={i}><span className="gutter">{visIndex(bc.index)}</span>
-        <span className={bc.id}>{bc.code}</span>
-      </li>
-    )) || []
+    var codes = line.codes && line.codes.map((bc, i) =>
+			<BytecodeLineView key={i} data={bc}/>) || []
     return (
       <li>
-        <span className="gutter">{line.index}</span> {line.source}
+        <div className="codeWrap lua">
+					<span className="gutter">{line.index}</span>
+						<PreserveWhiteSpace data={line.source}/>
+				</div>
         <ul className="codeUl">{codes}</ul>
       </li>
     )
@@ -101,12 +128,6 @@ class FuncProtoView extends React.Component {
     var proto = this.props.data;
     var lineNodes = proto.lines.map((line, i) =>
       <SourceLineView data={line} key={i}/>)
-    var kNumber = proto.kNumber.map((k, i) =>
-      <li key={i}>{k}</li>
-    )
-    var kGc = proto.kGc.map((k, i) =>
-      typeof(k) == 'object' ? <li key={i}>Prototype #{k}</li> : <li key={i}>{k}</li>
-    )
     return (
       <div className="panel panel-default">
         <div className="panel-heading">
@@ -115,8 +136,6 @@ class FuncProtoView extends React.Component {
         <div className="panel-body">
           <ul className="codeUl">{lineNodes}</ul>
         </div>
-        <ol>{kNumber}</ol>
-        <ol>{kGc}</ol>
       </div>
     )
   }
@@ -177,7 +196,7 @@ class App extends React.Component {
               i = i+1
             }
             mappedLines.push({
-              index: atLineNo || 0,
+              index: atLineNo,
               source: source[atLineNo - 1],
               codes: [code]
             });
@@ -186,6 +205,11 @@ class App extends React.Component {
             i = atLineNo;
         });
         // trailing lines without bytecode
+				for (; i < sourceRange[1]; i++)
+          mappedLines.push({
+            index: i+1,
+            source: source[i]
+          });
         var mappedProto = {
           id: 'P'+protoIdx,
           index: protoIdx,

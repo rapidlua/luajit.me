@@ -26,7 +26,7 @@ end
 local function json_map(m) return setmetatable(m or {}, __json_map__) end
 
 -- (after JSON decode) " -> ", \ -> \\, NL -> \n, \? -> \\?
-local _json_str_esc_map = { ['\\"'] = '\\"', ['\\\\'] = '\\\\\\\\', ['\\\n'] = '\\\\n' }
+local _json_str_esc_map = { ['\\"'] = '\\"', ['\\\\'] = '\\\\', ['\\\n'] = '\\\\n' }
 local function _json_str_esc(s) return _json_str_esc_map[s] or '\\'..s end
 local function _json_str(str)
     return (gsub(fmt('%q',str), '\\.', _json_str_esc))
@@ -227,7 +227,7 @@ local function run_code(source, ...)
             local proto = M[info.proto or info.linedefined] or ''
             insert(cur_trace_trace, fmt('BR%s:%d', proto, pc)) -- proto:bc (Bytecode Ref)
             if band(funcbc(func, pc), 0xff) < 16 then -- ORDER BC
-                insert(cur_trace_trace, fmt('%s:%d:%d', proto, pc+1, depth))
+                insert(cur_trace_trace, fmt('BR%d:%d', proto, pc+1, depth))
                 -- Write JMP for cond.
             end
         end

@@ -1,11 +1,36 @@
 div.jumbotron{padding:1em; }
 
-textarea { width:100%; padding:.7em;}
+textarea {
+		width:100%;
+		min-width:100%;
+		max-width:100%;
+		padding:.7em;
+		font-family: Menlo,monospace !important;
+}
 
 .plaqueWrapper { min-height:1em;}
 
 .toplevelCategory { padding:2.5%;}
 
-.gutter { display:inline-block; width: 3em; padding:.1em; text-align:right; margin:.1em; background-color:#eee;}
+.gutter {
+		display:inline-block;
+		width: 3.5em;
+		padding-left:.4em;
+		padding-right:.4em;
+		text-align:right;
+		margin-left:.0em;
+		margin-right:.6em;
+		border-right: solid .08em #000;
+}
 
-.codeUl { list-style-type: none; margin-left:-1em;}
+.codeUl { list-style-type: none; padding:0em;}
+
+.codeWrap { font-family:Menlo, monospace; font-weigth:100; }
+
+.lua { background-color:#ffffd6; }
+.bc { background-color:#f0f0ff; }
+
+.codeWrap:hover { background-color:#cf6; }
+
+.codeUl li { margin-top:0; margin-bottom:0; padding:0;}
+
