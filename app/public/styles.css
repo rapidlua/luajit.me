@@ -29,6 +29,9 @@ textarea {
 
 .lua { background-color:#ffffd6; }
 .bc { background-color:#f0f0ff; }
+.bcJumpTarget { background-color:#cf6 !important;}
+
+.bcJump { cursor: pointer; }
 
 .codeWrap:hover { background-color:#cf6; }
 

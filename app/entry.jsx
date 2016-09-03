@@ -92,14 +92,46 @@ function visIndex(i) {
   return s.substr(s.length-4)
 }
 
+function jumpTargetId(thisBc) {
+	return thisBc.id.replace(
+		/:\d+/, ':' + Number(/=> (\d+)/.exec(thisBc.code)[1]));
+}
+
 class BytecodeLineView extends React.Component {
+	handleClick() {
+		window.location = '#'+jumpTargetId(this.props.data);
+	}
+	handleMouseEnter() {
+		this.props.setJumpTarget(jumpTargetId(this.props.data))
+	}
+	handleMouseLeave() {
+		this.props.setJumpTarget(null);
+	}
 	render() {
 		var bc = this.props.data;
+		var onClick = ''
+		var onMouseEnter = ''
+		var onMouseLeave = ''
+		var className = "codeWrap bc"
+		if (/=> (\d+)/.exec(bc.code) != null) {
+			onClick = this.handleClick.bind(this);
+			onMouseEnter = this.handleMouseEnter.bind(this);
+			onMouseLeave = this.handleMouseLeave.bind(this);
+			className += " bcJump";
+		}
+		if (this.props.viewState.jumpTarget == bc.id)
+			className += " bcJumpTarget"
 		return (
       <li>
-				<div className="codeWrap bc">
-						<span className="gutter">{visIndex(bc.index)}</span>
-						<span className={bc.id}>{bc.code}</span>
+				<div
+					className={className}
+					onClick={onClick}
+					onMouseEnter={onMouseEnter}
+					onMouseLeave={onMouseLeave}
+				>
+					<a name={bc.id}></a>
+					<span className="gutter">{visIndex(bc.index)}</span>
+					<PreserveWhiteSpace data={bc.code}/>
 				</div>
       </li>
 		);
@@ -110,7 +142,11 @@ class SourceLineView extends React.Component {
   render() {
     var line = this.props.data
     var codes = line.codes && line.codes.map((bc, i) =>
-			<BytecodeLineView key={i} data={bc}/>) || []
+			<BytecodeLineView
+				key={i} data={bc}
+				viewState={this.props.viewState}
+				setJumpTarget={this.props.setJumpTarget}
+			/>) || []
     return (
       <li>
         <div className="codeWrap lua">
@@ -124,18 +160,27 @@ class SourceLineView extends React.Component {
 }
 
 class FuncProtoView extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {}
+  }
+	setJumpTarget(target) {
+		this.setState({jumpTarget: target})
+	}
   render() {
     var proto = this.props.data;
     var lineNodes = proto.lines.map((line, i) =>
-      <SourceLineView data={line} key={i}/>)
+      <SourceLineView
+				data={line} key={i}
+				viewState={this.state}
+				setJumpTarget={this.setJumpTarget.bind(this)}
+			/>)
     return (
       <div className="panel panel-default">
         <div className="panel-heading">
-          <h3 className="panel-title">Prototype #{proto.index}</h3>
+          <h3 className="panel-title">Proto #{proto.index}</h3>
         </div>
-        <div className="panel-body">
-          <ul className="codeUl">{lineNodes}</ul>
-        </div>
+        <ul className="codeUl">{lineNodes}</ul>
       </div>
     )
   }
@@ -176,7 +221,7 @@ class App extends React.Component {
         // process bytecodes
         proto.bc.forEach(function(bc, bcIdx) {
           bcIdx = bcIdx + 1 // 1-base indexing
-          var id = 'BC'+protoIdx+':'+i
+          var id = 'BC'+protoIdx+':'+bcIdx
           var atLineNo = bcMap[bcIdx-1]
           var lastLine = mappedLines[mappedLines.length - 1]
           var code = {
