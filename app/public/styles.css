@@ -4,6 +4,10 @@ textarea {
 		min-width:100%;
 		max-width:100%;
 		padding:.7em;
+/*  == breaks lua parser, WTF ==
+		white-space: nowrap;
+		overflow: auto;
+ */
 		font-family: Menlo,monospace !important;
 }
 
@@ -36,11 +40,12 @@ textarea {
 .lua { background-color:#ffffb0; }
 .lua2 { background-color:#ffff98; }
 .bc { background-color:#ffffd0; }
-.bcJumpTarget { background-color:#000 !important; color:#fff !important;}
+
+.bcJumpTarget { filter:invert(100%); }
 
 .bcJump { cursor: pointer; }
 
-.codeWrap:hover { background-color:#cf6; }
+.codeWrap:hover { filter:invert(100%); }
 
 .codeUl li { margin-top:0; margin-bottom:0; padding:0;}
 
@@ -48,7 +53,6 @@ textarea {
 
 .gutter .shevron {
 		display: inline-block;
-		color: #444;
 		float: left;
 		heigth: 100%;
 		font-size: 90%;
@@ -57,3 +61,6 @@ textarea {
 }
 
 .codeWrap:hover .gutter .shevron { visibility: visible; }
+
+.panel { overflow:hidden; }
+.codeUl { margin-bottom:0; }

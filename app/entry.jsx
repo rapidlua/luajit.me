@@ -202,7 +202,9 @@ class SourceLineView extends React.Component {
 					onClick={(this.mayExpand() ? this.handleClick.bind(this) : "")}
 				>
 					<span className="gutter">{shevron}{line.index}</span>
-					<PreserveWhiteSpace data={line.source}/>
+					<span
+						dangerouslySetInnerHTML={{ __html: line.source }}
+					/>
 				</div>
 				<ul className={"codeUl"+(enableBc ? "" : " hideMe")}>{codeNodes}</ul>
 			</li>
@@ -276,8 +278,16 @@ class App extends React.Component {
   replaceData(newData) {
     var mappedData = {}
     var source = newData.source // 1-base indexing
-    var protos = newData.protos
+		var protos = newData.protos
     if (protos && source) {
+			// <FIXME> -- syntax highlighting
+			var i, cont;
+			for (i = 0; i < source.length; i++) {
+				var res = hljs.highlight('lua', source[i], true, cont);
+				source[i] = res.value;
+				cont = res.top;
+			}
+			// </FIXME>
       mappedData.protos = protos.map(function(proto, protoIdx) {
         protoIdx = protoIdx + 1// 1-base indexing
         var sourceRange = proto.src_range
