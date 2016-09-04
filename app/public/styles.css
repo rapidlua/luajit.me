@@ -1,7 +1,6 @@
 div.jumbotron{padding:1em; }
 
 textarea {
-		width:100%;
 		min-width:100%;
 		max-width:100%;
 		padding:.7em;
@@ -25,11 +24,17 @@ textarea {
 
 .codeUl { list-style-type: none; padding:0em;}
 
-.codeWrap { font-family:Menlo, monospace; font-weigth:100; }
+.codeWrap {
+		font-family: Menlo, monospace;
+		font-weigth: 100;
+		overflow: hidden;
+		white-space: pre;
+		text-overflow: ellipsis;
+}
 
 .lua { background-color:#ffffd6; }
 .bc { background-color:#f0f0ff; }
-.bcJumpTarget { background-color:#cf6 !important;}
+.bcJumpTarget { background-color:#000 !important; color:#fff !important;}
 
 .bcJump { cursor: pointer; }
 
@@ -37,3 +42,16 @@ textarea {
 
 .codeUl li { margin-top:0; margin-bottom:0; padding:0;}
 
+.hideMe { display:none; }
+
+.gutter .shevron {
+		display: inline-block;
+		color: #444;
+		float: left;
+		heigth: 100%;
+		font-size: 90%;
+		visibility: hidden;
+		vertical-align: center;
+}
+
+.codeWrap:hover .gutter .shevron { visibility: visible; }

@@ -81,8 +81,12 @@ class PreserveWhiteSpace extends React.Component {
 						.replace(/&/g, "&amp;")
 				    .replace(/</g, "&lt;")
 						.replace(/>/g, "&gt;")
+						.replace(/ /g, "&nbsp;")
+						.replace(/-/g, "‑"); /* workaround for brower breaking line at minus sign
+						                        when text is overflowing (despite white-space: pre) */
 				return <span
 						style={{ whiteSpace: 'pre-wrap' }}
+						className={this.props.className}
 						dangerouslySetInnerHTML={{__html:text}}/>
 		}
 }
@@ -92,17 +96,20 @@ function visIndex(i) {
   return s.substr(s.length-4)
 }
 
-function jumpTargetId(thisBc) {
+function jumpTargetId(thisBc, offset) {
 	return thisBc.id.replace(
-		/:\d+/, ':' + Number(/=> (\d+)/.exec(thisBc.code)[1]));
+		/:\d+/, ':' + (offset + Number(/=> (\d+)/.exec(thisBc.code)[1])));
 }
 
 class BytecodeLineView extends React.Component {
 	handleClick() {
-		window.location = '#'+jumpTargetId(this.props.data);
+		var offset = 0;
+		if (/^FORL/.exec(this.props.data.code))
+			offset = -1;
+		window.location = '#'+jumpTargetId(this.props.data, offset);
 	}
 	handleMouseEnter() {
-		this.props.setJumpTarget(jumpTargetId(this.props.data))
+		this.props.setJumpTarget(jumpTargetId(this.props.data, 0))
 	}
 	handleMouseLeave() {
 		this.props.setJumpTarget(null);
@@ -139,23 +146,56 @@ class BytecodeLineView extends React.Component {
 }
 
 class SourceLineView extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {expand: null}
+  }
+	mayExpand() {
+		var line = this.props.data;
+		return line.codes && line.codes.length != 0;
+	}
+	handleClick() {
+		var line = this.props.data;
+		if (this.props.mode == 'lua') {
+			if (this.state.expand == line.source)
+				this.setState({expand:null})
+			else
+				this.setState({expand: line.source})
+		}
+	}
   render() {
-    var line = this.props.data
-    var codes = line.codes && line.codes.map((bc, i) =>
+		var line = this.props.data;
+    var mode = this.props.mode;
+		var enableLua = mode == "lua" || mode == "both";
+		var enableBc = mode == "bc" || mode == "both";
+		var shevronSymbol = "▶"
+		if (mode == "lua" && this.state.expand == line.source) {
+			enableBc = true;
+			shevronSymbol = "▼";
+		}
+		var codes = line.codes && line.codes.map((bc, i) =>
 			<BytecodeLineView
 				key={i} data={bc}
 				viewState={this.props.viewState}
 				setJumpTarget={this.props.setJumpTarget}
-			/>) || []
+			/>) || [];
+		var shevron = ""
+		if (mode == "lua") {
+			if (this.mayExpand())
+				shevron = <span className="shevron">{shevronSymbol}</span>
+		}
     return (
-      <li>
-        <div className="codeWrap lua">
-					<span className="gutter">{line.index}</span>
-						<PreserveWhiteSpace data={line.source}/>
+		  <li>
+        <div
+					className={"codeWrap lua"+(enableLua ? "" : " hideMe")}
+					onClick={(this.mayExpand() ? this.handleClick.bind(this) : "")}
+				>
+					<span className="gutter">{shevron}{line.index}</span>
+					<PreserveWhiteSpace data={line.source}/>
 				</div>
-        <ul className="codeUl">{codes}</ul>
-      </li>
-    )
+				<ul className={"codeUl"+(enableBc ? "" : " hideMe")}>{codes}</ul>
+			</li>
+		)
   }
 }
 
@@ -174,9 +214,10 @@ class FuncProtoView extends React.Component {
 				data={line} key={i}
 				viewState={this.state}
 				setJumpTarget={this.setJumpTarget.bind(this)}
+				mode={this.props.mode}
 			/>)
     return (
-      <div className="panel panel-default">
+      <div className="panel panel-default" onClick={this.props.handleClick}>
         <div className="panel-heading">
           <h3 className="panel-title">Proto #{proto.index}</h3>
         </div>
@@ -187,12 +228,32 @@ class FuncProtoView extends React.Component {
 }
 
 class PrototypesView extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {mode: "lua"}
+  }
+	nextMode() {
+		return {both: "bc", bc: "lua", lua:"both"}[this.state.mode];
+	}
+	handleClick(e) {
+		if (e.metaKey)
+			this.setState({mode: this.nextMode()})
+	}
   render() {
+		var mode = this.state.mode;
     var protos = this.props.data.protos;
+		var handler = this.handleClick.bind(this)
     var funcNodes = protos && protos.map(
-      (proto,i) => <FuncProtoView data={proto} key={i}/>
-    ) || [] 
-    return <div className="toplevelCategory">{funcNodes}</div>
+      function(proto,i) {
+				return (
+					<FuncProtoView data={proto} key={i} mode={mode} handleClick={handler}/>
+				)
+			}) || []
+    return (
+			<div className="toplevelCategory">
+				{funcNodes}
+			</div>
+		)
   }
 }
 
