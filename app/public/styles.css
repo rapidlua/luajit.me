@@ -30,10 +30,12 @@ textarea {
 		overflow: hidden;
 		white-space: pre;
 		text-overflow: ellipsis;
+		cursor: default;
 }
 
-.lua { background-color:#ffffd6; }
-.bc { background-color:#f0f0ff; }
+.lua { background-color:#ffffb0; }
+.lua2 { background-color:#ffff98; }
+.bc { background-color:#ffffd0; }
 .bcJumpTarget { background-color:#000 !important; color:#fff !important;}
 
 .bcJump { cursor: pointer; }

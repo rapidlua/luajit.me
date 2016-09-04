@@ -173,27 +173,38 @@ class SourceLineView extends React.Component {
 			enableBc = true;
 			shevronSymbol = "▼";
 		}
-		var codes = line.codes && line.codes.map((bc, i) =>
+		var codes = line.codes || [];
+		var codeNodes = codes.map((bc, i) =>
 			<BytecodeLineView
 				key={i} data={bc}
 				viewState={this.props.viewState}
 				setJumpTarget={this.props.setJumpTarget}
-			/>) || [];
-		var shevron = ""
+			/>);
+		var shevron = "";
 		if (mode == "lua") {
 			if (this.mayExpand())
-				shevron = <span className="shevron">{shevronSymbol}</span>
+				shevron = <span className="shevron">{shevronSymbol}</span>;
+		}
+		// slightly darker color in mixed mode
+		var className = "codeWrap lua"+(mode=="both" ? "2": "");
+		if (enableLua) {
+			var jumpTarget = this.props.viewState.jumpTarget;
+			if (jumpTarget != null && !enableBc &&
+				  codes.some((code) => code.id == jumpTarget))
+				className += " bcJumpTarget";
+		} else {
+			className += " hideMe";
 		}
     return (
 		  <li>
         <div
-					className={"codeWrap lua"+(enableLua ? "" : " hideMe")}
+					className={className}
 					onClick={(this.mayExpand() ? this.handleClick.bind(this) : "")}
 				>
 					<span className="gutter">{shevron}{line.index}</span>
 					<PreserveWhiteSpace data={line.source}/>
 				</div>
-				<ul className={"codeUl"+(enableBc ? "" : " hideMe")}>{codes}</ul>
+				<ul className={"codeUl"+(enableBc ? "" : " hideMe")}>{codeNodes}</ul>
 			</li>
 		)
   }
