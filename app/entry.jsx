@@ -4,7 +4,12 @@ import {render} from "react-dom";
 class SubmitForm extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {input: "local sum = 0\nfor i = 1,10000 do\n  sum = sum + i\nend", error: null}
+    this.state = {
+      // Safari quirk: leading spaces ignoted in a textarea
+      // with white-space: nowrap style (\u00a0 is a non-breaking space)
+      input: "local sum = 0\nfor i = 1,10000 do\n\u00a0\u00a0sum = sum + i\nend",
+      error: null
+    }
   }
   handleTextChange(e) {
     var text = e.target.firstChild.data;
@@ -55,19 +60,19 @@ class SubmitForm extends React.Component {
         <div className="plaqueWrapper">{plaque}</div>
         <div className="form-group">
           <textarea
-						rows="8" onChange={this.handleTextChange.bind(this)}
-						value={this.state.input}
-					/>
+            rows="5" onChange={this.handleTextChange.bind(this)}
+            value={this.state.input}
+          />
         </div>
         <div className="form-group">
           <div className="btn-toolbar">
             <button type="submit" className="btn btn-success">Run</button>
             <button
-							type="button" className="btn btn-danger"
-							onClick={this.handleClear.bind(this)}
-						>
-							Clear
-						</button>
+              type="button" className="btn btn-danger"
+              onClick={this.handleClear.bind(this)}
+            >
+              Clear
+            </button>
           </div>
         </div>
       </form>
@@ -76,19 +81,19 @@ class SubmitForm extends React.Component {
 }
 
 class PreserveWhiteSpace extends React.Component {
-		render() {
-				var text = this.props.data
-						.replace(/&/g, "&amp;")
-				    .replace(/</g, "&lt;")
-						.replace(/>/g, "&gt;")
-						.replace(/ /g, "&nbsp;")
-						.replace(/-/g, "‑"); /* workaround for brower breaking line at minus sign
-						                        when text is overflowing (despite white-space: pre) */
-				return <span
-						style={{ whiteSpace: 'pre-wrap' }}
-						className={this.props.className}
-						dangerouslySetInnerHTML={{__html:text}}/>
-		}
+    render() {
+        var text = this.props.data
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/ /g, "&nbsp;")
+            .replace(/-/g, "‑"); /* workaround for brower breaking line at minus sign
+                                    when text is overflowing (despite white-space: pre) */
+        return <span
+            style={{ whiteSpace: 'pre-wrap' }}
+            className={this.props.className}
+            dangerouslySetInnerHTML={{__html:text}}/>
+    }
 }
 
 function visIndex(i) {
@@ -97,52 +102,52 @@ function visIndex(i) {
 }
 
 function jumpTargetId(thisBc, offset) {
-	return thisBc.id.replace(
-		/:\d+/, ':' + (offset + Number(/=> (\d+)/.exec(thisBc.code)[1])));
+  return thisBc.id.replace(
+    /:\d+/, ':' + (offset + Number(/=> (\d+)/.exec(thisBc.code)[1])));
 }
 
 class BytecodeLineView extends React.Component {
-	handleClick() {
-		var offset = 0;
-		if (/^FORL/.exec(this.props.data.code))
-			offset = -1;
-		window.location = '#'+jumpTargetId(this.props.data, offset);
-	}
-	handleMouseEnter() {
-		this.props.setJumpTarget(jumpTargetId(this.props.data, 0))
-	}
-	handleMouseLeave() {
-		this.props.setJumpTarget(null);
-	}
-	render() {
-		var bc = this.props.data;
-		var onClick = ''
-		var onMouseEnter = ''
-		var onMouseLeave = ''
-		var className = "codeWrap bc"
-		if (/=> (\d+)/.exec(bc.code) != null) {
-			onClick = this.handleClick.bind(this);
-			onMouseEnter = this.handleMouseEnter.bind(this);
-			onMouseLeave = this.handleMouseLeave.bind(this);
-			className += " bcJump";
-		}
-		if (this.props.viewState.jumpTarget == bc.id)
-			className += " bcJumpTarget"
-		return (
+  handleClick() {
+    var offset = 0;
+    if (/^FORL/.exec(this.props.data.code))
+      offset = -1;
+    window.location = '#'+jumpTargetId(this.props.data, offset);
+  }
+  handleMouseEnter() {
+    this.props.setJumpTarget(jumpTargetId(this.props.data, 0))
+  }
+  handleMouseLeave() {
+    this.props.setJumpTarget(null);
+  }
+  render() {
+    var bc = this.props.data;
+    var onClick = ''
+    var onMouseEnter = ''
+    var onMouseLeave = ''
+    var className = "codeWrap bc"
+    if (/=> (\d+)/.exec(bc.code) != null) {
+      onClick = this.handleClick.bind(this);
+      onMouseEnter = this.handleMouseEnter.bind(this);
+      onMouseLeave = this.handleMouseLeave.bind(this);
+      className += " bcJump";
+    }
+    if (this.props.viewState.jumpTarget == bc.id)
+      className += " bcJumpTarget"
+    return (
       <li>
-				<div
-					className={className}
-					onClick={onClick}
-					onMouseEnter={onMouseEnter}
-					onMouseLeave={onMouseLeave}
-				>
-					<a name={bc.id}></a>
-					<span className="gutter">{visIndex(bc.index)}</span>
-					<PreserveWhiteSpace data={bc.code}/>
-				</div>
+        <div
+          className={className}
+          onClick={onClick}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+        >
+          <a name={bc.id}></a>
+          <span className="gutter">{visIndex(bc.index)}</span>
+          <PreserveWhiteSpace data={bc.code}/>
+        </div>
       </li>
-		);
-	}
+    );
+  }
 }
 
 class SourceLineView extends React.Component {
@@ -150,65 +155,65 @@ class SourceLineView extends React.Component {
     super(props)
     this.state = {expand: null}
   }
-	mayExpand() {
-		var line = this.props.data;
-		return line.codes && line.codes.length != 0;
-	}
-	handleClick() {
-		var line = this.props.data;
-		if (this.props.mode == 'lua') {
-			if (this.state.expand == line.source)
-				this.setState({expand:null})
-			else
-				this.setState({expand: line.source})
-		}
-	}
+  mayExpand() {
+    var line = this.props.data;
+    return line.codes && line.codes.length != 0;
+  }
+  handleClick() {
+    var line = this.props.data;
+    if (this.props.mode == 'lua') {
+      if (this.state.expand == line.source)
+        this.setState({expand:null})
+      else
+        this.setState({expand: line.source})
+    }
+  }
   render() {
-		var line = this.props.data;
+    var line = this.props.data;
     var mode = this.props.mode;
-		var enableLua = mode == "lua" || mode == "both";
-		var enableBc = mode == "bc" || mode == "both";
-		var shevronSymbol = "▶"
-		if (mode == "lua" && this.state.expand == line.source) {
-			enableBc = true;
-			shevronSymbol = "▼";
-		}
-		var codes = line.codes || [];
-		var codeNodes = codes.map((bc, i) =>
-			<BytecodeLineView
-				key={i} data={bc}
-				viewState={this.props.viewState}
-				setJumpTarget={this.props.setJumpTarget}
-			/>);
-		var shevron = "";
-		if (mode == "lua") {
-			if (this.mayExpand())
-				shevron = <span className="shevron">{shevronSymbol}</span>;
-		}
-		// slightly darker color in mixed mode
-		var className = "codeWrap lua"+(mode=="both" ? "2": "");
-		if (enableLua) {
-			var jumpTarget = this.props.viewState.jumpTarget;
-			if (jumpTarget != null && !enableBc &&
-				  codes.some((code) => code.id == jumpTarget))
-				className += " bcJumpTarget";
-		} else {
-			className += " hideMe";
-		}
+    var enableLua = mode == "lua" || mode == "both";
+    var enableBc = mode == "bc" || mode == "both";
+    var shevronSymbol = "▶"
+    if (mode == "lua" && this.state.expand == line.source) {
+      enableBc = true;
+      shevronSymbol = "▼";
+    }
+    var codes = line.codes || [];
+    var codeNodes = codes.map((bc, i) =>
+      <BytecodeLineView
+        key={i} data={bc}
+        viewState={this.props.viewState}
+        setJumpTarget={this.props.setJumpTarget}
+      />);
+    var shevron = "";
+    if (mode == "lua") {
+      if (this.mayExpand())
+        shevron = <span className="shevron">{shevronSymbol}</span>;
+    }
+    // slightly darker color in mixed mode
+    var className = "codeWrap lua"+(mode=="both" ? "2": "");
+    if (enableLua) {
+      var jumpTarget = this.props.viewState.jumpTarget;
+      if (jumpTarget != null && !enableBc &&
+          codes.some((code) => code.id == jumpTarget))
+        className += " bcJumpTarget";
+    } else {
+      className += " hideMe";
+    }
     return (
-		  <li>
+      <li>
         <div
-					className={className}
-					onClick={(this.mayExpand() ? this.handleClick.bind(this) : "")}
-				>
-					<span className="gutter">{shevron}{line.index}</span>
-					<span
-						dangerouslySetInnerHTML={{ __html: line.source }}
-					/>
-				</div>
-				<ul className={"codeUl"+(enableBc ? "" : " hideMe")}>{codeNodes}</ul>
-			</li>
-		)
+          className={className}
+          onClick={(this.mayExpand() ? this.handleClick.bind(this) : "")}
+        >
+          <span className="gutter">{shevron}{line.index}</span>
+          <span
+            dangerouslySetInnerHTML={{ __html: line.source }}
+          />
+        </div>
+        <ul className={"codeUl"+(enableBc ? "" : " hideMe")}>{codeNodes}</ul>
+      </li>
+    )
   }
 }
 
@@ -217,18 +222,18 @@ class FuncProtoView extends React.Component {
     super(props)
     this.state = {}
   }
-	setJumpTarget(target) {
-		this.setState({jumpTarget: target})
-	}
+  setJumpTarget(target) {
+    this.setState({jumpTarget: target})
+  }
   render() {
     var proto = this.props.data;
     var lineNodes = proto.lines.map((line, i) =>
       <SourceLineView
-				data={line} key={i}
-				viewState={this.state}
-				setJumpTarget={this.setJumpTarget.bind(this)}
-				mode={this.props.mode}
-			/>)
+        data={line} key={i}
+        viewState={this.state}
+        setJumpTarget={this.setJumpTarget.bind(this)}
+        mode={this.props.mode}
+      />)
     return (
       <div className="panel panel-default" onClick={this.props.handleClick}>
         <div className="panel-heading">
@@ -245,28 +250,28 @@ class PrototypesView extends React.Component {
     super(props)
     this.state = {mode: "lua"}
   }
-	nextMode() {
-		return {both: "bc", bc: "lua", lua:"both"}[this.state.mode];
-	}
-	handleClick(e) {
-		if (e.metaKey)
-			this.setState({mode: this.nextMode()})
-	}
+  nextMode() {
+    return {both: "bc", bc: "lua", lua:"both"}[this.state.mode];
+  }
+  handleClick(e) {
+    if (e.metaKey)
+      this.setState({mode: this.nextMode()})
+  }
   render() {
-		var mode = this.state.mode;
+    var mode = this.state.mode;
     var protos = this.props.data.protos;
-		var handler = this.handleClick.bind(this)
+    var handler = this.handleClick.bind(this)
     var funcNodes = protos && protos.map(
       function(proto,i) {
-				return (
-					<FuncProtoView data={proto} key={i} mode={mode} handleClick={handler}/>
-				)
-			}) || []
+        return (
+          <FuncProtoView data={proto} key={i} mode={mode} handleClick={handler}/>
+        )
+      }) || []
     return (
-			<div className="toplevelCategory">
-				{funcNodes}
-			</div>
-		)
+      <div className="toplevelCategory">
+        {funcNodes}
+      </div>
+    )
   }
 }
 
@@ -278,16 +283,17 @@ class App extends React.Component {
   replaceData(newData) {
     var mappedData = {}
     var source = newData.source // 1-base indexing
-		var protos = newData.protos
+    var protos = newData.protos
     if (protos && source) {
-			// <FIXME> -- syntax highlighting
-			var i, cont;
-			for (i = 0; i < source.length; i++) {
-				var res = hljs.highlight('lua', source[i], true, cont);
-				source[i] = res.value;
-				cont = res.top;
-			}
-			// </FIXME>
+      // <FIXME> -- syntax highlighting
+      var i, cont, sourceHl = [];
+      for (i = 0; i < source.length; i++) {
+        var res = hljs.highlight('lua', source[i], true, cont);
+        sourceHl[i] = res.value;
+        cont = res.top;
+      }
+      source = sourceHl;
+      // </FIXME>
       mappedData.protos = protos.map(function(proto, protoIdx) {
         protoIdx = protoIdx + 1// 1-base indexing
         var sourceRange = proto.src_range
@@ -332,7 +338,7 @@ class App extends React.Component {
             i = atLineNo;
         });
         // trailing lines without bytecode
-				for (; i < sourceRange[1]; i++)
+        for (; i < sourceRange[1]; i++)
           mappedLines.push({
             index: i+1,
             source: source[i]

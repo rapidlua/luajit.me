@@ -1,14 +1,12 @@
 div.jumbotron{padding:1em; }
 
 textarea {
-		min-width:100%;
-		max-width:100%;
-		padding:.7em;
-/*  == breaks lua parser, WTF ==
-		white-space: nowrap;
-		overflow: auto;
- */
-		font-family: Menlo,monospace !important;
+    min-width:100%;
+    max-width:100%;
+    padding:.7em;
+    white-space: nowrap;
+    overflow: auto;
+    font-family: Menlo,monospace !important;
 }
 
 .plaqueWrapper { min-height:1em;}
@@ -16,25 +14,25 @@ textarea {
 .toplevelCategory { padding:2.5%;}
 
 .gutter {
-		display:inline-block;
-		width: 3.5em;
-		padding-left:.4em;
-		padding-right:.4em;
-		text-align:right;
-		margin-left:.0em;
-		margin-right:.6em;
-		border-right: solid .08em #000;
+    display:inline-block;
+    width: 3.5em;
+    padding-left:.4em;
+    padding-right:.4em;
+    text-align:right;
+    margin-left:.0em;
+    margin-right:.6em;
+    border-right: solid .08em #000;
 }
 
 .codeUl { list-style-type: none; padding:0em;}
 
 .codeWrap {
-		font-family: Menlo, monospace;
-		font-weigth: 100;
-		overflow: hidden;
-		white-space: pre;
-		text-overflow: ellipsis;
-		cursor: default;
+    font-family: Menlo, monospace;
+    font-weigth: 100;
+    overflow: hidden;
+    white-space: pre;
+    text-overflow: ellipsis;
+    cursor: default;
 }
 
 .lua { background-color:#ffffb0; }
@@ -52,12 +50,12 @@ textarea {
 .hideMe { display:none; }
 
 .gutter .shevron {
-		display: inline-block;
-		float: left;
-		heigth: 100%;
-		font-size: 90%;
-		visibility: hidden;
-		vertical-align: center;
+    display: inline-block;
+    float: left;
+    heigth: 100%;
+    font-size: 90%;
+    visibility: hidden;
+    vertical-align: center;
 }
 
 .codeWrap:hover .gutter .shevron { visibility: visible; }

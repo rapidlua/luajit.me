@@ -266,4 +266,6 @@ else
     ffi.cdef('size_t write(int, const char *, size_t)')
     write = function(str) ffi.C.write(tonumber(meta_fd), str, #str) end
 end
-write(run_code(io.stdin:read('*a')))
+-- Safari quirk: replaces spaces with \xc2\xa0 in a textarea
+-- with white-space: nowrap style
+write(run_code(gsub(io.stdin:read('*a'),'\194\160',' ')))
