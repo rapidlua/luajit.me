@@ -1,32 +1,33 @@
-div.jumbotron{padding:1em; }
+div.jumbotron {
+    padding: 1em;
+}
 
 textarea {
-    min-width:100%;
-    max-width:100%;
-    padding:.7em;
+    min-width: 100%;
+    max-width: 100%;
+    padding: .7em;
     white-space: nowrap;
     overflow: auto;
     font-family: Menlo,monospace !important;
 }
 
-.plaqueWrapper { min-height:1em;}
+.invisible { display: none; }
 
-.toplevelCategory { padding:2.5%;}
+.plaque-wrapper { min-height: 1em; }
 
-.gutter {
-    display:inline-block;
-    width: 3.5em;
-    padding-left:.4em;
-    padding-right:.4em;
-    text-align:right;
-    margin-left:.0em;
-    margin-right:.6em;
-    border-right: solid .08em #000;
+.toplevel-block { padding: 2.5%; }
+
+.func-proto-view {
+    overflow: hidden;
 }
 
-.codeUl { list-style-type: none; padding:0em;}
+.code-block {
+    list-style-type: none;
+    padding: 0em;
+    margin-bottom: 0;
+}
 
-.codeWrap {
+.code-line {
     font-family: Menlo, monospace;
     font-weigth: 100;
     overflow: hidden;
@@ -35,19 +36,18 @@ textarea {
     cursor: default;
 }
 
-.lua { background-color:#ffffb0; }
-.lua2 { background-color:#ffff98; }
-.bc { background-color:#ffffd0; }
+.code-line:hover { filter: invert(100%); }
 
-.bcJumpTarget { filter:invert(100%); }
-
-.bcJump { cursor: pointer; }
-
-.codeWrap:hover { filter:invert(100%); }
-
-.codeUl li { margin-top:0; margin-bottom:0; padding:0;}
-
-.hideMe { display:none; }
+.gutter {
+    display: inline-block;
+    width: 3.5em;
+    padding-left: .4em;
+    padding-right: .4em;
+    text-align: right;
+    margin-left: .0em;
+    margin-right: .6em;
+    border-right: solid .08em #000;
+}
 
 .gutter .shevron {
     display: inline-block;
@@ -55,10 +55,19 @@ textarea {
     heigth: 100%;
     font-size: 90%;
     visibility: hidden;
-    vertical-align: center;
 }
 
-.codeWrap:hover .gutter .shevron { visibility: visible; }
+.code-line:hover .gutter .shevron { visibility: visible; }
 
-.panel { overflow:hidden; }
-.codeUl { margin-bottom:0; }
+.code-line-lua   { background-color: #ffffb0; }
+.code-line-luabc { background-color: #ffffd0; }
+
+.active-jump-target { filter:invert(100%); }
+
+.jump-cmd { cursor: pointer; }
+
+/* create some breathing space between lua / luabc sections */
+.func-proto-view-lua   .code-block .code-block .code-line:first-child .gutter,
+.func-proto-view-mixed .code-block .code-block .code-line:first-child .gutter { padding-top:.35em; }
+.func-proto-view-lua   .code-block .code-block .code-line:last-child  .gutter,
+.func-proto-view-mixed .code-block .code-block .code-line:last-child  .gutter { padding-bottom:.35em; }

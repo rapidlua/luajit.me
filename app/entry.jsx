@@ -57,7 +57,7 @@ class SubmitForm extends React.Component {
       plaque = ''
     return (
       <form onSubmit={this.handleSubmit.bind(this)}>
-        <div className="plaqueWrapper">{plaque}</div>
+        <div className="plaque-wrapper">{plaque}</div>
         <div className="form-group">
           <textarea
             rows="5" onChange={this.handleTextChange.bind(this)}
@@ -80,22 +80,6 @@ class SubmitForm extends React.Component {
   }
 }
 
-class PreserveWhiteSpace extends React.Component {
-    render() {
-        var text = this.props.data
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/ /g, "&nbsp;")
-            .replace(/-/g, "‑"); /* workaround for brower breaking line at minus sign
-                                    when text is overflowing (despite white-space: pre) */
-        return <span
-            style={{ whiteSpace: 'pre-wrap' }}
-            className={this.props.className}
-            dangerouslySetInnerHTML={{__html:text}}/>
-    }
-}
-
 function visIndex(i) {
   var s = "0000"+i
   return s.substr(s.length-4)
@@ -107,7 +91,8 @@ function jumpTargetId(thisBc, offset) {
 }
 
 class BytecodeLineView extends React.Component {
-  handleClick() {
+  handleClick(e) {
+    if (e.metaKey) return;
     var offset = 0;
     if (/^FORL/.exec(this.props.data.code))
       offset = -1;
@@ -124,28 +109,28 @@ class BytecodeLineView extends React.Component {
     var onClick = ''
     var onMouseEnter = ''
     var onMouseLeave = ''
-    var className = "codeWrap bc"
+    var className = "code-line code-line-luabc"
     if (/=> (\d+)/.exec(bc.code) != null) {
       onClick = this.handleClick.bind(this);
       onMouseEnter = this.handleMouseEnter.bind(this);
       onMouseLeave = this.handleMouseLeave.bind(this);
-      className += " bcJump";
+      className += " jump-cmd";
     }
     if (this.props.viewState.jumpTarget == bc.id)
-      className += " bcJumpTarget"
+      className += " active-jump-target"
     return (
-      <li>
-        <div
-          className={className}
-          onClick={onClick}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-        >
-          <a name={bc.id}></a>
-          <span className="gutter">{visIndex(bc.index)}</span>
-          <PreserveWhiteSpace data={bc.code}/>
-        </div>
-      </li>
+      <div
+        className={className}
+        onClick={onClick}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <a name={bc.id}></a>
+        <span className="gutter">{visIndex(bc.index)}</span>
+        <span
+          dangerouslySetInnerHTML={{ __html: bc.codeHl }}
+        />
+      </div>
     );
   }
 }
@@ -159,7 +144,8 @@ class SourceLineView extends React.Component {
     var line = this.props.data;
     return line.codes && line.codes.length != 0;
   }
-  handleClick() {
+  handleClick(e) {
+    if (e.metaKey) return;
     var line = this.props.data;
     if (this.props.mode == 'lua') {
       if (this.state.expand == line.source)
@@ -171,8 +157,8 @@ class SourceLineView extends React.Component {
   render() {
     var line = this.props.data;
     var mode = this.props.mode;
-    var enableLua = mode == "lua" || mode == "both";
-    var enableBc = mode == "bc" || mode == "both";
+    var enableLua = mode == "lua" || mode == "mixed";
+    var enableBc = mode == "luabc" || mode == "mixed";
     var shevronSymbol = "▶"
     if (mode == "lua" && this.state.expand == line.source) {
       enableBc = true;
@@ -190,29 +176,30 @@ class SourceLineView extends React.Component {
       if (this.mayExpand())
         shevron = <span className="shevron">{shevronSymbol}</span>;
     }
-    // slightly darker color in mixed mode
-    var className = "codeWrap lua"+(mode=="both" ? "2": "");
+    var className = "code-line code-line-lua"
     if (enableLua) {
       var jumpTarget = this.props.viewState.jumpTarget;
       if (jumpTarget != null && !enableBc &&
           codes.some((code) => code.id == jumpTarget))
-        className += " bcJumpTarget";
+        className += " active-jump-target";
     } else {
-      className += " hideMe";
+      className += " invisible";
     }
     return (
-      <li>
+      <div>
         <div
           className={className}
           onClick={(this.mayExpand() ? this.handleClick.bind(this) : "")}
         >
           <span className="gutter">{shevron}{line.index}</span>
           <span
-            dangerouslySetInnerHTML={{ __html: line.source }}
+            dangerouslySetInnerHTML={{ __html: line.sourceHl }}
           />
         </div>
-        <ul className={"codeUl"+(enableBc ? "" : " hideMe")}>{codeNodes}</ul>
-      </li>
+        <div className={"code-block"+(enableBc ? "" : " invisible")}>
+          {codeNodes}
+        </div>
+      </div>
     )
   }
 }
@@ -235,11 +222,11 @@ class FuncProtoView extends React.Component {
         mode={this.props.mode}
       />)
     return (
-      <div className="panel panel-default" onClick={this.props.handleClick}>
+      <div className={"panel panel-default func-proto-view func-proto-view-" + this.props.mode} onClick={this.props.handleClick}>
         <div className="panel-heading">
           <h3 className="panel-title">Proto #{proto.index}</h3>
         </div>
-        <ul className="codeUl">{lineNodes}</ul>
+        <div className="code-block">{lineNodes}</div>
       </div>
     )
   }
@@ -251,11 +238,22 @@ class PrototypesView extends React.Component {
     this.state = {mode: "lua"}
   }
   nextMode() {
-    return {both: "bc", bc: "lua", lua:"both"}[this.state.mode];
+    return {
+      mixed: "lua",
+      luabc: "mixed",
+      lua:   "luabc"
+    } [this.state.mode];
+  }
+  prevMode() {
+    return {
+      mixed: "luabc",
+      luabc: "lua",
+      lua:   "mixed"
+    } [this.state.mode];
   }
   handleClick(e) {
     if (e.metaKey)
-      this.setState({mode: this.nextMode()})
+      this.setState({mode: e.shiftKey ? this.prevMode() : this.nextMode()})
   }
   render() {
     var mode = this.state.mode;
@@ -268,7 +266,7 @@ class PrototypesView extends React.Component {
         )
       }) || []
     return (
-      <div className="toplevelCategory">
+      <div className="toplevel-block">
         {funcNodes}
       </div>
     )
@@ -282,8 +280,8 @@ class App extends React.Component {
   }
   replaceData(newData) {
     var mappedData = {}
-    var source = newData.source // 1-base indexing
-    var protos = newData.protos
+    var source = newData.source, sourceHl; // 1-base indexing
+    var protos = newData.protos;
     if (protos && source) {
       // <FIXME> -- syntax highlighting
       var i, cont, sourceHl = [];
@@ -292,7 +290,6 @@ class App extends React.Component {
         sourceHl[i] = res.value;
         cont = res.top;
       }
-      source = sourceHl;
       // </FIXME>
       mappedData.protos = protos.map(function(proto, protoIdx) {
         protoIdx = protoIdx + 1// 1-base indexing
@@ -304,18 +301,20 @@ class App extends React.Component {
         for (i = Math.max(1, sourceRange[0]); i<bcMap[0]; i++)
           mappedLines.push({
             index: i,
-            source: source[i-1]
+            source: source[i-1],
+            sourceHl: sourceHl[i-1]
           });
         // process bytecodes
         proto.bc.forEach(function(bc, bcIdx) {
           bcIdx = bcIdx + 1 // 1-base indexing
-          var id = 'BC'+protoIdx+':'+bcIdx
-          var atLineNo = bcMap[bcIdx-1]
-          var lastLine = mappedLines[mappedLines.length - 1]
+          var id = 'BC'+protoIdx+':'+bcIdx;
+          var atLineNo = bcMap[bcIdx-1];
+          var lastLine = mappedLines[mappedLines.length - 1];
           var code = {
               id: id,
               index: bcIdx,
-              code: bc
+              code: bc,
+              codeHl: hljs.highlight('lua', bc, true).value
           }
           if (lastLine && atLineNo && lastLine.index >= atLineNo) {
             lastLine.codes.push(code);
@@ -324,13 +323,15 @@ class App extends React.Component {
             while (atLineNo && i+1 < atLineNo) {
               mappedLines.push({
                 index: i+1,
-                source: source[i]
+                source: source[i],
+                sourceHl: sourceHl[i]
               })
               i = i+1
             }
             mappedLines.push({
               index: atLineNo,
               source: source[atLineNo - 1],
+              sourceHl: sourceHl[atLineNo - 1],
               codes: [code]
             });
           }
@@ -341,7 +342,8 @@ class App extends React.Component {
         for (; i < sourceRange[1]; i++)
           mappedLines.push({
             index: i+1,
-            source: source[i]
+            source: source[i],
+            sourceHl: sourceHl[i]
           });
         var mappedProto = {
           id: 'P'+protoIdx,
