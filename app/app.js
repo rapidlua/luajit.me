@@ -32,7 +32,7 @@ app.post('/run', jsonParser, function(req, res) {
     var helper = child_process.spawn(helper_cmd, helper_args, helper_opts)
     var watchdog = setTimeout(function() {
         helper.kill();
-        res.status(500).send('{"error": "Timeout exceeded"}\n')
+        res.send('{"error": "Timeout exceeded"}\n')
         res = null
     }, helper_timeout)
     helper.on('error', function(err) {

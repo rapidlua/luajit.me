@@ -62,6 +62,9 @@ textarea {
 .code-line-lua   { background-color: #ffffb0; }
 .code-line-luabc { background-color: #ffffd0; }
 
+/* increase contrast in mixed mode */
+.func-proto-view-mixed .code-line-lua  { background-color: #ffffa0; }
+
 .active-jump-target { filter:invert(100%); }
 
 .jump-cmd { cursor: pointer; }
