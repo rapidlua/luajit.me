@@ -1,69 +1,156 @@
 import React from "react";
 import {render} from "react-dom";
 
-import {SubmitForm} from "./submitForm.jsx";
 import {importData} from "./importData.jsx";
 import {FuncProtoView} from "./funcProtoView.jsx";
 
-class PrototypesView extends React.Component {
+class App extends React.Component {
   constructor(props) {
+    const input = "local sum = 1\nfor i = 2,10000 do\n\u00a0\u00a0sum = sum + i\nend";
     super(props)
-    this.state = {mode: "lua"}
+    this.state = {
+      data: null,
+      mode: "lua",
+      selection: null,
+      input: input,
+      topPanel: true,
+      leftPanel: false,
+      rightPanel: false
+    }
   }
-  nextMode() {
-    return {
-      mixed: "lua",
-      luabc: "mixed",
-      lua:   "luabc"
-    } [this.state.mode];
+  handleTextChange(e) {
+    var text = e.target.firstChild.data;
+    this.setState({input: e.target.value})
   }
-  prevMode() {
-    return {
-      mixed: "luabc",
-      luabc: "lua",
-      lua:   "mixed"
-    } [this.state.mode];
-  }
-  handleClick(e, id) {
+  handleClear(e) {
     e.stopPropagation();
-    console.log('click')
-    if (e.metaKey)
-      this.setState({mode: e.shiftKey ? this.prevMode() : this.nextMode()});
-    else
-      this.setState({selection: id})
+    this.setState({input: "", data: {}})
   }
-  render() {
+  handleSubmit(e) {
+    e.stopPropagation();
+    $.ajax({
+      type: "POST",
+      url: "/run",
+      dataType: "json",
+      async: true,
+      data: JSON.stringify({source:this.state.input}),
+      success: function(response) {
+        console.log(response)
+        this.setState({data: importData(response)})
+      }.bind(this),
+      error: function(response, _, errorText) {
+        var result = response.responseJson || {error: errorText}
+        this.props.replaceData(result)
+      }.bind(this)
+    })
+  }
+  selectItem(e, id) {
+    e.stopPropagation();
+    this.setState({selection: id})
+  }
+  selectMode(e, mode) {
+    e.stopPropagation();
+    if (mode != 'mixed' && mode != "luabc")
+      mode = "lua";
+    this.setState({mode: mode})
+  }
+  togglePanel(e, panel) {
+    e.stopPropagation();
+    var upd = {};
+    upd[panel] = !this.state[panel];
+    this.setState(upd);
+  }
+  render () {
     var mode = this.state.mode;
     var selection = this.state.selection;
-    var protos = this.props.data.protos;
-    var handler = this.handleClick.bind(this)
-    var funcNodes = protos && protos.map(
+    var data = this.state.data;
+    var selectItem = this.selectItem.bind(this)
+    var content = data != null && typeof(data.protos)=="object" && data.protos.map(
       function(proto,i) {
         return (
           <FuncProtoView
             data={proto} key={i} mode={mode}
-            handleClick={handler} selection={selection}/>
+            handleClick={selectItem} selection={selection}/>
         )
       }) || []
-    return <div className="toplevel-block" onClick={handler}>{funcNodes}</div>;
-  }
-}
-
-class App extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {data: {}}
-  }
-  replaceData(newData) {
-    this.setState({data: importData(newData)})
-  }
-  render () {
-    return (
-      <div>
-        <div className="jumbotron">
-          <SubmitForm replaceData={this.replaceData.bind(this)}/>
+    var numLines = Math.min(25,
+      Math.max(4, this.state.input.split(/\n/).length));
+    if (data!=null && data.error) {
+      content.splice(0, 0, (
+        <div className="alert alert-danger" role="alert">
+          <strong>Something wrong!</strong> {data.error}
         </div>
-        <PrototypesView data={this.state.data}/>
+      ));
+    }
+    var selectMode = this.selectMode.bind(this);
+    var modeSwitch = (
+      <div className="toolbar-items toolbar-em">
+        <span
+          className={"toolbar-btn toolbar-sw-" + (mode == "lua" ? "on" : "off")}
+          onClick={((e)=>selectMode(e, "lua"))}
+        >Lua</span>
+        <span
+          className={"toolbar-btn toolbar-sw-" + (mode == "luabc" ? "on" : "off")}
+          onClick={((e)=>selectMode(e, "luabc"))}
+        >Bytecode</span>
+        <span
+          className={"toolbar-btn toolbar-sw-" + (mode == "mixed" ? "on" : "off")}
+          onClick={((e)=>selectMode(e, "mixed"))}
+        >Mixed</span>
+      </div>
+    );
+    var togglePanel = this.togglePanel.bind(this);
+    var panelSwitches = (
+      <div className="toolbar-items">
+        <span
+          className={"toolbar-btn toolbar-sw-" + (this.state.leftPanel ? "on" : "off")}
+          onClick={((e)=>togglePanel(e, "leftPanel"))}
+        >
+          <span className="pane-toggle-icon">▏</span>
+        </span>
+        <span
+          className={"toolbar-btn toolbar-sw-" + (this.state.topPanel ? "on" : "off")}
+          onClick={((e)=>togglePanel(e, "topPanel"))}
+        >
+          <span className="pane-toggle-icon">▔</span>
+        </span>
+        <span
+          className={"toolbar-btn toolbar-sw-" + (this.state.rightPanel ? "on" : "off")}
+          onClick={((e)=>togglePanel(e, "rightPanel"))}
+        >
+          <span className="pane-toggle-icon">▕</span>
+        </span>
+      </div>
+    )
+    return (
+      <div className="app-frame">
+        <div className={"app-frame-row" + (this.state.topPanel ? "" : " invisible")}>
+          <textarea
+            rows={numLines} onChange={this.handleTextChange.bind(this)}
+            value={this.state.input}
+          />
+        </div>
+        <div className="app-frame-row">
+          <div className="app-frame-cell toolbar">
+            <div className="toolbar-items">
+              <span className="toolbar-btn" onClick={this.handleSubmit.bind(this)}>Update</span>
+              <span className="toolbar-btn" onClick={this.handleClear.bind(this)}>Clear</span>
+            </div>
+            <div className="toolbar-spacer"/>
+            {modeSwitch}
+            <div className="toolbar-spacer"/>
+            {panelSwitches}
+          </div>
+        </div>
+        <div className="app-frame-row">
+          <div className="app-frame-cell app-frame-cell-primary" onClick={selectItem}>
+            <div className="scroller">
+              <div className="primary-pane">
+                {content}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

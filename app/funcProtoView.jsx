@@ -71,6 +71,7 @@ class SourceLineView extends React.Component {
         this.setState({expand:null})
       else
         this.setState({expand: line.source})
+      e.stopPropagation();
     }
   }
   render() {
@@ -147,8 +148,8 @@ export class FuncProtoView extends React.Component {
       ? "primary" : "default");
     className += ' func-proto-view func-proto-view-' + this.props.mode;
     return (
-      <div className={className}>
-        <div className="panel-heading" onClick={this.handleClick.bind(this)}>
+      <div className={className} onClick={this.handleClick.bind(this)}>
+        <div className="panel-heading">
           <h3 className="panel-title">Proto #{proto.index}</h3>
         </div>
         <div className="code-block">{lineNodes}</div>

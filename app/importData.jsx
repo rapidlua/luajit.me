@@ -1,5 +1,5 @@
 export function importData(jsonResponse) {
-  var mappedData = {}
+  var mappedData = {error: jsonResponse.error}
   var source = jsonResponse.source, sourceHl; // 1-base indexing
   var protos = jsonResponse.protos;
   if (protos && source) {
