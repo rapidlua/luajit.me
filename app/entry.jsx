@@ -84,7 +84,7 @@ class App extends React.Component {
     }
     var selectMode = this.selectMode.bind(this);
     var modeSwitch = (
-      <div className="toolbar-items toolbar-em">
+      <div className="toolbar-group toolbar-em">
         <span
           className={"toolbar-btn toolbar-sw-" + (mode == "lua" ? "on" : "off")}
           onClick={((e)=>selectMode(e, "lua"))}
@@ -101,7 +101,7 @@ class App extends React.Component {
     );
     var togglePanel = this.togglePanel.bind(this);
     var panelSwitches = (
-      <div className="toolbar-items">
+      <div className="toolbar-group">
         <span
           className={"toolbar-btn toolbar-sw-" + (this.state.leftPanel ? "on" : "off")}
           onClick={((e)=>togglePanel(e, "leftPanel"))}
@@ -123,32 +123,34 @@ class App extends React.Component {
       </div>
     )
     return (
-      <div className="app-frame">
-        <div className={"app-frame-row" + (this.state.topPanel ? "" : " invisible")}>
+      <div className="app-container">
+        <div className={"top-pane" + (this.state.topPanel ? "" : " invisible")}>
           <textarea
             rows={numLines} onChange={this.handleTextChange.bind(this)}
             value={this.state.input}
           />
         </div>
-        <div className="app-frame-row">
-          <div className="app-frame-cell toolbar">
-            <div className="toolbar-items">
-              <span className="toolbar-btn" onClick={this.handleSubmit.bind(this)}>Update</span>
-              <span className="toolbar-btn" onClick={this.handleClear.bind(this)}>Clear</span>
-            </div>
-            <div className="toolbar-spacer"/>
-            {modeSwitch}
-            <div className="toolbar-spacer"/>
-            {panelSwitches}
+        <div className="app-main">
+          <div className={"left-pane" + (this.state.leftPanel ? "" : " invisible")}>
+            <div className="toolbar"/>
           </div>
-        </div>
-        <div className="app-frame-row">
-          <div className="app-frame-cell app-frame-cell-primary" onClick={selectItem}>
-            <div className="scroller">
-              <div className="primary-pane">
+          <div className="primary-pane">
+            <div className="toolbar">
+              <div className="toolbar-group">
+                <span className="toolbar-btn" onClick={this.handleSubmit.bind(this)}>Update</span>
+                <span className="toolbar-btn" onClick={this.handleClear.bind(this)}>Clear</span>
+              </div>
+              {modeSwitch}
+              {panelSwitches}
+            </div>
+            <div className="content-host" onClick={selectItem}>
+              <div className="content-area">
                 {content}
               </div>
             </div>
+          </div>
+          <div className={"right-pane" + (this.state.rightPanel ? "" : " invisible")}>
+            <div className="toolbar"/>
           </div>
         </div>
       </div>
