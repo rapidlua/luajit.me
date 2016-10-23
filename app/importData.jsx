@@ -68,10 +68,9 @@ export function importData(jsonResponse) {
       var mappedProto = {
         id: 'P'+protoIdx,
         index: protoIdx,
-        kNumber: proto.k_number,
-        kGc: proto.k_gc,
-        nParams: proto.n_params,
-        nSlots: proto.n_slots,
+        info: proto.info,
+        consts: proto.consts,
+        gcConsts: proto.gcconsts,
         lines: mappedLines
       }
       return mappedProto;

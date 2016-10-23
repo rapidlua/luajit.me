@@ -88,12 +88,9 @@ _dissect = function(func, res, M)
         src_range = json_array({info.linedefined, info.lastlinedefined}, 2),
         bc        = bc,
         bc_map    = bc_map,
-        k_number  = k_number,
-        k_gc      = k_gc,
-        n_slots   = info.stackslots,
-        n_params  = info.params,
-        n_params  = info.isvararg and '...' or info.params,
-        extra     = json_map(info)
+        consts    = k_number,
+        gcconsts  = k_gc,
+        info      = json_map(info)
     })
     for i = 1,HUGE_VAL do
         local code = bcline(func, i)

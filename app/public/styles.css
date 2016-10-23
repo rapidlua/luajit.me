@@ -2,8 +2,8 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
 }
 
 .top-pane {}
@@ -15,8 +15,19 @@
     flex: 1;
 }
 
+.primary-pane, .left-pane, .right-pane {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: relative;
+}
+
+.primary-pane {
+    flex: 1;
+}
+
 .left-pane, .right-pane {
-    background-color: #f8f8f8;
+    background-color: #fafafa;
     flex: 0 0 250px;
 }
 
@@ -28,28 +39,62 @@
     border-left: solid 1px #999;
 }
 
-.primary-pane {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    flex: 1;
+.pane-resizer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 16px;
+    z-index: 2000;
+    cursor: col-resize;
+}
+
+.primary-pane .pane-resizer {
+    display: none;
+}
+
+.left-pane .pane-resizer {
+    right: 0;
+    margin-right: -8px;
+}
+
+.right-pane .pane-resizer {
+    left: 0;
+    margin-left: -8px;
 }
 
 .content-host {
     flex: 1;
     position: relative;
+    cursor: default;
 }
 
 .content-area {
     display: block;
-    padding: 2em 1.5em .5em 1.5em;
+    padding: 12px;
     overflow: auto;
     position: absolute;
     left: 0;
     right: 0;
     top: 0;
     bottom: 0;
-    cursor: default;
+}
+
+.primary-pane .content-area {
+    padding: 2em 1.5em .5em 1.5em;
+}
+
+.content-placeholder {
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #c0c0c0;
 }
 
 .primary-pane .panel {
@@ -71,7 +116,7 @@
     display: flex;
     flex-flow: row;
     justify-content: space-between;
-    height: 28;
+    min-height: 29px;
     background-color: #fff;
 }
 
@@ -178,12 +223,8 @@
     text-align: right;
     margin-left: .0em;
     margin-right: .6em;
-    border-right: solid .08em #ddd;
+    border-right: solid 1px rgba(0,0,0,.25);
     font-family: Helvetica, Arial, monospace;
-}
-
-.panel-primary .gutter {
-    border-right-color: #337ab7;
 }
 
 .gutter .shevron {
@@ -213,3 +254,20 @@
 .func-proto-view-mixed .code-block .code-block .code-line:first-child .gutter { padding-top:.35em; }
 .func-proto-view-lua   .code-block .code-block .code-line:last-child  .gutter,
 .func-proto-view-mixed .code-block .code-block .code-line:last-child  .gutter { padding-bottom:.35em; }
+
+
+.func-proto-info-view {
+		display: table;
+}
+.func-proto-info-view > div {
+		display: table-row;
+}
+.func-proto-info-view > div > div {
+		display: table-cell;
+}
+.func-proto-info-view > div > div:first-child {
+		text-align: right;
+		font-weight: 500;
+		white-space: nowrap;
+		padding-right: 12px;
+}
