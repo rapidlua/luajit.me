@@ -256,18 +256,35 @@
 .func-proto-view-mixed .code-block .code-block .code-line:last-child  .gutter { padding-bottom:.35em; }
 
 
-.func-proto-info-view {
+.func-proto-info-view, .func-proto-consts-view {
 		display: table;
+		margin-bottom: 24px;
 }
-.func-proto-info-view > div {
+.details-kv {
 		display: table-row;
 }
-.func-proto-info-view > div > div {
+.details-key, .details-val {
 		display: table-cell;
 }
-.func-proto-info-view > div > div:first-child {
+.details-key {
 		text-align: right;
-		font-weight: 500;
 		white-space: nowrap;
-		padding-right: 12px;
+		padding-right: 16px;
+}
+.func-proto-info-view .details-key {
+		font-weight: 500;
+}
+
+.func-proto-consts-view .details-key {
+		color: #808080;
+		min-width: 36px;
+}
+
+.func-proto-consts-view .details-val {
+		font-family: Menlo, monospace;
+}
+
+.func-proto-consts-view .proto-ref {
+		font-weight: bold;
+		font-family: Helvetica, Arial;
 }

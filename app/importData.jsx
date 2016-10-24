@@ -1,3 +1,14 @@
+function convertConsts(consts) {
+  return consts.map((value) => ({
+    value: value,
+    valueHl: (
+      typeof(value)=='object' ?
+      "<span class=\"proto-ref\">Proto #"+value['$func$']+"</span>":
+      hljs.highlight('lua', value+'', true).value
+    )
+  }));
+}
+
 export function importData(jsonResponse) {
   var mappedData = {error: jsonResponse.error}
   var source = jsonResponse.source, sourceHl; // 1-base indexing
@@ -69,8 +80,8 @@ export function importData(jsonResponse) {
         id: 'P'+protoIdx,
         index: protoIdx,
         info: proto.info,
-        consts: proto.consts,
-        gcConsts: proto.gcconsts,
+        consts: convertConsts(proto.consts),
+        gcConsts: convertConsts(proto.gcconsts),
         lines: mappedLines
       }
       return mappedProto;

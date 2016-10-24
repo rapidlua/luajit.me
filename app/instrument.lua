@@ -26,7 +26,7 @@ end
 local function json_map(m) return setmetatable(m or {}, __json_map__) end
 
 -- (after JSON decode) " -> ", \ -> \\, NL -> \n, \? -> \\?
-local _json_str_esc_map = { ['\\"'] = '\\"', ['\\\\'] = '\\\\', ['\\\n'] = '\\\\n' }
+local _json_str_esc_map = { ['\\"'] = '\\"', ['\\\\'] = '\\\\', ['\\\n'] = 'n' }
 local function _json_str_esc(s) return _json_str_esc_map[s] or '\\'..s end
 local function _json_str(str)
     return (gsub(fmt('%q',str), '\\.', _json_str_esc))

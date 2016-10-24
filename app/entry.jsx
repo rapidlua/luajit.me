@@ -122,21 +122,42 @@ class PrimaryPanel extends React.Component {
   }
 }
 
-class BasicDetailLine extends React.Component {
+class FuncProtoDetailsLine extends React.Component {
   render() {
     var value = this.props.value;
+    var valueHl = this.props.valueHl;
     if (typeof(value) === "boolean")
       value = value && "Yes" || "No";
     return (
-      <div>
-        <div>{this.props.label}</div>
-        <div>{value}</div>
+      <div className="details-kv">
+        <div className="details-key">{this.props.label}</div>
+        {
+          valueHl ?
+          <div className="details-val" dangerouslySetInnerHTML={{__html: valueHl}}/> :
+          <div className="details-val">{value}</div>
+        }
       </div>
     );
   }
 }
 
-class FuncProtoInfoPanel extends React.Component {
+class FuncProtoConstsView extends React.Component {
+  render() {
+    return (
+      <div className="func-proto-consts-view">
+        {
+          this.props.data.map((k, i) => (
+            <FuncProtoDetailsLine
+              key={i} label={i} value={k.value} valueHl={k.valueHl}
+            />
+          ))
+        }
+      </div>
+    );
+  }
+}
+
+class FuncProtoDetailsPanel extends React.Component {
   constructor(props) {
     super(props);
     this.state = {mode: "info"};
@@ -146,7 +167,7 @@ class FuncProtoInfoPanel extends React.Component {
     ];
     this.renders = {
       info: this.renderInfo.bind(this),
-      k: this.renderConsts
+      k: this.renderConsts.bind(this)
     };
     this.infoProps = [
       {key: "params",     label: "Params:"},
@@ -169,7 +190,7 @@ class FuncProtoInfoPanel extends React.Component {
     return (
       <div className="func-proto-info-view">
         { this.infoProps.map((ip) => (
-          <BasicDetailLine
+          <FuncProtoDetailsLine
             key={ip.key}
             label={ip.label}
             value={info[ip.key]}
@@ -179,10 +200,25 @@ class FuncProtoInfoPanel extends React.Component {
     )
   }
   renderConsts() {
-    return "Consts";
+    var result = [];
+    var proto = this.props.data;
+    if (proto.consts.length != 0) {
+      result.push(
+        <FuncProtoConstsView
+          key="consts" data={proto.consts}
+        />
+      );
+    }
+    if (proto.gcConsts.length != 0) {
+      result.push(
+        <FuncProtoConstsView
+          key="gcConsts" data={proto.gcConsts}
+        />
+      );
+    }
+    return result;
   }
   render() {
-    console.log(this.props.data);
     return (
       <AppPanel
         className="right-pane"
@@ -198,6 +234,7 @@ class FuncProtoInfoPanel extends React.Component {
           </div>
         }
         content={this.renders[this.state.mode]()}
+        placeholder="No Consts"
       />
     );
   }
@@ -223,7 +260,6 @@ class App extends React.Component {
     this.makeMenu = this.makeMenu.bind(this);
   }
   handleTextChange(e) {
-    var text = e.target.firstChild.data;
     this.setState({input: e.target.value})
   }
   handleClear(e) {
@@ -291,7 +327,7 @@ class App extends React.Component {
     var selection = this.state.selection;
     var selectedProto = selection && selection.match(/P([0-9]+)/);
     if (selectedProto)
-      return <FuncProtoInfoPanel data={this.state.data.protos[selectedProto[1]-1]}/>;
+      return <FuncProtoDetailsPanel data={this.state.data.protos[selectedProto[1]-1]}/>;
     return (
       <AppPanel
         className="right-pane"
@@ -303,15 +339,13 @@ class App extends React.Component {
   render () {
     var selection = this.state.selection;
     var data = this.state.data;
-    var numLines = Math.min(25,
-      Math.max(4, this.state.input.split(/\n/).length));
     return (
       <div className="app-container">
         {
           this.state.topPanel == false ? "" :
           <div className="top-pane">
             <textarea
-              rows={numLines} onChange={this.handleTextChange}
+              rows="5" onChange={this.handleTextChange}
               value={this.state.input}
             />
           </div>
