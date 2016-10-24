@@ -85,9 +85,8 @@ _dissect = function(func, res, M)
     local info = funcinfo(func)
     M[info.proto or info.linedefined] = proto_pos
     res[proto_pos] = json_map({
-        src_range = json_array({info.linedefined, info.lastlinedefined}, 2),
         bc        = bc,
-        bc_map    = bc_map,
+        bcmap    = bc_map,
         consts    = k_number,
         gcconsts  = k_gc,
         info      = json_map(info)
@@ -159,6 +158,13 @@ end
 
 local __out__ = { __index = { flush = function() end, close = function() end } }
 
+local function moveparent(trace, info)
+  info.parent = trace.parent
+  trace.parent = nil
+  info.parentexit = trace.parentexit
+  trace.parentexit = nil
+end
+
 local function run_code(source, ...)
     local traces = json_array({})
     local result, M = json_map({source = json_array(split(source)), traces = traces})
@@ -186,30 +192,33 @@ local function run_code(source, ...)
             local id = #traces + 1
             cur_trace_trace = json_array()
             cur_trace = json_map({
-                luajit_id = tr,
                 trace = cur_trace_trace,
                 parent = t_by_tr[otr],
-                parent_exit = oex
+                parentexit = oex
             })
             traces[id] = cur_trace 
             t_by_tr[tr] = id
             dump_trace(what, tr, func, pc, otr, oex)
         elseif what == 'stop' then
             local info = traceinfo(tr)
-            cur_trace.target = t_by_tr[info.link]
-            cur_trace.link_type = info.linktype
+            info.link = t_by_tr[info.link]
+            moveparent(cur_trace, info)
+            cur_trace.info = json_map(info)
             local chunks = {}; out.chunks = chunks
             dump_trace(what, tr, func, pc, otr, oex)
             out.chunks = nil
             local ir_and_asm = split(concat(chunks, ''), '---- TRACE %d[^\n]*\n')
             local ir = split(ir_and_asm[2]); ir[#ir] = nil
-            for i,item in ipairs(ir) do ir[i] = sub(item, 6) end -- remove #### prefix
             local asm = split(ir_and_asm[3]); asm[#asm] = nil
+            for i,item in ipairs(asm) do asm[i] = gsub(item, '\t', '    ') end
             cur_trace.ir = json_array(ir)
             cur_trace.asm = json_array(asm)
         elseif what == 'abort' then
-            cur_trace.aborted = true
-            cur_trace.abort_reason = fmterr(otr, oex)
+            local info = traceinfo(tr)
+            info.link = nil
+            info.error = fmterr(otr, oex)
+            moveparent(cur_trace, info)
+            cur_trace.info = json_map(info)
             dump_trace(what, tr, func, pc, otr, oex)
         elseif what == 'flush' then
             t_by_tr = {}

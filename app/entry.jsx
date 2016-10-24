@@ -46,7 +46,9 @@ class AppPanel extends React.Component {
         <div className="content-host" onClick={this.props.contentOnClick}>
         {
           noContent ?
-          <div className="content-placeholder">{this.props.placeholder || "No Data"}</div> :
+          <div className="content-placeholder">
+            {this.props.placeholder || "No Data"}
+          </div> :
           <div className="content-area">{content}</div>
         }
         </div>
@@ -88,6 +90,7 @@ class PrimaryPanel extends React.Component {
     var selectItem = this.props.selectItem;
     var selection = this.props.selection;
     var data = this.props.data;
+    var error = this.props.error;
     var mode = this.state.mode;
     var toolbar = (this.props.makeMenu || this.makeMenu)(
       <ModeSwitcher
@@ -100,7 +103,7 @@ class PrimaryPanel extends React.Component {
         ]}
       />
     );
-    var content = Array.isArray(data.protos) && data.protos.map(
+    var content = data.map(
       function(proto,i) {
         return (
           <FuncProtoView
@@ -109,8 +112,8 @@ class PrimaryPanel extends React.Component {
           />
         )
       }) || [];
-    if (data.error)
-      content.splice(0, 0, <ErrorBanner key="error" message={data.error}/>);
+    if (error)
+      content.splice(0, 0, <ErrorBanner key="error" message={error}/>);
     return (
       <AppPanel
         className="primary-pane"
@@ -141,7 +144,7 @@ class FuncProtoDetailsLine extends React.Component {
   }
 }
 
-class FuncProtoConstsView extends React.Component {
+class FuncProtoConstsTable extends React.Component {
   render() {
     return (
       <div className="func-proto-consts-view">
@@ -204,14 +207,14 @@ class FuncProtoDetailsPanel extends React.Component {
     var proto = this.props.data;
     if (proto.consts.length != 0) {
       result.push(
-        <FuncProtoConstsView
+        <FuncProtoConstsTable
           key="consts" data={proto.consts}
         />
       );
     }
     if (proto.gcConsts.length != 0) {
       result.push(
-        <FuncProtoConstsView
+        <FuncProtoConstsTable
           key="gcConsts" data={proto.gcConsts}
         />
       );
@@ -240,12 +243,84 @@ class FuncProtoDetailsPanel extends React.Component {
   }
 }
 
+class TraceThumb extends React.Component {
+  render() {
+    var data = this.props.data;
+    var selectItem = this.props.selectItem;
+    return (
+      <div
+        className={"trace-thumb" + (this.props.selection == data.id ? "-active": "")}
+        onClick={(e)=>selectItem(e,data.id)}
+      >
+        {data.index}
+      </div>
+    );
+  }
+}
+
+class TraceBrowserPanel extends React.Component {
+  render() {
+    var data = this.props.data;
+    var selection = this.props.selection;
+    var selectItem = this.props.selectItem;
+    return (
+      <AppPanel
+        className="left-pane"
+        toolbar={<div className="toolbar"></div>}
+        content={data.filter((item)=>item).map((item, i) => (
+          <TraceThumb
+            key={i}
+            data={item} selection={selection} selectItem={selectItem}
+          />
+        ))}
+        contentOnClick={selectItem}
+        placeholder="No Traces"
+      />
+    );
+  }
+}
+
+class TraceDetailsPanel extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {mode: "info"};
+    this.modes = [
+      {name:"info", label:"Info"},
+      {name:"ir",   label:"IR"},
+      {name:"asm",  label:"Asm"}
+    ];
+    this.selectMode = this.selectMode.bind(this);
+  }
+  selectMode(e, mode) {
+    e.stopPropagation();
+    this.setState({mode: mode})
+  }
+  render() {
+    return (
+      <AppPanel
+        className="right-pane"
+        toolbar={
+          <div className="toolbar">
+            <div/>
+            <ModeSwitcher
+              modes={this.modes}
+              currentMode={this.state.mode}
+              selectMode={this.selectMode}
+            />
+            <div/>
+          </div>
+        }
+      />
+    );
+  }
+}
+
 class App extends React.Component {
   constructor(props) {
     const input = "local sum = 1\nfor i = 2,10000 do\n\u00a0\u00a0sum = sum + i\nend";
     super(props);
     this.state = {
-      data: {},
+      data: {protos: [], traces: []},
       selection: null,
       input: input,
       topPanel: true,
@@ -264,7 +339,7 @@ class App extends React.Component {
   }
   handleClear(e) {
     e.stopPropagation();
-    this.setState({input: "", data: {}, selection: null})
+    this.setState({input: "", data: {protos: [], traces: []}, selection: null})
   }
   handleSubmit(e) {
     e.stopPropagation();
@@ -276,13 +351,20 @@ class App extends React.Component {
       data: JSON.stringify({source:this.state.input}),
       success: function(response) {
         console.log(response)
-        this.setState({data: importData(response)})
+        this.handleResponse(response);
       }.bind(this),
       error: function(response, _, errorText) {
-        var result = response.responseJson || {error: errorText}
-        this.props.replaceData(result)
+        this.handleResponse(response.responseJson || {error: errorText});
       }.bind(this)
     })
+  }
+  handleResponse(response) {
+    var data = importData(response);
+    var update = {data: data};
+    /* auto-select first prototype */
+    if (this.state.selection == null && data.protos.length != 0)
+      update.selection = 'P1';
+    this.setState(update);
   }
   selectItem(e, id) {
     e.stopPropagation();
@@ -325,9 +407,22 @@ class App extends React.Component {
   }
   makeRightPanel() {
     var selection = this.state.selection;
-    var selectedProto = selection && selection.match(/P([0-9]+)/);
-    if (selectedProto)
-      return <FuncProtoDetailsPanel data={this.state.data.protos[selectedProto[1]-1]}/>;
+    if (selection) {
+      var protoSelected = selection.match(/P([0-9]+)/);
+      if (protoSelected) {
+        var index = protoSelected[1] - 1;
+        /* may become invalid after reload */
+        if (this.state.data.protos[index])
+          return <FuncProtoDetailsPanel data={this.state.data.protos[index]}/>;
+      }
+      var traceSelected = selection.match(/T([0-9]+)/);
+      if (traceSelected) {
+        var index = traceSelected[1] - 1;
+        /* may become invalid after reload */
+        if (this.state.data.traces[index])
+          return <TraceDetailsPanel data={this.state.data.traces[index]}/>;
+      }
+    }
     return (
       <AppPanel
         className="right-pane"
@@ -353,14 +448,15 @@ class App extends React.Component {
         <div className="app-main">
           {
             this.state.leftPanel == false ? "" :
-            <AppPanel
-              className="left-pane"
-              toolbar={<div className="toolbar"></div>}
-              placeholder="No Traces"
+            <TraceBrowserPanel
+              data={data.traces}
+              selection={selection}
+              selectItem={this.selectItem}
             />
           }
           <PrimaryPanel
-            data={data}
+            data={data.protos}
+            error={data.error}
             selection={selection}
             selectItem={this.selectItem}
             makeMenu={this.makeMenu}
