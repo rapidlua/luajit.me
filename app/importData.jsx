@@ -18,7 +18,8 @@ function convertPrototype(proto, protoIdx, source, sourceHl) {
   // leading lines without bytecode
   for (i = Math.max(1, firstLine); i<bcMap[0]; i++)
     mappedLines.push({
-      index: i,
+      key: i,
+      lineno: i,
       source: source[i-1],
       sourceHl: sourceHl[i-1]
     });
@@ -29,28 +30,29 @@ function convertPrototype(proto, protoIdx, source, sourceHl) {
     var atLineNo = bcMap[bcIdx-1];
     var lastLine = mappedLines[mappedLines.length - 1];
     var code = {
-        id: id,
-        index: bcIdx,
+        bcindex: bcIdx,
         code: bc,
-        codeHl: hljs.highlight('lua', bc, true).value
+        codeHi: hljs.highlight('lua', bc, true).value
     };
-    if (lastLine && atLineNo && lastLine.index >= atLineNo) {
-      lastLine.codes.push(code);
+    if (lastLine && atLineNo && lastLine.lineno >= atLineNo) {
+      lastLine.bytecode.push(code);
     } else {
       // middle lines without bytecodes
       while (atLineNo && i+1 < atLineNo) {
         mappedLines.push({
-          index: i+1,
-          source: source[i],
-          sourceHl: sourceHl[i]
+          key: i+1,
+          lineno: i+1,
+          code: source[i],
+          codeHi: sourceHl[i]
         });
         i = i + 1;
       }
       mappedLines.push({
-        index: atLineNo,
-        source: source[atLineNo - 1],
-        sourceHl: sourceHl[atLineNo - 1],
-        codes: [code]
+        key: atLineNo,
+        lineno: atLineNo,
+        code: source[atLineNo - 1],
+        codeHi: sourceHl[atLineNo - 1],
+        bytecode: [code]
       });
     }
     if (atLineNo > i)
@@ -59,9 +61,10 @@ function convertPrototype(proto, protoIdx, source, sourceHl) {
   // trailing lines without bytecode
   for (; i < lastLine; i++)
     mappedLines.push({
-      index: i+1,
-      source: source[i],
-      sourceHl: sourceHl[i]
+      key: i+1,
+      lineno: i+1,
+      code: source[i],
+      codeHi: sourceHl[i]
     });
   return {
     id: 'P'+protoIdx,

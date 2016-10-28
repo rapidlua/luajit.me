@@ -2,7 +2,6 @@ import React from "react";
 import {render} from "react-dom";
 
 import {importData} from "./importData.jsx";
-import {FuncProtoView} from "./funcProtoView.jsx";
 import {PropListView} from "./propListView.jsx";
 import {CodeView} from "./codeView.jsx";
 
@@ -66,6 +65,150 @@ class AppPanel extends React.Component {
   }
 }
 
+function findBytecode(lines, index)
+{
+  if (!index) return;
+  var line = lines.find((line)=>(
+    line.bytecode && line.bytecode.length != 0 &&
+    line.bytecode[0].bcindex <= index &&
+    index < line.bytecode[0].bcindex + line.bytecode.length
+  ));
+  return line && line.bytecode[index-line.bytecode[0].bcindex].code;
+}
+
+function findJumpTarget(lines, index)
+{
+    var bytecode = findBytecode(lines, index);
+    if (bytecode) {
+      var maybeTarget = bytecode.match(/=>\s*(\d{4})/);
+      return maybeTarget && +maybeTarget[1];
+    }
+}
+
+class LuaCodeView extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
+    this.toggleExpand = this.toggleExpand.bind(this);
+    this.bcLineOnMouseEnter = this.bcLineOnMouseEnter.bind(this);
+    this.bcLineOnMouseLeave = this.bcLineOnMouseLeave.bind(this);
+  }
+  toggleExpand(e) {
+    if (this.props.mode != 'lua') {
+      /* clicks don't expand things in these modes */
+      return;
+    }
+    e.stopPropagation();
+    var lineno = +e.currentTarget.getAttribute("data-lineno");
+    var line = this.props.data.find((line) => (line.lineno == lineno));
+    if (line) {
+      var key = 'expand' + line.key;
+      var upd = {};
+      upd[key] = !this.state[key] || undefined;
+      this.setState(upd);
+    }
+  }
+  bcLineOnMouseEnter(e) {
+    var index = +e.currentTarget.getAttribute('data-lineno');
+    var jumpTarget = findJumpTarget(this.props.data, index);
+    if (jumpTarget) {
+      this.setState({emBcIndex: jumpTarget});
+    }
+  }
+  bcLineOnMouseLeave(e) {
+    var index = +e.currentTarget.getAttribute('data-lineno');
+    var jumpTarget = findJumpTarget(this.props.data, index);
+    if (jumpTarget) {
+      this.setState({emBcIndex: undefined});
+    }
+  }
+  render() {
+    var state = this.state;
+    var mode = this.props.mode;
+    var lines = this.props.data;
+    var toggleExpand = this.toggleExpand;
+    var bcLineOnMouseEnter = this.bcLineOnMouseEnter;
+    var bcLineOnMouseLeave = this.bcLineOnMouseLeave;
+    var emBcIndex = this.state.emBcIndex;
+    var content = [];
+    lines.forEach(function(line, i) {
+      var mayExpand = line.bytecode || undefined;
+      var expanded = state['expand' + line.key];
+      var visuallyExpanded = (
+        mode != "lua" || expanded
+      );
+      var emThis = (
+        line.bytecode && line.bytecode.length != 0 &&
+        line.bytecode[0].bcindex <= emBcIndex &&
+        emBcIndex < line.bytecode[0].bcindex + line.bytecode.length
+      );
+      content.push(
+        <CodeView
+          className="xcode-line-group lua"
+          key={'lua'+i}
+          data={[{
+            className: (
+              emThis && !visuallyExpanded ? "xcode-line em" : undefined
+            ),
+            key: line.key,
+            lineno: line.lineno,
+            code: line.code, codeHi: line.codeHi,
+            onClick: toggleExpand,
+            gutter: mayExpand && (
+              <div className="xgutter">
+                <div className={"shevron"+(expanded ? " expanded" : "")}/>
+                {line.lineno}
+              </div>
+            )
+          }]}
+        />
+      );
+      if (line.bytecode) {
+        content.push(
+          <CodeView
+            className={"xcode-line-group luabc"+(expanded ? " expanded" : "")}
+            key={'luabc'+i}
+            data={line.bytecode.map((bc, i)=>({
+              key: i,
+              lineno: number4(bc.bcindex),
+              code: bc.code, codeHi: bc.codeHi,
+              className: (
+                bc.bcindex == emBcIndex ? "xcode-line em": undefined
+              ),
+              onMouseEnter: bcLineOnMouseEnter,
+              onMouseLeave: bcLineOnMouseLeave
+            }))}
+          />
+        );
+      }
+    });
+    return (
+      <div className={"xcode-view primary " + (mode || "")}>
+        {content}
+      </div>
+    );
+  }
+}
+
+class FuncProtoView extends React.Component {
+  render() {
+    var proto = this.props.data;
+    var selectItem = this.props.selectItem;
+    return (
+      <div
+        className={"panel panel-" + (this.props.selection == proto.id ?
+          "primary" : "default")}
+        onClick={(e)=>(selectItem(e,proto.id))}
+      >
+        <div className="panel-heading">
+          <h3 className="panel-title">Proto #{proto.index}</h3>
+        </div>
+        <LuaCodeView data={proto.lines} mode={this.props.mode}/>
+      </div>
+    );
+  }
+}
+
 class ErrorBanner extends React.Component {
   render() {
     return (
@@ -111,15 +254,15 @@ class PrimaryPanel extends React.Component {
         ]}
       />
     );
-    var content = data.map(
-      function(proto,i) {
-        return (
-          <FuncProtoView
-            data={proto} key={i} mode={mode}
-            handleClick={selectItem} selection={selection}
-          />
-        )
-      }) || [];
+    var content = data.map((proto,i) => (
+      <FuncProtoView
+        key={i}
+        data={proto}
+        mode={mode}
+        selection={selection}
+        selectItem={selectItem}
+      />
+    ));
     if (error)
       content.splice(0, 0, <ErrorBanner key="error" message={error}/>);
     return (
@@ -189,7 +332,7 @@ class FuncProtoDetailsPanel extends React.Component {
           <CodeView
             key='consts'
             className="xcode-view consts"
-            data={proto.consts} xform={kToCodeLine}
+            data={proto.consts.map(kToCodeLine)}
           />
         );
       }
@@ -198,7 +341,7 @@ class FuncProtoDetailsPanel extends React.Component {
           <CodeView
             key='gcConsts'
             className="xcode-view consts"
-            data={proto.gcConsts} xform={kToCodeLine}
+            data={proto.gcConsts.map(kToCodeLine)}
           />
         );
       }
@@ -332,15 +475,14 @@ class TraceDetailsPanel extends React.Component {
         content = (
           <CodeView
             className="xcode-view ir"
-            data={ir}
-            xform={(ir, i) => ({
+            data={ir.map((ir, i) => ({
               className: emphasize[i] ? "xcode-line em" : "xcode-line",
               key: i,
               lineno: number4(i+1),
               code: ir.code,
               onMouseEnter: irLineOnMouseEnter,
               onMouseLeave: irLineOnMouseLeave
-            })}
+            }))}
           />
         );
       }
@@ -349,12 +491,11 @@ class TraceDetailsPanel extends React.Component {
       if (asm.length != 0) {
         content = (
           <CodeView
-            data={asm}
-            xform={(asm, i) => ({
+            data={asm.map((asm, i) => ({
               key: i,
               code: asm.code,
               codeHi: asm.codeHi
-            })}
+            }))}
           />
         );
       }

@@ -18,7 +18,7 @@ export class CodeLine extends React.Component {
     if (this.props.gutter !== undefined)
       gutter = this.props.gutter;
     else if (this.props.lineno !== undefined)
-      gutter = <div className="gutter-area">{this.props.lineno}</div>;
+      gutter = <div className="xgutter">{this.props.lineno}</div>;
     return (
       <div
         className={this.props.className || "xcode-line"}
@@ -28,7 +28,7 @@ export class CodeLine extends React.Component {
         onMouseLeave={this.props.onMouseLeave}
       >
         {gutter}
-        <div className="xcode-area">{code}</div>
+        <div className="xcode">{code}</div>
       </div>
     );
   }
@@ -40,7 +40,7 @@ export class CodeView extends React.Component {
     return (
       <div className={this.props.className || "xcode-view"}>
         {this.props.data.map((item, i) => (
-          React.createElement(CodeLine, xform ? xform(item, i) : item, null)
+          React.createElement(CodeLine, item, null)
         ))}
       </div>
     )

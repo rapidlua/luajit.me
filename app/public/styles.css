@@ -204,65 +204,6 @@
     background-color: #f8f8ec;
 }
 
-.invisible { display: none; }
-
-.code-block {
-    list-style-type: none;
-    padding: 0em;
-    margin-bottom: 0;
-}
-
-.code-line {
-    font-family: Menlo, monospace;
-    overflow: hidden;
-    white-space: pre;
-    text-overflow: ellipsis;
-    max-width: 100%;
-}
-
-.code-line:hover { filter: invert(100%); }
-
-.gutter {
-    display: inline-block;
-    width: 3.5em;
-    padding-left: .4em;
-    padding-right: .4em;
-    text-align: right;
-    margin-left: .0em;
-    margin-right: .6em;
-    border-right: solid 1px rgba(0,0,0,.25);
-    font-family: Helvetica, Arial, monospace;
-}
-
-.gutter .shevron {
-    display: inline-block;
-    float: left;
-    font-family: Menlo, monospace;
-    font-size: 90%;
-    visibility: hidden;
-}
-
-.code-line:hover .gutter .shevron { visibility: visible; }
-
-.code-line:active .gutter .shevron { font-size: 100%; }
-
-.code-line-lua   { background-color: #ffffb0; }
-.code-line-luabc { background-color: #ffffd0; }
-
-/* increase contrast in mixed mode */
-.func-proto-view-mixed .code-line-lua  { background-color: #ffffa0; }
-
-.active-jump-target { filter:invert(100%); }
-
-.jump-cmd { cursor: pointer; }
-
-/* create some breathing space between lua / luabc sections */
-.func-proto-view-lua   .code-block .code-block .code-line:first-child .gutter,
-.func-proto-view-mixed .code-block .code-block .code-line:first-child .gutter { padding-top:.35em; }
-.func-proto-view-lua   .code-block .code-block .code-line:last-child  .gutter,
-.func-proto-view-mixed .code-block .code-block .code-line:last-child  .gutter { padding-bottom:.35em; }
-
-
 /***********************************************************************/
 
 .prop-list-view {
@@ -298,21 +239,93 @@
 .xcode-view {
 		display: table;
 }
+.xcode-line-group {
+		display: table-row-group;
+}
 .xcode-line {
 		display: table-row;
 }
-.xcode-line > .gutter-area,
-.xcode-line > .xcode-area {
+.xcode-line > .xgutter,
+.xcode-line > .xcode {
 		display: table-cell;
+}
+.xcode-line > .xcode > div {
     overflow: hidden;
     white-space: pre;
     text-overflow: ellipsis;
 }
-.xcode-line > .xcode-area {
+.xcode-line > .xcode {
 		font-family: Menlo, monospace;
+		width: 100%;
 }
 .xcode-line.em {
 		filter: invert(100%);
+}
+
+/***********************************************************************/
+.xcode-view.primary {
+		width:100%;
+		table-layout:fixed;
+}
+.xcode-view.primary .xgutter {
+		width: 46px;
+		padding: 0 6px;
+		text-align: right;
+		border-right: solid rgba(0,0,0,.25) 1px;
+}
+.xcode-view.primary .xcode {
+		width: 100%;
+		padding: 0 6px;
+}
+.xcode-view.lua .xcode-line-group.luabc,
+.xcode-view.luabc .xcode-line-group.lua {
+		display: none;
+}
+.xcode-view.lua .xcode-line-group.luabc.expanded {
+		display: table-row-group;
+}
+.xcode-line-group.lua > .xcode-line {
+		background-color: #ffffb0;
+}
+.xcode-line-group.luabc > .xcode-line {
+		background-color: #ffffd0;
+}
+.xcode-view.mixed .xcode-line-group.lua > .xcode-line {
+		background-color: #ffffa0;
+}
+.xcode-view.lua   .xcode-line-group.luabc .xcode-line:first-child .xgutter,
+.xcode-view.mixed .xcode-line-group.luabc .xcode-line:first-child .xgutter {
+		padding-top: 4px;
+}
+.xcode-view.lua   .xcode-line-group.luabc .xcode-line:last-child .xgutter,
+.xcode-view.mixed .xcode-line-group.luabc .xcode-line:last-child .xgutter {
+		padding-bottom: 4px;
+}
+
+.xcode-view.primary .xcode-line:hover {
+		filter: invert(100%);
+}
+
+.xgutter > .shevron {
+		float: left;
+}
+.xgutter > .shevron:before {
+		content: "▶";
+		font-size: 80%;
+}
+.xgutter > .shevron.expanded:before {
+		content: "▼";
+}
+.xgutter > .shevron:after {
+		content: "\200B";
+}
+
+.xcode-view.primary .shevron {
+		display: none;
+}
+
+.xcode-view.lua .xcode-line:hover .shevron {
+		display: inline-block;
 }
 
 /***********************************************************************/
@@ -323,7 +336,7 @@
 		margin-top: 6px;
 }
 
-.right-pane .xcode-line > .gutter-area {
+.right-pane .xcode-line > .xgutter {
 		text-align: right;
 		white-space: nowrap;
 		padding-right: 12px;
@@ -332,11 +345,11 @@
 		min-width: 28px;
 }
 
-.xcode-view.consts .xcode-line > .gutter-area {
+.xcode-view.consts .xcode-line > .xgutter {
 		padding-left: 0;
 }
 
-.right-pane .xcode-line > .xcode-area {
+.right-pane .xcode-line > .xcode {
 		padding-left: 4px;
 		padding-right: 4px;
 }
@@ -350,7 +363,7 @@
     background-color: #fafafa;
 }
 
-.xcode-view.ir .xcode-line > .gutter-area {
+.xcode-view.ir .xcode-line > .xgutter {
 		padding-right: 0px;
 }
 
