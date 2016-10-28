@@ -384,12 +384,12 @@
 }
 
 .trace-thumb.error {
-		border-color: red !important;
+		border-color: #ffb0b0;
 }
 
 .trace-thumb.error > div {
 		color: red;
-		border-color: red;
+		border-color: #ffb0b0;
 		background-color: #ffe6e6;
 }
 
@@ -408,8 +408,5 @@
 }
 
 .trace-thumb.error.active {
-		background-color: #ffe6e6;
-}
-.trace-thumb.error.active > div {
-		color: #ffe6e6;
+		border-color: red;
 }
