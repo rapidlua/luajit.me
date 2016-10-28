@@ -3,6 +3,14 @@ import {render} from "react-dom";
 
 import {importData} from "./importData.jsx";
 import {FuncProtoView} from "./funcProtoView.jsx";
+import {PropListView} from "./propListView.jsx";
+import {CodeView} from "./codeView.jsx";
+
+/* 1-> "0001" */
+function number4(i) {
+  var s = "0000"+i
+  return s.substr(s.length-4)
+}
 
 class ToggleButton extends React.Component {
   render() {
@@ -125,111 +133,12 @@ class PrimaryPanel extends React.Component {
   }
 }
 
-class PropListItem extends React.Component {
-  render() {
-    return (
-      <div className="prop-list-item">
-        <div className="prop-list-item-label">{this.props.label}</div>
-        <div className="prop-list-item-value">{this.props.value}</div>
-      </div>
-    );
-  }
-}
-
-class PropListView extends React.Component {
-  render() {
-    var data = this.props.data;
-    var schema = this.props.schema;
-    var content = [];
-    if (schema) {
-      schema.forEach(function(schemaItem, i) {
-        var key = schemaItem.key;
-        var rawValue = data[key];
-        var fmt = schemaItem.fmt;
-        var value;
-        if (fmt)
-          value = fmt(rawValue);
-        else if (rawValue!==undefined)
-          value = ""+rawValue;
-        if (value) {
-          content.push(
-            <PropListItem
-              key={key}
-              value={value}
-              label={schemaItem.label || key}
-            />
-          );
-        }
-      });
-    } else for (var key in data) {
-      if (data.hasOwnProperty(key)) {
-        content.push(
-          <PropListItem
-            key={key}
-            value={""+data[key]}
-            label={key}
-          />
-        );
-      }
-    }
-    return (
-      <div className="prop-list-view">{content}</div>
-    );
-  }
-}
-
-
-class CodeLine extends React.Component {
-  render() {
-    /*
-     * className?, onClick?, onMouseEnter?, onMouseLeave?,
-     * codeHi | code, lineno | gutter, overlay?
-     */
-    var code = (
-      this.props.codeHi !== undefined ?
-      <div dangerouslySetInnerHTML={{__html: this.props.codeHi}}/> :
-      <div>{this.props.code}</div>
-    );
-    if (this.props.overlay)
-      code = <div>{code}{this.props.overlay}</div>;
-    var gutter;
-    if (this.props.gutter !== undefined)
-      gutter = this.props.gutter;
-    else if (this.props.lineno !== undefined)
-      gutter = <div className="gutter-area">{this.props.lineno}</div>;
-    return (
-      <div
-        className={this.props.className || "xcode-line"}
-        data-lineno={this.props.lineno}
-        onClick={this.props.onClick}
-        onMouseEnter={this.props.onMouseEnter}
-        onMouseLeave={this.props.onMouseLeave}
-      >
-        {gutter}
-        <div className="xcode-area">{code}</div>
-      </div>
-    );
-  }
-}
-
-class CodeView extends React.Component {
-  render() {
-    var xform = this.props.xform;
-    return (
-      <div className={this.props.className || "xcode-view"}>
-        {this.props.data.map((item, i) => (
-          React.createElement(CodeLine, xform ? xform(item, i) : item, null)
-        ))}
-      </div>
-    )
-  }
-}
-
 function formatBool(v) {
   if (v == true) return "Yes";
   if (v == false) return "No";
 }
 
+/* {const} -> presentation suitable for codeView */
 function kToCodeLine(k, i) {
   return {
     key: i,
@@ -354,11 +263,6 @@ class TraceBrowserPanel extends React.Component {
       />
     );
   }
-}
-
-function number4(i) {
-  var s = "0000"+i
-  return s.substr(s.length-4)
 }
 
 class TraceDetailsPanel extends React.Component {
