@@ -28,7 +28,7 @@
 
 .left-pane, .right-pane {
     background-color: #fafafa;
-    flex: 0 0 250px;
+    flex: 0 0 300px;
 }
 
 .left-pane {
@@ -106,8 +106,15 @@
 }
 
 .primary-pane .panel-heading .panel-title {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: .7px;
+    font-weight: 500;
+    line-height: 1;
+    border-color: #c8c8c8;
+}
+
+.primary-pane .panel-default > .panel-heading {
+		background-color: #e6e6e6;
 }
 
 .toolbar {
@@ -256,62 +263,153 @@
 .func-proto-view-mixed .code-block .code-block .code-line:last-child  .gutter { padding-bottom:.35em; }
 
 
-.func-proto-info-view, .func-proto-consts-view {
+/***********************************************************************/
+
+.prop-list-view {
 		display: table;
-		margin-bottom: 24px;
 }
-.details-kv {
+
+.prop-list-item {
 		display: table-row;
 }
-.details-key, .details-val {
+
+.prop-list-item-label, .prop-list-item-value {
 		display: table-cell;
 }
-.details-key {
+
+.prop-list-item-label {
+		font-weight: 500;
 		text-align: right;
 		white-space: nowrap;
 		padding-right: 16px;
 }
-.func-proto-info-view .details-key {
-		font-weight: 500;
+
+.prop-list-item-label:after {
+		content: ":";
 }
 
-.func-proto-consts-view .details-key {
-		color: #808080;
-		min-width: 36px;
+.prop-list-item-value .error {
+		color: red;
+		font-style: italic;
 }
 
-.func-proto-consts-view .details-val {
+/***********************************************************************/
+
+.xcode-view {
+		display: table;
+}
+.xcode-line {
+		display: table-row;
+}
+.xcode-line > .gutter-area,
+.xcode-line > .xcode-area {
+		display: table-cell;
+    overflow: hidden;
+    white-space: pre;
+    text-overflow: ellipsis;
+}
+.xcode-line > .xcode-area {
 		font-family: Menlo, monospace;
 }
-
-.func-proto-consts-view .proto-ref {
-		font-weight: bold;
-		font-family: Helvetica, Arial;
+.xcode-line.em {
+		filter: invert(100%);
 }
 
-.trace-thumb, .trace-thumb-active {
-		max-width: 48px;
-		height: 48px;
+/***********************************************************************/
+
+.right-pane .prop-list-view,
+.right-pane .xcode-view {
+		margin-bottom: 24px;
+		margin-top: 6px;
+}
+
+.right-pane .xcode-line > .gutter-area {
+		text-align: right;
+		white-space: nowrap;
+		padding-right: 8px;
+		padding-left: 4px;
+		color: #808080;
+		min-width: 28px;
+}
+
+.xcode-view.consts .xcode-line > .gutter-area {
+		padding-left: 0;
+}
+
+.right-pane .xcode-line > .xcode-area {
+		padding-left: 8px;
+		padding-right: 4px;
+}
+
+.xcode-view.ir .xcode-line:hover {
+		filter: invert(100%);
+    background-color: #fafafa;
+}
+
+.xcode-view.ir .xcode-line {
+    background-color: #fafafa;
+}
+
+.xcode-view.ir .xcode-line > .gutter-area {
+		padding-right: 0px;
+}
+
+/***********************************************************************/
+
+.trace-thumb {
 		margin: 12px auto;
 		margin-bottom: 24px;
+		max-width: 48px;
 		width: 100%;
-		font-size: 18px;
+}
+
+.trace-thumb > div {
+		width: 48px;
+		height: 48px;
+		font-size: 15px;
+		font-weight: 500;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		border-radius: 24px;
+		background-color: #e6e6e6;
+		border: solid 1px #c8c8c8;
 }
 
-.trace-thumb {
-		background-color: #ffffff;
-		border: solid 1px #808080;
+.trace-thumb.special {
+		padding: 4px;
+		max-width: 58px;
+		border: solid 1px #c8c8c8;
+		border-radius: 100px;
 }
 
-.trace-thumb:hover {
+.trace-thumb.error {
+		border-color: red !important;
+}
+
+.trace-thumb.error > div {
+		color: red;
+		border-color: red;
+		background-color: #ffe6e6;
+}
+
+.trace-thumb:hover > div {
 		background-color: #ffd800;
 }
 
-.trace-thumb-active {
+.trace-thumb.special.active {
+		border-color: #337ab7;
+}
+
+.trace-thumb.active > div {
 		background-color: #337ab7;
 		color: #ffffff;
+		border-color: #337ab7;
+}
+
+.trace-thumb.error.active {
+		background-color: #ffe6e6;
+}
+.trace-thumb.error.active > div {
+		color: #ffe6e6;
 }

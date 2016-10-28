@@ -25,9 +25,9 @@ class ModeSwitcher extends React.Component {
       <div className="toolbar-group toolbar-em">
         {this.props.modes.map((mode) => (
           <ToggleButton
-            key     = {mode.name}
-            isOn    = {currentMode == mode.name}
-            onClick = {(e)=>selectMode(e, mode.name)}
+            key     = {mode.key}
+            isOn    = {currentMode == mode.key}
+            onClick = {(e)=>selectMode(e, mode.key)}
             label   = {mode.label || mode.name}
           />
         ))}
@@ -73,9 +73,9 @@ class PrimaryPanel extends React.Component {
     super(props);
     this.state = {mode: "lua"};
     this.modes = [
-      {name:"lua",   label:"Lua"},
-      {name:"luabc", label:"Bytecode"},
-      {name:"mixed", label:"Mixed"}
+      {key:"lua",   label:"Lua"},
+      {key:"luabc", label:"Bytecode"},
+      {key:"mixed", label:"Mixed"}
     ];
     this.selectMode = this.selectMode.bind(this);
   }
@@ -97,9 +97,9 @@ class PrimaryPanel extends React.Component {
         currentMode = {mode}
         selectMode = {this.selectMode}
         modes = {[
-          {name:"lua",   label:"Lua"},
-          {name:"luabc", label:"Bytecode"},
-          {name:"mixed", label:"Mixed"}
+          {key:"lua",   label:"Lua"},
+          {key:"luabc", label:"Bytecode"},
+          {key:"mixed", label:"Mixed"}
         ]}
       />
     );
@@ -125,38 +125,117 @@ class PrimaryPanel extends React.Component {
   }
 }
 
-class FuncProtoDetailsLine extends React.Component {
+class PropListItem extends React.Component {
   render() {
-    var value = this.props.value;
-    var valueHl = this.props.valueHl;
-    if (typeof(value) === "boolean")
-      value = value && "Yes" || "No";
     return (
-      <div className="details-kv">
-        <div className="details-key">{this.props.label}</div>
-        {
-          valueHl ?
-          <div className="details-val" dangerouslySetInnerHTML={{__html: valueHl}}/> :
-          <div className="details-val">{value}</div>
-        }
+      <div className="prop-list-item">
+        <div className="prop-list-item-label">{this.props.label}</div>
+        <div className="prop-list-item-value">{this.props.value}</div>
       </div>
     );
   }
 }
 
-class FuncProtoConstsTable extends React.Component {
+class PropListView extends React.Component {
   render() {
-    return (
-      <div className="func-proto-consts-view">
-        {
-          this.props.data.map((k, i) => (
-            <FuncProtoDetailsLine
-              key={i} label={i} value={k.value} valueHl={k.valueHl}
+    var data = this.props.data;
+    var schema = this.props.schema;
+    var content = [];
+    if (schema) {
+      schema.forEach(function(schemaItem, i) {
+        var key = schemaItem.key;
+        var rawValue = data[key];
+        var fmt = schemaItem.fmt;
+        var value;
+        if (fmt)
+          value = fmt(rawValue);
+        else if (rawValue!==undefined)
+          value = ""+rawValue;
+        if (value) {
+          content.push(
+            <PropListItem
+              key={key}
+              value={value}
+              label={schemaItem.label || key}
             />
-          ))
+          );
         }
+      });
+    } else for (var key in data) {
+      if (data.hasOwnProperty(key)) {
+        content.push(
+          <PropListItem
+            key={key}
+            value={""+data[key]}
+            label={key}
+          />
+        );
+      }
+    }
+    return (
+      <div className="prop-list-view">{content}</div>
+    );
+  }
+}
+
+
+class CodeLine extends React.Component {
+  render() {
+    /*
+     * className?, onClick?, onMouseEnter?, onMouseLeave?,
+     * codeHi | code, lineno | gutter, overlay?
+     */
+    var code = (
+      this.props.codeHi !== undefined ?
+      <div dangerouslySetInnerHTML={{__html: this.props.codeHi}}/> :
+      <div>{this.props.code}</div>
+    );
+    if (this.props.overlay)
+      code = <div>{code}{this.props.overlay}</div>;
+    var gutter;
+    if (this.props.gutter !== undefined)
+      gutter = this.props.gutter;
+    else if (this.props.lineno !== undefined)
+      gutter = <div className="gutter-area">{this.props.lineno}</div>;
+    return (
+      <div
+        className={this.props.className || "xcode-line"}
+        data-lineno={this.props.lineno}
+        onClick={this.props.onClick}
+        onMouseEnter={this.props.onMouseEnter}
+        onMouseLeave={this.props.onMouseLeave}
+      >
+        {gutter}
+        <div className="xcode-area">{code}</div>
       </div>
     );
+  }
+}
+
+class CodeView extends React.Component {
+  render() {
+    var xform = this.props.xform;
+    return (
+      <div className={this.props.className || "xcode-view"}>
+        {this.props.data.map((item, i) => (
+          React.createElement(CodeLine, xform ? xform(item, i) : item, null)
+        ))}
+      </div>
+    )
+  }
+}
+
+function formatBool(v) {
+  if (v == true) return "Yes";
+  if (v == false) return "No";
+}
+
+function kToCodeLine(k, i) {
+  return {
+    key: i,
+    lineno: i,
+    code: k.value,
+    codeHi: k.valueHi
   }
 }
 
@@ -165,22 +244,18 @@ class FuncProtoDetailsPanel extends React.Component {
     super(props);
     this.state = {mode: "info"};
     this.modes = [
-      {name:"info", label:"Info"},
-      {name:"k",    label:"Consts"},
+      {key:"info",   label:"Info"},
+      {key:"consts", label:"Consts"},
     ];
-    this.renders = {
-      info: this.renderInfo.bind(this),
-      k: this.renderConsts.bind(this)
-    };
-    this.infoProps = [
-      {key: "params",     label: "Params:"},
-      {key: "isvararg",   label: "Is Vararg:"},
-      {key: "stackslots", label: "Stack Slots:"},
-      {key: "upvalues",   label: "Upvalues:"},
-      {key: "bytecodes",  label: "Bytecodes:"},
-      {key: "nconsts",    label: "Consts:"},
-      {key: "gcconsts",   label: "GC Consts:"},
-      {key: "children",   label: "Has Children:"}
+    this.infoSchema = [
+      {key:"params",     label:"Params"},
+      {key:"isvararg",   label:"Is Vararg",    fmt:formatBool},
+      {key:"stackslots", label:"Stack Slots"},
+      {key:"upvalues",   label:"Upvalues"},
+      {key:"bytecodes",  label:"Bytecodes"},
+      {key:"nconsts",    label:"Consts"},
+      {key:"gcconsts",   label:"GC Consts"},
+      {key:"children",   label:"Has Children", fmt:formatBool}
     ];
     this.selectMode = this.selectMode.bind(this);
   }
@@ -188,43 +263,41 @@ class FuncProtoDetailsPanel extends React.Component {
     e.stopPropagation();
     this.setState({mode: mode})
   }
-  renderInfo() {
-    var info = this.props.data.info;
-    return (
-      <div className="func-proto-info-view">
-        { this.infoProps.map((ip) => (
-          <FuncProtoDetailsLine
-            key={ip.key}
-            label={ip.label}
-            value={info[ip.key]}
-          />
-        )) }
-      </div>
-    )
-  }
-  renderConsts() {
-    var result = [];
-    var proto = this.props.data;
-    if (proto.consts.length != 0) {
-      result.push(
-        <FuncProtoConstsTable
-          key="consts" data={proto.consts}
-        />
-      );
-    }
-    if (proto.gcConsts.length != 0) {
-      result.push(
-        <FuncProtoConstsTable
-          key="gcConsts" data={proto.gcConsts}
-        />
-      );
-    }
-    return result;
-  }
   render() {
+    var content;
+    if (this.state.mode == 'info') {
+      content = (
+        <PropListView
+          data={this.props.data.info}
+          schema={this.infoSchema}
+        />
+      );
+    } else {
+      content = [];
+      var proto = this.props.data;
+      if (proto.consts.length != 0) {
+        content.push(
+          <CodeView
+            key='consts'
+            className="xcode-view consts"
+            data={proto.consts} xform={kToCodeLine}
+          />
+        );
+      }
+      if (proto.gcConsts.length != 0) {
+        content.push(
+          <CodeView
+            key='gcConsts'
+            className="xcode-view consts"
+            data={proto.gcConsts} xform={kToCodeLine}
+          />
+        );
+      }
+    }
     return (
       <AppPanel
         className="right-pane"
+        content={content}
         toolbar={
           <div className="toolbar">
             <div/>
@@ -236,7 +309,6 @@ class FuncProtoDetailsPanel extends React.Component {
             <div/>
           </div>
         }
-        content={this.renders[this.state.mode]()}
         placeholder="No Consts"
       />
     );
@@ -247,12 +319,16 @@ class TraceThumb extends React.Component {
   render() {
     var data = this.props.data;
     var selectItem = this.props.selectItem;
+    var className = "trace-thumb";
+    if (this.props.selection == data.id)
+      className += " active";
+    if (data.info.linktype == "interpreter" || !data.info.parent || data.info.error)
+      className += " special";
+    if (data.info.error)
+      className += " error";
     return (
-      <div
-        className={"trace-thumb" + (this.props.selection == data.id ? "-active": "")}
-        onClick={(e)=>selectItem(e,data.id)}
-      >
-        {data.index}
+      <div className={className} onClick={(e)=>selectItem(e,data.id)}>
+        <div>{data.index}</div>
       </div>
     );
   }
@@ -280,25 +356,109 @@ class TraceBrowserPanel extends React.Component {
   }
 }
 
+function number4(i) {
+  var s = "0000"+i
+  return s.substr(s.length-4)
+}
+
 class TraceDetailsPanel extends React.Component {
   constructor(props) {
     super(props);
     this.state = {mode: "info"};
     this.modes = [
-      {name:"info", label:"Info"},
-      {name:"ir",   label:"IR"},
-      {name:"asm",  label:"Asm"}
+      {key:"info", label:"Info"},
+      {key:"ir",   label:"IR"},
+      {key:"asm",  label:"Asm"}
+    ];
+    this.infoSchema = [
+      {key:"error",      label:"Error",      fmt:function(val) {
+        if (val) return (
+          <span className="error">{val}</span>
+        );
+      }},
+      {key:"observed",   label:"Times Seen", fmt:function(val) {
+        if (val > 1) return val;
+      }},
+      {key:"parent",     label:"Parent"},
+      {key:"parentexit", label:"Parent Exit"},
+      {key:"link",       label:"Link"},
+      {key:"linktype",   label:"Link Type",  fmt:function(val) {
+        if (val != "none") return val;
+      }},
+      {key:"nexit",      label:"Num Exits"}
     ];
     this.selectMode = this.selectMode.bind(this);
+    this.irLineOnMouseEnter = this.irLineOnMouseEnter.bind(this);
+    this.irLineOnMouseLeave = this.irLineOnMouseLeave.bind(this);
   }
   selectMode(e, mode) {
     e.stopPropagation();
     this.setState({mode: mode})
   }
+  irLineOnMouseEnter(e) {
+    this.setState({activeIrLine: e.currentTarget.getAttribute('data-lineno')-1});
+  }
+  irLineOnMouseLeave(e) {
+    this.setState({activeIrLine: undefined})
+  }
   render() {
+    var content;
+    var mode = this.state.mode;
+    if (mode == "info") {
+      content = (
+        <PropListView
+          data={this.props.data.info}
+          schema={this.infoSchema}
+        />
+      );
+    } else if (mode == "ir") {
+      var ir = this.props.data.ir;
+      if (ir.length != 0) {
+        var activeLine = ir[this.state.activeIrLine];
+        var emphasize = {};
+        if (activeLine) {
+          var re = /[0-9]{4,}/g;
+          var m;
+          while ((m = re.exec(activeLine.code))) {
+            emphasize[m[0]-1] = true;
+          }
+        }
+        var irLineOnMouseEnter = this.irLineOnMouseEnter;
+        var irLineOnMouseLeave = this.irLineOnMouseLeave;
+        content = (
+          <CodeView
+            className="xcode-view ir"
+            data={ir}
+            xform={(ir, i) => ({
+              className: emphasize[i] ? "xcode-line em" : "xcode-line",
+              key: i,
+              lineno: number4(i+1),
+              code: ir.code,
+              onMouseEnter: irLineOnMouseEnter,
+              onMouseLeave: irLineOnMouseLeave
+            })}
+          />
+        );
+      }
+    } else {
+      var asm = this.props.data.asm;
+      if (asm.length != 0) {
+        content = (
+          <CodeView
+            data={asm}
+            xform={(asm, i) => ({
+              key: i,
+              code: asm.code,
+              codeHi: asm.codeHi
+            })}
+          />
+        );
+      }
+    }
     return (
       <AppPanel
         className="right-pane"
+        content={content}
         toolbar={
           <div className="toolbar">
             <div/>

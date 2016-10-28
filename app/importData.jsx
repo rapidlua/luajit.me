@@ -1,7 +1,7 @@
 function convertConsts(consts) {
   return consts.map((value) => ({
     value: value,
-    valueHl: (
+    valueHi: (
       typeof(value)=='object' ?
       "<span class=\"proto-ref\">Proto #"+value['$func$']+"</span>":
       hljs.highlight('lua', value+'', true).value
@@ -73,6 +73,26 @@ function convertPrototype(proto, protoIdx, source, sourceHl) {
   };
 }
 
+function convertIr(ir) {
+  if (!Array.isArray(ir))
+    return [];
+  return ir.map((ir) => ({
+    code: ir.replace(/^\d+\s/,"")
+  }));
+}
+
+function convertAsm(asm) {
+  if (!Array.isArray(asm))
+    return [];
+  return asm.map(function (asm) {
+    asm = asm.replace(/^[0-9a-fA-F]+\s*/,"").replace(/->/,"; ->");
+    return {
+      code: asm,
+      codeHi:hljs.highlight('x86asm', asm, true).value
+    };
+  });
+}
+
 function convertTrace(trace, traceIdx, trIndex) {
   var info = trace.info;
   var tr = trace.trace;
@@ -94,7 +114,7 @@ function convertTrace(trace, traceIdx, trIndex) {
   var res = {
     id: 'T'+traceIdx,
     index: traceIdx,
-    info: info, trace: tr, ir: ir, asm: asm
+    info: info, trace: tr, ir: convertIr(ir), asm: convertAsm(asm)
   };
   trIndex[signature] = res;
   return res;
