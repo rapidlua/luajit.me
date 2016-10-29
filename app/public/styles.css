@@ -328,6 +328,19 @@
 		display: inline-block;
 }
 
+.xcode-line-group.lua .xcode-line.active-trace {
+		background-color: #e0ff30;
+}
+.xcode-line-group.luabc .xcode-line.active-trace {
+		background-color: #e0ff78;
+}
+.xcode-line-group.lua .xcode-line.active-trace.error {
+		background-color: #ff7060;
+}
+.xcode-line-group.luabc .xcode-line.active-trace.error {
+		background-color: #ffa080;
+}
+
 /***********************************************************************/
 
 .right-pane .prop-list-view,
@@ -407,7 +420,12 @@
 }
 
 .trace-thumb:hover > div {
-		background-color: #ffd800;
+		background-color: #e0ff30;
+}
+
+.trace-thumb.error:hover > div {
+		background-color: #ff7060;
+		color: #ffffff;
 }
 
 .trace-thumb.special.active {
@@ -415,7 +433,7 @@
 }
 
 .trace-thumb.active > div {
-		background-color: #337ab7;
+		background-color: #337ab7 !important;
 		color: #ffffff;
 		border-color: #337ab7;
 }

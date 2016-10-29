@@ -65,24 +65,24 @@ class AppPanel extends React.Component {
   }
 }
 
-function findBytecode(lines, index)
+function findLineByBytecodeIndex(lines, index)
 {
   if (!index) return;
-  var line = lines.find((line)=>(
+  return lines.find((line)=>(
     line.bytecode && line.bytecode.length != 0 &&
     line.bytecode[0].bcindex <= index &&
     index < line.bytecode[0].bcindex + line.bytecode.length
   ));
-  return line && line.bytecode[index-line.bytecode[0].bcindex].code;
 }
 
 function findJumpTarget(lines, index)
 {
-    var bytecode = findBytecode(lines, index);
-    if (bytecode) {
-      var maybeTarget = bytecode.match(/=>\s*(\d{4})/);
-      return maybeTarget && +maybeTarget[1];
-    }
+  var line = findLineByBytecodeIndex(lines, index);
+  var bytecode = line && line.bytecode[index-line.bytecode[0].bcindex].code;
+  if (bytecode) {
+    var maybeTarget = bytecode.match(/=>\s*(\d{4})/);
+    return maybeTarget && +maybeTarget[1];
+  }
 }
 
 class LuaCodeView extends React.Component {
@@ -90,6 +90,7 @@ class LuaCodeView extends React.Component {
     super(props);
     this.state = {};
     this.toggleExpand = this.toggleExpand.bind(this);
+    this.collapseViaBcLine = this.collapseViaBcLine.bind(this);
     this.bcLineOnMouseEnter = this.bcLineOnMouseEnter.bind(this);
     this.bcLineOnMouseLeave = this.bcLineOnMouseLeave.bind(this);
   }
@@ -105,6 +106,21 @@ class LuaCodeView extends React.Component {
       var key = 'expand' + line.key;
       var upd = {};
       upd[key] = !this.state[key] || undefined;
+      this.setState(upd);
+    }
+  }
+  collapseViaBcLine(e) {
+    if (this.props.mode != 'lua') {
+      /* clicks don't expand things in these modes */
+      return;
+    }
+    e.stopPropagation();
+    var bcIndex = +e.currentTarget.getAttribute("data-lineno");
+    var line = findLineByBytecodeIndex(this.props.data, bcIndex);
+    if (line) {
+      var key = 'expand' + line.key;
+      var upd = {};
+      upd[key] = undefined;
       this.setState(upd);
     }
   }
@@ -127,10 +143,12 @@ class LuaCodeView extends React.Component {
     var mode = this.props.mode;
     var lines = this.props.data;
     var toggleExpand = this.toggleExpand;
+    var collapseViaBcLine = this.collapseViaBcLine;
     var bcLineOnMouseEnter = this.bcLineOnMouseEnter;
     var bcLineOnMouseLeave = this.bcLineOnMouseLeave;
     var emBcIndex = this.state.emBcIndex;
     var content = [];
+    var lineDecorator = this.props.lineDecorator || ((l) => l);
     lines.forEach(function(line, i) {
       var mayExpand = line.bytecode || undefined;
       var expanded = state['expand' + line.key];
@@ -146,9 +164,9 @@ class LuaCodeView extends React.Component {
         <CodeView
           className="xcode-line-group lua"
           key={'lua'+i}
-          data={[{
+          data={[lineDecorator({
             className: (
-              emThis && !visuallyExpanded ? "xcode-line em" : undefined
+              emThis && !visuallyExpanded ? "xcode-line em" : "xcode-line"
             ),
             key: line.key,
             lineno: line.lineno,
@@ -160,7 +178,7 @@ class LuaCodeView extends React.Component {
                 {line.lineno}
               </div>
             )
-          }]}
+          }, line, visuallyExpanded)]}
         />
       );
       if (line.bytecode) {
@@ -168,16 +186,17 @@ class LuaCodeView extends React.Component {
           <CodeView
             className={"xcode-line-group luabc"+(expanded ? " expanded" : "")}
             key={'luabc'+i}
-            data={line.bytecode.map((bc, i)=>({
+            data={line.bytecode.map((bc, i)=>lineDecorator({
               key: i,
               lineno: number4(bc.bcindex),
               code: bc.code, codeHi: bc.codeHi,
               className: (
-                bc.bcindex == emBcIndex ? "xcode-line em": undefined
+                bc.bcindex == emBcIndex ? "xcode-line em": "xcode-line"
               ),
+              onClick: collapseViaBcLine,
               onMouseEnter: bcLineOnMouseEnter,
-              onMouseLeave: bcLineOnMouseLeave
-            }))}
+              onMouseLeave: bcLineOnMouseLeave,
+            }, bc))}
           />
         );
       }
@@ -203,7 +222,11 @@ class FuncProtoView extends React.Component {
         <div className="panel-heading">
           <h3 className="panel-title">Proto #{proto.index}</h3>
         </div>
-        <LuaCodeView data={proto.lines} mode={this.props.mode}/>
+        <LuaCodeView
+          data={proto.lines}
+          mode={this.props.mode}
+          lineDecorator={this.props.lineDecorator}
+        />
       </div>
     );
   }
@@ -242,6 +265,7 @@ class PrimaryPanel extends React.Component {
     var selection = this.props.selection;
     var data = this.props.data;
     var error = this.props.error;
+    var lineDecorator = this.props.lineDecorator;
     var mode = this.state.mode;
     var toolbar = (this.props.makeMenu || this.makeMenu)(
       <ModeSwitcher
@@ -261,6 +285,7 @@ class PrimaryPanel extends React.Component {
         mode={mode}
         selection={selection}
         selectItem={selectItem}
+        lineDecorator={lineDecorator}
       />
     ));
     if (error)
@@ -368,9 +393,23 @@ class FuncProtoDetailsPanel extends React.Component {
 }
 
 class TraceThumb extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleClick = this.handleClick.bind(this);
+    this.handleMouseOver = this.handleMouseOver.bind(this);
+    this.handleMouseOut = this.handleMouseOut.bind(this);
+  }
+  handleClick(e) {
+    this.props.selectItem(e, this.props.data.id);
+  }
+  handleMouseOver(e) {
+    this.props.selectTransient(e, this.props.data.id);
+  }
+  handleMouseOut(e) {
+    this.props.selectTransient(e, null);
+  }
   render() {
     var data = this.props.data;
-    var selectItem = this.props.selectItem;
     var className = "trace-thumb";
     if (this.props.selection == data.id)
       className += " active";
@@ -379,7 +418,11 @@ class TraceThumb extends React.Component {
     if (data.info.error)
       className += " error";
     return (
-      <div className={className} onClick={(e)=>selectItem(e,data.id)}>
+      <div
+        className={className}
+        onClick={this.handleClick}
+        onMouseOver={this.handleMouseOver} onMouseOut={this.handleMouseOut}
+      >
         <div>{data.index}</div>
       </div>
     );
@@ -391,14 +434,16 @@ class TraceBrowserPanel extends React.Component {
     var data = this.props.data;
     var selection = this.props.selection;
     var selectItem = this.props.selectItem;
+    var selectTransient = this.props.selectTransient;
     return (
       <AppPanel
         className="left-pane"
         toolbar={<div className="toolbar"></div>}
         content={data.filter((item)=>item).map((item, i) => (
           <TraceThumb
-            key={i}
-            data={item} selection={selection} selectItem={selectItem}
+            key={i} data={item}
+            selection={selection} selectItem={selectItem}
+            selectTransient={selectTransient}
           />
         ))}
         contentOnClick={selectItem}
@@ -536,6 +581,7 @@ class App extends React.Component {
     this.handleClear = this.handleClear.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.selectItem = this.selectItem.bind(this);
+    this.selectTransient = this.selectTransient.bind(this);
     this.togglePanel = this.togglePanel.bind(this);
     this.makeMenu = this.makeMenu.bind(this);
   }
@@ -574,6 +620,10 @@ class App extends React.Component {
   selectItem(e, id) {
     e.stopPropagation();
     this.setState({selection: id})
+  }
+  selectTransient(e, id) {
+    e.stopPropagation();
+    this.setState({transientSelection: id})
   }
   togglePanel(e, panel) {
     e.stopPropagation();
@@ -636,6 +686,40 @@ class App extends React.Component {
       />
     );
   }
+  createLineDecorator() {
+    var trace, selection = this.state.transientSelection || this.state.selection;
+    if (selection) {
+      var traceSelected = selection.match(/T([0-9]+)/);
+      if (traceSelected)
+        trace = this.state.data.traces[traceSelected[1]-1];
+    }
+    if (trace) {
+      var highlightMap = {};
+      trace.trace.forEach((br, i) =>
+        (highlightMap[br] = i)
+      );
+      return function(aline, entity, visuallyExpanded) {
+        var highlightCurrent;
+        if (entity.bcindex) {
+          highlightCurrent = (highlightMap[entity.id] !== undefined);
+        } else if (visuallyExpanded) {
+          highlightCurrent = (entity.bytecode && entity.bytecode.every((bc) =>
+            highlightMap[bc.id] !== undefined
+          ));
+        } else {
+          highlightCurrent = (entity.bytecode && entity.bytecode.find((bc) =>
+            highlightMap[bc.id] !== undefined
+          ));
+        }
+        if (highlightCurrent) {
+            aline.className += " active-trace";
+            if (trace.info.error)
+              aline.className += " error";
+        }
+        return aline;
+      }
+    }
+  }
   render () {
     var selection = this.state.selection;
     var data = this.state.data;
@@ -657,6 +741,7 @@ class App extends React.Component {
               data={data.traces}
               selection={selection}
               selectItem={this.selectItem}
+              selectTransient={this.selectTransient}
             />
           }
           <PrimaryPanel
@@ -665,6 +750,7 @@ class App extends React.Component {
             selection={selection}
             selectItem={this.selectItem}
             makeMenu={this.makeMenu}
+            lineDecorator={this.createLineDecorator()}
           />
           {
             this.state.rightPanel == false ? "" : this.makeRightPanel()

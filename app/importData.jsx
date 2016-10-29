@@ -26,10 +26,11 @@ function convertPrototype(proto, protoIdx, source, sourceHl) {
   // process bytecodes
   proto.bc.forEach(function(bc, bcIdx) {
     bcIdx = bcIdx + 1; // 1-base indexing
-    var id = 'BC'+protoIdx+':'+bcIdx;
+    var id = 'BR'+protoIdx+':'+bcIdx;
     var atLineNo = bcMap[bcIdx-1];
     var lastLine = mappedLines[mappedLines.length - 1];
     var code = {
+        id: id,
         bcindex: bcIdx,
         code: bc,
         codeHi: hljs.highlight('lua', bc, true).value
@@ -72,7 +73,8 @@ function convertPrototype(proto, protoIdx, source, sourceHl) {
     info: proto.info,
     consts: convertConsts(proto.consts),
     gcConsts: convertConsts(proto.gcconsts),
-    lines: mappedLines
+    lines: mappedLines,
+    bytecodeMap: bcMap
   };
 }
 
