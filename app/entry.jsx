@@ -233,41 +233,13 @@ class FuncProtoView extends React.Component {
 }
 
 class PrimaryPanel extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {mode: "lua"};
-    this.modes = [
-      {key:"lua",   label:"Lua"},
-      {key:"luabc", label:"Bytecode"},
-      {key:"mixed", label:"Mixed"}
-    ];
-    this.selectMode = this.selectMode.bind(this);
-  }
-  selectMode(e, mode) {
-    e.stopPropagation();
-    this.setState({mode: mode})
-  }
-  makeMenu(modeSwitcher) {
-    return <div className="toolbar"><div/>{modeSwitcher}<div/></div>;
-  }
   render() {
     var selectItem = this.props.selectItem;
     var selection = this.props.selection;
     var data = this.props.data;
     var error = this.props.error;
     var lineDecorator = this.props.lineDecorator;
-    var mode = this.state.mode;
-    var toolbar = (this.props.makeMenu || this.makeMenu)(
-      <ModeSwitcher
-        currentMode = {mode}
-        selectMode = {this.selectMode}
-        modes = {[
-          {key:"lua",   label:"Lua"},
-          {key:"luabc", label:"Bytecode"},
-          {key:"mixed", label:"Mixed"}
-        ]}
-      />
-    );
+    var mode = this.props.mode;
     var content = data.map((proto,i) => (
       <FuncProtoView
         key={i}
@@ -287,7 +259,7 @@ class PrimaryPanel extends React.Component {
     return (
       <AppPanel
         className="primary-pane"
-        toolbar={toolbar}
+        toolbar={this.props.toolbar}
         content={content}
         contentOnClick={selectItem}
       />
@@ -310,14 +282,10 @@ function kToCodeLine(k, i) {
   }
 }
 
-class FuncProtoDetailsPanel extends React.Component {
+class FuncProtoDetailPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {mode: "info"};
-    this.modes = [
-      {key:"info",   label:"Info"},
-      {key:"consts", label:"Consts"},
-    ];
+    this.state = {};
     this.infoSchema = [
       {key:"params",     label:"Params"},
       {key:"isvararg",   label:"Is Vararg",    fmt:formatBool},
@@ -328,15 +296,10 @@ class FuncProtoDetailsPanel extends React.Component {
       {key:"gcconsts",   label:"GC Consts"},
       {key:"children",   label:"Has Children", fmt:formatBool}
     ];
-    this.selectMode = this.selectMode.bind(this);
-  }
-  selectMode(e, mode) {
-    e.stopPropagation();
-    this.setState({mode: mode})
   }
   render() {
     var content;
-    if (this.state.mode == 'info') {
+    if (this.props.mode == 'info') {
       content = (
         <PropListView
           data={this.props.data.info}
@@ -369,17 +332,7 @@ class FuncProtoDetailsPanel extends React.Component {
       <AppPanel
         className="right-pane"
         content={content}
-        toolbar={
-          <div className="toolbar">
-            <div/>
-            <ModeSwitcher
-              modes={this.modes}
-              currentMode={this.state.mode}
-              selectMode={this.selectMode}
-            />
-            <div/>
-          </div>
-        }
+        toolbar={this.props.toolbar}
         placeholder="No Consts"
       />
     );
@@ -432,7 +385,7 @@ class TraceBrowserPanel extends React.Component {
     return (
       <AppPanel
         className="left-pane"
-        toolbar={<div className="toolbar"></div>}
+        toolbar={this.props.toolbar}
         content={data.filter((item)=>item).map((item, i) => (
           <TraceThumb
             key={i} data={item}
@@ -447,15 +400,10 @@ class TraceBrowserPanel extends React.Component {
   }
 }
 
-class TraceDetailsPanel extends React.Component {
+class TraceDetailPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {mode: "info"};
-    this.modes = [
-      {key:"info", label:"Info"},
-      {key:"ir",   label:"IR"},
-      {key:"asm",  label:"Asm"}
-    ];
+    this.state = {};
     this.infoSchema = [
       {key:"error",      label:"Error",      fmt:function(val) {
         if (val) return (
@@ -473,13 +421,8 @@ class TraceDetailsPanel extends React.Component {
       }},
       {key:"nexit",      label:"Num Exits"}
     ];
-    this.selectMode = this.selectMode.bind(this);
     this.irLineOnMouseEnter = this.irLineOnMouseEnter.bind(this);
     this.irLineOnMouseLeave = this.irLineOnMouseLeave.bind(this);
-  }
-  selectMode(e, mode) {
-    e.stopPropagation();
-    this.setState({mode: mode})
   }
   irLineOnMouseEnter(e) {
     this.setState({activeIrLine: e.currentTarget.getAttribute('data-lineno')-1});
@@ -488,8 +431,8 @@ class TraceDetailsPanel extends React.Component {
     this.setState({activeIrLine: undefined})
   }
   render() {
-    var content;
-    var mode = this.state.mode;
+    var content, placeholder;
+    var mode = this.props.mode;
     if (mode == "info") {
       content = (
         <PropListView
@@ -498,6 +441,7 @@ class TraceDetailsPanel extends React.Component {
         />
       );
     } else if (mode == "ir") {
+      placeholder = "No IR";
       var ir = this.props.data.ir;
       if (ir.length != 0) {
         var activeLine = ir[this.state.activeIrLine];
@@ -526,6 +470,7 @@ class TraceDetailsPanel extends React.Component {
         );
       }
     } else {
+      placeholder = "No Asm";
       var asm = this.props.data.asm;
       if (asm.length != 0) {
         content = (
@@ -542,18 +487,9 @@ class TraceDetailsPanel extends React.Component {
     return (
       <AppPanel
         className="right-pane"
+        toolbar={this.props.toolbar}
         content={content}
-        toolbar={
-          <div className="toolbar">
-            <div/>
-            <ModeSwitcher
-              modes={this.modes}
-              currentMode={this.state.mode}
-              selectMode={this.selectMode}
-            />
-            <div/>
-          </div>
-        }
+        placeholder={placeholder}
       />
     );
   }
@@ -636,18 +572,104 @@ class App extends React.Component {
       data: {protos: [], traces: []},
       selection: null,
       input: input,
-      showTopPanel: true,
+      inPresentationMode: false,
+      showTopPanel: false,
       showLeftPanel: false,
       showRightPanel: false,
-      enableFilter: false
+      enableFilter: false,
+      mode: "lua",
+      protoMode: "info",
+      traceMode: "info"
     };
+    this.modes = [
+      {key:"lua",   label:"Lua"},
+      {key:"luabc", label:"Bytecode"},
+      {key:"mixed", label:"Mixed"}
+    ];
+    this.protoModes = [
+      {key:"info",   label:"Info"},
+      {key:"consts", label:"Consts"},
+    ];
+    this.traceModes = [
+      {key:"info", label:"Info"},
+      {key:"ir",   label:"IR"},
+      {key:"asm",  label:"Asm"}
+    ];
+    this.handleKeyDown = this.handleKeyDown.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
     this.handleClear = this.handleClear.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.selectMode = this.selectMode.bind(this);
+    this.selectProtoMode = this.selectProtoMode.bind(this);
+    this.selectTraceMode = this.selectTraceMode.bind(this);
     this.selectItem = this.selectItem.bind(this);
     this.selectTransient = this.selectTransient.bind(this);
     this.toggleOption = this.toggleOption.bind(this);
-    this.makeMenu = this.makeMenu.bind(this);
+    this.toolbarHover = this.toolbarHover.bind(this);
+    this.toolbarUnhover = this.toolbarUnhover.bind(this);
+  }
+  componentDidMount() {
+    $(document.body).on("keydown", this.handleKeyDown);
+  }
+  componenWillUnMount() {
+    $(document.body).off("keydown", this.handleKeyDown);
+  }
+  handleKeyDown(e) {
+    if (e.metaKey || e.target.tagName == "INPUT" ||
+        e.target.tagName == "TEXTAREA")
+    {
+      return;
+    }
+    console.log(e.keyCode);
+    if (e.keyCode == 48 /* 0 */)
+      this.toggleOption(e, "showTopPanel");
+    if (e.keyCode == 49 /* 1 */)
+      this.toggleOption(e, "showLeftPanel");
+    if (e.keyCode == 50 /* 2 */)
+      this.toggleOption(e, "showRightPanel");
+    if (e.keyCode == 66 /* B */)
+      this.selectMode(e, "luabc");
+    if (e.keyCode == 76 /* L */)
+      this.selectMode(e, "lua");
+    if (e.keyCode == 77 /* M */)
+      this.selectMode(e, "mixed");
+    if (e.keyCode == 80 /* P */)
+      this.toggleOption(e, "inPresentationMode");
+    if (e.keyCode == 82 /* R */)
+      this.handleSubmit(e);
+    /* <- / -> */
+    if ((e.keyCode == 37 || e.keyCode == 39) && this.state.selection) {
+      var modeKey, modes;
+      if (this.state.selection[0] == 'P') {
+        modeKey = "protoMode"; modes = this.protoModes;
+      } else {
+        modeKey = "traceMode"; modes = this.traceModes;
+      }
+      var currentMode = this.state[modeKey];
+      var index = modes.findIndex((mode) => (mode.key == currentMode));
+      if (index !== undefined) {
+        var nextIndex = (
+          index + modes.length + (e.keyCode == 37 ? -1 : 1)
+        ) % modes.length;
+        var upd = {};
+        upd[modeKey] = modes[nextIndex].key;
+        this.setState(upd);
+      }
+    }
+  }
+  toggleOption(e, option) {
+    e.stopPropagation();
+    var upd = {};
+    upd[option] = !this.state[option];
+    if (upd.inPresentationMode || this.state.inPresentationMode) {
+      upd.showTopPanel = false;
+      if (option == "showRightPanel")
+        upd.showLeftPanel = false;
+      else if (option == "showLeftPanel" ||
+               this.state.showLeftPanel && this.state.showRightPanel)
+        upd.showRightPanel = false;
+    }
+    this.setState(upd);
   }
   handleTextChange(e) {
     this.setState({input: e.target.value})
@@ -681,6 +703,18 @@ class App extends React.Component {
       update.selection = 'P1';
     this.setState(update);
   }
+  selectMode(e, mode) {
+    e.stopPropagation();
+    this.setState({mode: mode})
+  }
+  selectProtoMode(e, mode) {
+    e.stopPropagation();
+    this.setState({protoMode: mode})
+  }
+  selectTraceMode(e, mode) {
+    e.stopPropagation();
+    this.setState({traceMode: mode})
+  }
   selectItem(e, id) {
     e.stopPropagation();
     this.setState({selection: id})
@@ -689,27 +723,29 @@ class App extends React.Component {
     e.stopPropagation();
     this.setState({transientSelection: id})
   }
-  toggleOption(e, option) {
-    e.stopPropagation();
-    var upd = {};
-    upd[option] = !this.state[option];
-    this.setState(upd);
+  toolbarHover() {
+    this.setState({toolbarHover: true});
   }
-  makeMenu(items) {
+  toolbarUnhover() {
+    this.setState({toolbarHover: false});
+  }
+  makeToolbar() {
     var toggleOption = this.toggleOption;
     return (
-      <div className="toolbar">
+      <div
+        className="toolbar"
+        onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
+      >
         <div className="toolbar-group">
-          <span className="toolbar-btn" onClick={this.handleSubmit}>Update</span>
+          <span className="toolbar-btn" onClick={this.handleSubmit}>Run</span>
           <span className="toolbar-btn" onClick={this.handleClear}>Clear</span>
-          <ToggleButton
-            isOn    = {this.state.enableFilter}
-            onClick = {(e)=>toggleOption(e, "enableFilter")}
-            label   = "&#x25d2;"
-          />
         </div>
-        {items}
-        <div className="toolbar-group">
+        <ModeSwitcher
+          currentMode = {this.state.mode}
+          selectMode = {this.selectMode}
+          modes = {this.modes}
+        />
+        <div className="toolbar-group pane-toggle">
           <ToggleButton
             isOn    = {this.state.showLeftPanel}
             onClick = {(e)=>toggleOption(e, "showLeftPanel")}
@@ -729,6 +765,56 @@ class App extends React.Component {
       </div>
     );
   }
+  makeTraceBrowserToolbar() {
+    var toggleOption = this.toggleOption;
+    return (
+      <div
+        className="toolbar"
+        onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
+      >
+        <div/>
+        <div className="toolbar-group">
+          <ToggleButton
+            isOn    = {this.state.enableFilter}
+            onClick = {(e)=>toggleOption(e, "enableFilter")}
+            label   = "&#x25d2;"
+          />
+        </div>
+      </div>
+    );
+  }
+  makeProtoDetailToolbar() {
+    return (
+      <div
+        className="toolbar"
+        onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
+      >
+        <div/>
+        <ModeSwitcher
+          currentMode = {this.state.protoMode}
+          selectMode = {this.selectProtoMode}
+          modes = {this.protoModes}
+        />
+        <div/>
+      </div>
+    );
+  }
+  makeTraceDetailToolbar() {
+    return (
+      <div
+        className="toolbar"
+        onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
+      >
+        <div/>
+        <ModeSwitcher
+          currentMode = {this.state.traceMode}
+          selectMode = {this.selectTraceMode}
+          modes = {this.traceModes}
+        />
+        <div/>
+      </div>
+    );
+  }
   makeRightPanel() {
     var selection = this.state.selection;
     if (selection) {
@@ -737,20 +823,37 @@ class App extends React.Component {
         var index = protoSelected[1] - 1;
         /* may become invalid after reload */
         if (this.state.data.protos[index])
-          return <FuncProtoDetailsPanel data={this.state.data.protos[index]}/>;
+          return (
+            <FuncProtoDetailPanel
+              mode={this.state.protoMode}
+              toolbar={this.makeProtoDetailToolbar()}
+              data={this.state.data.protos[index]}
+            />
+          );
       }
       var traceSelected = selection.match(/T([0-9]+)/);
       if (traceSelected) {
         var index = traceSelected[1] - 1;
         /* may become invalid after reload */
         if (this.state.data.traces[index])
-          return <TraceDetailsPanel data={this.state.data.traces[index]}/>;
+          return (
+            <TraceDetailPanel
+              mode={this.state.traceMode}
+              toolbar={this.makeTraceDetailToolbar()}
+              data={this.state.data.traces[index]}
+            />
+          );
       }
     }
     return (
       <AppPanel
         className="right-pane"
-        toolbar={<div className="toolbar"></div>}
+        toolbar={
+          <div
+            className="toolbar"
+            onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
+          />
+        }
         placeholder="No Selection"
       />
     );
@@ -780,7 +883,13 @@ class App extends React.Component {
       }
     }
     return (
-      <div className="app-container">
+      <div
+        className={
+          "app-container" +
+          (this.state.inPresentationMode ? " presentation" : "") +
+          (this.state.toolbarHover ? " toolbar-hover" : "")
+        }
+      >
         {
           !this.state.showTopPanel ? "" :
           <div className="top-pane">
@@ -794,6 +903,7 @@ class App extends React.Component {
           {
             !this.state.showLeftPanel ? "" :
             <TraceBrowserPanel
+              toolbar={this.makeTraceBrowserToolbar()}
               data={data.traces}
               selection={selection}
               selectItem={this.selectItem}
@@ -801,11 +911,12 @@ class App extends React.Component {
             />
           }
           <PrimaryPanel
+            mode={this.state.mode}
             data={protos}
             error={data.error}
             selection={selection}
             selectItem={this.selectItem}
-            makeMenu={this.makeMenu}
+            toolbar={this.makeToolbar()}
             lineDecorator={lineDecorator}
           />
           {

@@ -39,6 +39,11 @@
     border-left: solid 1px #999;
 }
 
+.presentation .left-pane,
+.presentation .right-pane {
+    border: none;
+}
+
 .pane-resizer {
     position: absolute;
     top: 0;
@@ -46,6 +51,10 @@
     width: 16px;
     z-index: 2000;
     cursor: col-resize;
+}
+
+.presentation .pane-resizer {
+    width: 8px;
 }
 
 .primary-pane .pane-resizer {
@@ -57,9 +66,18 @@
     margin-right: -8px;
 }
 
+.presentation .left-pane .pane-resizer {
+    margin-right: -4px;
+}
+
 .right-pane .pane-resizer {
     left: 0;
     margin-left: -8px;
+}
+
+.presentation .right-pane .pane-resizer {
+    left: 0;
+    margin-left: -4px;
 }
 
 .content-host {
@@ -124,10 +142,40 @@
     flex-flow: row;
     justify-content: space-between;
     min-height: 29px;
-    background-color: #fff;
+    background-color: #ffffff;
+}
+
+.presentation .toolbar {
+    background-color: #404040;
+    border: none;
+    height: 12px;
+    min-height: 12px;
+    position: relative;
+    z-index: 4000;
+    overflow: hidden;
+}
+
+.presentation .toolbar > * {
+    visibility: hidden;
+}
+
+.presentation.toolbar-hover .toolbar {
+    overflow: visible;
+    height: 29px;
+    min-height: 29px;
+    margin-bottom: -17px;
+    z-index: 4000; /* on top of resizer strips */
+}
+
+.presentation.toolbar-hover .toolbar > * {
+    visibility: visible;
 }
 
 .toolbar-group {}
+
+.presentation .toolbar-group.pane-toggle {
+    visibility: hidden !important;
+}
 
 .toolbar-btn {
     display: inline-block;
@@ -141,6 +189,10 @@
     margin: 0px 2px;
     vertical-align: middle;
     font-weight: 400;
+}
+
+.presentation .toolbar-btn {
+    color: #a0a0a0;
 }
 
 .toolbar-btn:first-child {
@@ -162,7 +214,8 @@
     border-color: #000;
 }
 
-.toolbar-sw-on, .toolbar-sw-on:hover, .toolbar-sw-on:active {
+.toolbar-sw-on, .toolbar-sw-on:hover, .toolbar-sw-on:active,
+.presentation .toolbar-sw-on {
     color: rgb(39, 134, 243);
     border-color: rgb(39, 134, 243);
 }
