@@ -114,7 +114,7 @@
 }
 
 .primary-pane .panel-default > .panel-heading {
-		background-color: #e6e6e6;
+    background-color: #e6e6e6;
 }
 
 .toolbar {
@@ -207,168 +207,201 @@
 /***********************************************************************/
 
 .prop-list-view {
-		display: table;
+    display: table;
 }
 
 .prop-list-item {
-		display: table-row;
+    display: table-row;
 }
 
 .prop-list-item-label, .prop-list-item-value {
-		display: table-cell;
+    display: table-cell;
 }
 
 .prop-list-item-label {
-		font-weight: 500;
-		text-align: right;
-		white-space: nowrap;
-		padding-right: 16px;
+    font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 16px;
 }
 
 .prop-list-item-label:after {
-		content: ":";
+    content: ":";
 }
 
 .prop-list-item-value .error {
-		color: red;
-		font-style: italic;
+    color: red;
+    font-style: italic;
+}
+
+.xcode .proto-ref {
+    font-weight: bold;
 }
 
 /***********************************************************************/
 
 .xcode-view {
-		display: table;
+    display: table;
 }
 .xcode-line-group {
-		display: table-row-group;
+    display: table-row-group;
 }
 .xcode-line {
-		display: table-row;
+    display: table-row;
 }
 .xcode-line > .xgutter,
 .xcode-line > .xcode {
-		display: table-cell;
+    display: table-cell;
 }
 .xcode-line > .xcode > div {
     overflow: hidden;
     white-space: pre;
     text-overflow: ellipsis;
+    position: relative;
+    background-color: inherit;
 }
+
+.xcode-overlay {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    max-width: 90%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: inherit;
+    padding-right: 3px;
+}
+
+.xcode-overlay > span {
+    background-color: #000000;
+    padding: 0 6px;
+    border-radius: 6px;
+    font-size: 90%;
+    margin-left: 3px;
+    color: #ffffff;
+    font-family: Helvetica;
+}
+
 .xcode-line > .xcode {
-		font-family: Menlo, monospace;
-		width: 100%;
+    font-family: Menlo, monospace;
+    width: 100%;
+    background-color: inherit;
 }
 .xcode-line.em {
-		filter: invert(100%);
+    filter: invert(100%);
 }
 
 /***********************************************************************/
 .xcode-view.primary {
-		width:100%;
-		table-layout:fixed;
+    width:100%;
+    table-layout:fixed;
 }
 .xcode-view.primary .xgutter {
-		width: 46px;
-		padding: 0 6px;
-		text-align: right;
-		border-right: solid rgba(0,0,0,.25) 1px;
+    width: 46px;
+    padding: 0 6px;
+    text-align: right;
+    border-right: solid rgba(0,0,0,.25) 1px;
 }
-.xcode-view.primary .xcode {
-		width: 100%;
-		padding: 0 6px;
+.xcode-view.primary .xcode > div {
+    width: 100%;
+    padding: 0 6px;
 }
 .xcode-view.lua .xcode-line-group.luabc,
 .xcode-view.luabc .xcode-line-group.lua {
-		display: none;
+    display: none;
 }
 .xcode-view.lua .xcode-line-group.luabc.expanded {
-		display: table-row-group;
+    display: table-row-group;
 }
 .xcode-line-group.lua > .xcode-line {
-		background-color: #ffffb0;
+    background-color: #ffffb0;
 }
 .xcode-line-group.luabc > .xcode-line {
-		background-color: #ffffd0;
+    background-color: #ffffd0;
 }
 .xcode-view.mixed .xcode-line-group.lua > .xcode-line {
-		background-color: #ffffa0;
+    background-color: #ffffa0;
 }
 .xcode-view.lua   .xcode-line-group.luabc .xcode-line:first-child .xgutter,
 .xcode-view.mixed .xcode-line-group.luabc .xcode-line:first-child .xgutter {
-		padding-top: 4px;
+    padding-top: 4px;
 }
 .xcode-view.lua   .xcode-line-group.luabc .xcode-line:last-child .xgutter,
 .xcode-view.mixed .xcode-line-group.luabc .xcode-line:last-child .xgutter {
-		padding-bottom: 4px;
+    padding-bottom: 4px;
 }
 
 .xcode-view.primary .xcode-line:hover {
-		filter: invert(100%);
+    filter: invert(100%);
 }
 
 .xgutter > .shevron {
-		float: left;
+    float: left;
 }
 .xgutter > .shevron:before {
-		content: "▶";
-		font-size: 80%;
+    content: "▶";
+    font-size: 80%;
 }
 .xgutter > .shevron.expanded:before {
-		content: "▼";
+    content: "▼";
 }
 .xgutter > .shevron:after {
-		content: "\200B";
+    content: "\200B";
 }
 
 .xcode-view.primary .shevron {
-		display: none;
+    display: none;
 }
 
 .xcode-view.lua .xcode-line:hover .shevron {
-		display: inline-block;
+    display: inline-block;
 }
 
 .xcode-line-group.lua .xcode-line.active-trace {
-		background-color: #e0ff30;
+    /* !important: override background for lua/mixed line (higher precedence) */
+    background-color: #e0ff30 !important;
 }
 .xcode-line-group.luabc .xcode-line.active-trace {
-		background-color: #e0ff78;
+    background-color: #e0ff78;
 }
 .xcode-line-group.lua .xcode-line.active-trace.error {
-		background-color: #ff7060;
+    /* !important: overrude another .active-trace rule */
+    background-color: #ff7060 !important;
 }
 .xcode-line-group.luabc .xcode-line.active-trace.error {
-		background-color: #ffa080;
+    background-color: #ffa080;
 }
 
 /***********************************************************************/
 
 .right-pane .prop-list-view,
 .right-pane .xcode-view {
-		margin-bottom: 24px;
-		margin-top: 6px;
+    margin-bottom: 24px;
+    margin-top: 6px;
 }
 
 .right-pane .xcode-line > .xgutter {
-		text-align: right;
-		white-space: nowrap;
-		padding-right: 12px;
-		padding-left: 4px;
-		color: #808080;
-		min-width: 28px;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 12px;
+    padding-left: 4px;
+    color: #808080;
+    min-width: 28px;
 }
 
 .xcode-view.consts .xcode-line > .xgutter {
-		padding-left: 0;
+    padding-left: 0;
 }
 
 .right-pane .xcode-line > .xcode {
-		padding-left: 4px;
-		padding-right: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
 }
 
 .xcode-view.ir .xcode-line:hover {
-		filter: invert(100%);
+    filter: invert(100%);
     background-color: #fafafa;
 }
 
@@ -377,67 +410,67 @@
 }
 
 .xcode-view.ir .xcode-line > .xgutter {
-		padding-right: 0px;
+    padding-right: 0px;
 }
 
 /***********************************************************************/
 
 .trace-thumb {
-		margin: 12px auto;
-		margin-bottom: 24px;
-		max-width: 48px;
-		width: 100%;
+    margin: 12px auto;
+    margin-bottom: 24px;
+    max-width: 48px;
+    width: 100%;
 }
 
 .trace-thumb > div {
-		width: 48px;
-		height: 48px;
-		font-size: 15px;
-		font-weight: 500;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border-radius: 24px;
-		background-color: #e6e6e6;
-		border: solid 1px #c8c8c8;
+    width: 48px;
+    height: 48px;
+    font-size: 15px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 24px;
+    background-color: #e6e6e6;
+    border: solid 1px #c8c8c8;
 }
 
 .trace-thumb.special {
-		padding: 4px;
-		max-width: 58px;
-		border: solid 1px #c8c8c8;
-		border-radius: 100px;
+    padding: 4px;
+    max-width: 58px;
+    border: solid 1px #c8c8c8;
+    border-radius: 100px;
 }
 
 .trace-thumb.error {
-		border-color: #ffb0b0;
+    border-color: #ffb0b0;
 }
 
 .trace-thumb.error > div {
-		color: red;
-		border-color: #ffb0b0;
-		background-color: #ffe6e6;
+    color: red;
+    border-color: #ffb0b0;
+    background-color: #ffe6e6;
 }
 
 .trace-thumb:hover > div {
-		background-color: #e0ff30;
+    background-color: #e0ff30;
 }
 
 .trace-thumb.error:hover > div {
-		background-color: #ff7060;
-		color: #ffffff;
+    background-color: #ff7060;
+    color: #ffffff;
 }
 
 .trace-thumb.special.active {
-		border-color: #337ab7;
+    border-color: #337ab7;
 }
 
 .trace-thumb.active > div {
-		background-color: #337ab7 !important;
-		color: #ffffff;
-		border-color: #337ab7;
+    background-color: #337ab7 !important;
+    color: #ffffff;
+    border-color: #337ab7;
 }
 
 .trace-thumb.error.active {
-		border-color: red;
+    border-color: red;
 }

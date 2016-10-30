@@ -232,16 +232,6 @@ class FuncProtoView extends React.Component {
   }
 }
 
-class ErrorBanner extends React.Component {
-  render() {
-    return (
-      <div className="alert alert-danger" role="alert">
-        <strong>Something wrong!</strong> {this.props.message}
-      </div>
-    );
-  }
-}
-
 class PrimaryPanel extends React.Component {
   constructor(props) {
     super(props);
@@ -289,7 +279,11 @@ class PrimaryPanel extends React.Component {
       />
     ));
     if (error)
-      content.splice(0, 0, <ErrorBanner key="error" message={error}/>);
+      content.splice(0, 0, (
+        <div key="error" className="alert alert-danger" role="alert">
+          <strong>Something wrong!</strong> {this.props.message}
+        </div>
+      ));
     return (
       <AppPanel
         className="primary-pane"
@@ -698,6 +692,42 @@ class App extends React.Component {
       trace.trace.forEach((br, i) =>
         (highlightMap[br] = i)
       );
+      var decorationMap = {};
+      var protos = this.state.data.protos;
+      var lastLine, lastSubIndex = 0, lastIndex = 0;
+      trace.trace.forEach(function(bcref) {
+        var match = bcref.match(/BR(\d+):(\d+)/);
+        var proto = protos[match[1]-1];
+        var bcIndex = +match[2];
+        var line = proto.lines[proto.bytecodeMap[bcIndex-1]-proto.lines[0].lineno];
+        var bytecodeDecoration = decorationMap[bcref];
+        if (!bytecodeDecoration) {
+          bytecodeDecoration = [];
+          decorationMap[bcref] = bytecodeDecoration;
+        }
+        if (line !== lastLine) {
+          var lineDecoration = decorationMap[line.id];
+          if (!lineDecoration) {
+            lineDecoration = [];
+            decorationMap[line.id] = lineDecoration;
+          }
+          lineDecoration.push(++lastIndex+"");
+          lastSubIndex = 0;
+        }
+        bytecodeDecoration.push(lastIndex + "." + (++lastSubIndex));
+        lastLine = line;
+      });
+      if (trace.info.error) {
+        var lastBcref = trace.trace[trace.trace.length - 1];
+        if (lastBcref) {
+          decorationMap[lastBcref].push(trace.info.error);
+          var match = lastBcref.match(/BR(\d+):(\d+)/);
+          var proto = protos[match[1]-1];
+          var bcIndex = +match[2];
+          var line = proto.lines[proto.bytecodeMap[bcIndex-1]-1];
+          decorationMap[line.id].push(trace.info.error);
+        }
+      }
       return function(aline, entity, visuallyExpanded) {
         var highlightCurrent;
         if (entity.bcindex) {
@@ -712,9 +742,16 @@ class App extends React.Component {
           ));
         }
         if (highlightCurrent) {
-            aline.className += " active-trace";
-            if (trace.info.error)
-              aline.className += " error";
+          aline.className += " active-trace";
+          if (trace.info.error)
+            aline.className += " error";
+          aline.overlay = (
+            <div className="xcode-overlay">{
+              decorationMap[entity.id].map((decoration, i) => (
+                <span key={i}>{decoration}</span>
+              ))
+            }</div>
+          );
         }
         return aline;
       }

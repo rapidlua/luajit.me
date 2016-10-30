@@ -13,15 +13,17 @@ function convertPrototype(proto, protoIdx, source, sourceHl) {
   var firstLine = proto.info.linedefined;
   var lastLine = proto.info.lastlinedefined;
   var bcMap = proto.bcmap;
+  var bcAltMap = [];
   var mappedLines = [];
   var i;
   // leading lines without bytecode
   for (i = Math.max(1, firstLine); i<bcMap[0]; i++)
     mappedLines.push({
       key: i,
+      id: "L"+protoIdx+":"+i,
       lineno: i,
-      source: source[i-1],
-      sourceHl: sourceHl[i-1]
+      code: source[i-1],
+      codeHi: sourceHl[i-1]
     });
   // process bytecodes
   proto.bc.forEach(function(bc, bcIdx) {
@@ -37,11 +39,13 @@ function convertPrototype(proto, protoIdx, source, sourceHl) {
     };
     if (lastLine && atLineNo && lastLine.lineno >= atLineNo) {
       lastLine.bytecode.push(code);
+      bcAltMap[bcIdx - 1] = lastLine.lineno;
     } else {
       // middle lines without bytecodes
       while (atLineNo && i+1 < atLineNo) {
         mappedLines.push({
           key: i+1,
+          id: "L"+protoIdx+":"+(i+1),
           lineno: i+1,
           code: source[i],
           codeHi: sourceHl[i]
@@ -51,10 +55,12 @@ function convertPrototype(proto, protoIdx, source, sourceHl) {
       mappedLines.push({
         key: atLineNo,
         lineno: atLineNo,
+        id: "L"+protoIdx+":"+atLineNo,
         code: source[atLineNo - 1],
         codeHi: sourceHl[atLineNo - 1],
         bytecode: [code]
       });
+      bcAltMap[bcIdx - 1] = atLineNo;
     }
     if (atLineNo > i)
       i = atLineNo;
@@ -74,7 +80,7 @@ function convertPrototype(proto, protoIdx, source, sourceHl) {
     consts: convertConsts(proto.consts),
     gcConsts: convertConsts(proto.gcconsts),
     lines: mappedLines,
-    bytecodeMap: bcMap
+    bytecodeMap: bcAltMap
   };
 }
 
