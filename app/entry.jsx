@@ -281,7 +281,7 @@ class PrimaryPanel extends React.Component {
     if (error)
       content.splice(0, 0, (
         <div key="error" className="alert alert-danger" role="alert">
-          <strong>Something wrong!</strong> {this.props.message}
+          <strong>Something wrong!</strong> {error}
         </div>
       ));
     return (
@@ -559,6 +559,75 @@ class TraceDetailsPanel extends React.Component {
   }
 }
 
+function resolveBcref(data, bcref)
+{
+  var match = bcref.match(/BR(\d+):(\d+)/);
+  var proto = data.protos[match[1]-1];
+  var index = +match[2];
+  return proto.lines[proto.bytecodeMap[index-1]-proto.lines[0].lineno];
+}
+
+function createLineDecorator(data, trace)
+{
+  var decorationMap = {};
+  var lastLine, lastSubIndex = 0, lastIndex = 0;
+  trace.trace.forEach(function(bcref) {
+    var line = resolveBcref(data, bcref);
+    var bytecodeDecoration = decorationMap[bcref];
+    if (!bytecodeDecoration) {
+      bytecodeDecoration = [];
+      decorationMap[bcref] = bytecodeDecoration;
+    }
+    if (line !== lastLine) {
+      var lineDecoration = decorationMap[line.id];
+      if (!lineDecoration) {
+        lineDecoration = [];
+        decorationMap[line.id] = lineDecoration;
+      }
+      lineDecoration.push(++lastIndex+"");
+      lastSubIndex = 0;
+    }
+    bytecodeDecoration.push(lastIndex + "." + (++lastSubIndex));
+    lastLine = line;
+  });
+  if (trace.info.error) {
+    var lastBcref = trace.trace[trace.trace.length - 1];
+    if (lastBcref) {
+      var line = resolveBcref(data, lastBcref);
+      decorationMap[lastBcref].push(trace.info.error);
+      decorationMap[line.id].push(trace.info.error);
+    }
+  }
+
+  return function(aline, entity, visuallyExpanded) {
+    var highlightCurrent;
+    if (entity.bcindex) {
+      highlightCurrent = (decorationMap[entity.id] !== undefined);
+    } else if (visuallyExpanded) {
+      highlightCurrent = (entity.bytecode && entity.bytecode.every((bc) =>
+        decorationMap[bc.id] !== undefined
+      ));
+    } else {
+      highlightCurrent = (entity.bytecode && entity.bytecode.find((bc) =>
+        decorationMap[bc.id] !== undefined
+      ));
+    }
+    if (highlightCurrent) {
+      aline.className += " active-trace";
+      if (trace.info.error)
+        aline.className += " error";
+      aline.overlay = (
+        <div className="xcode-overlay">{
+          decorationMap[entity.id].map((decoration, i) => (
+            <span key={i}>{decoration}</span>
+          ))
+        }</div>
+      );
+    }
+    return aline;
+  }
+}
+
 class App extends React.Component {
   constructor(props) {
     const input = "local sum = 1\nfor i = 2,10000 do\n\u00a0\u00a0sum = sum + i\nend";
@@ -567,16 +636,17 @@ class App extends React.Component {
       data: {protos: [], traces: []},
       selection: null,
       input: input,
-      topPanel: true,
-      leftPanel: false,
-      rightPanel: false
+      showTopPanel: true,
+      showLeftPanel: false,
+      showRightPanel: false,
+      enableFilter: false
     };
     this.handleTextChange = this.handleTextChange.bind(this);
     this.handleClear = this.handleClear.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.selectItem = this.selectItem.bind(this);
     this.selectTransient = this.selectTransient.bind(this);
-    this.togglePanel = this.togglePanel.bind(this);
+    this.toggleOption = this.toggleOption.bind(this);
     this.makeMenu = this.makeMenu.bind(this);
   }
   handleTextChange(e) {
@@ -619,35 +689,40 @@ class App extends React.Component {
     e.stopPropagation();
     this.setState({transientSelection: id})
   }
-  togglePanel(e, panel) {
+  toggleOption(e, option) {
     e.stopPropagation();
     var upd = {};
-    upd[panel] = !this.state[panel];
+    upd[option] = !this.state[option];
     this.setState(upd);
   }
   makeMenu(items) {
-    var togglePanel = this.togglePanel.bind(this);
+    var toggleOption = this.toggleOption;
     return (
       <div className="toolbar">
         <div className="toolbar-group">
           <span className="toolbar-btn" onClick={this.handleSubmit}>Update</span>
           <span className="toolbar-btn" onClick={this.handleClear}>Clear</span>
+          <ToggleButton
+            isOn    = {this.state.enableFilter}
+            onClick = {(e)=>toggleOption(e, "enableFilter")}
+            label   = "&#x25d2;"
+          />
         </div>
         {items}
         <div className="toolbar-group">
           <ToggleButton
-            isOn    = {this.state.leftPanel}
-            onClick = {(e)=>togglePanel(e, "leftPanel")}
+            isOn    = {this.state.showLeftPanel}
+            onClick = {(e)=>toggleOption(e, "showLeftPanel")}
             label   = {<span className="pane-toggle-icon">&#x258f;</span>}
           />
           <ToggleButton
-            isOn    = {this.state.topPanel}
-            onClick = {(e)=>togglePanel(e, "topPanel")}
+            isOn    = {this.state.showTopPanel}
+            onClick = {(e)=>toggleOption(e, "showTopPanel")}
             label   = {<span className="pane-toggle-icon">&#x2594;</span>}
           />
           <ToggleButton
-            isOn    = {this.state.rightPanel}
-            onClick = {(e)=>togglePanel(e, "rightPanel")}
+            isOn    = {this.state.showRightPanel}
+            onClick = {(e)=>toggleOption(e, "showRightPanel")}
             label   = {<span className="pane-toggle-icon">&#x2595;</span>}
           />
         </div>
@@ -680,90 +755,34 @@ class App extends React.Component {
       />
     );
   }
-  createLineDecorator() {
-    var trace, selection = this.state.transientSelection || this.state.selection;
-    if (selection) {
-      var traceSelected = selection.match(/T([0-9]+)/);
-      if (traceSelected)
-        trace = this.state.data.traces[traceSelected[1]-1];
-    }
-    if (trace) {
-      var highlightMap = {};
-      trace.trace.forEach((br, i) =>
-        (highlightMap[br] = i)
-      );
-      var decorationMap = {};
-      var protos = this.state.data.protos;
-      var lastLine, lastSubIndex = 0, lastIndex = 0;
-      trace.trace.forEach(function(bcref) {
-        var match = bcref.match(/BR(\d+):(\d+)/);
-        var proto = protos[match[1]-1];
-        var bcIndex = +match[2];
-        var line = proto.lines[proto.bytecodeMap[bcIndex-1]-proto.lines[0].lineno];
-        var bytecodeDecoration = decorationMap[bcref];
-        if (!bytecodeDecoration) {
-          bytecodeDecoration = [];
-          decorationMap[bcref] = bytecodeDecoration;
-        }
-        if (line !== lastLine) {
-          var lineDecoration = decorationMap[line.id];
-          if (!lineDecoration) {
-            lineDecoration = [];
-            decorationMap[line.id] = lineDecoration;
-          }
-          lineDecoration.push(++lastIndex+"");
-          lastSubIndex = 0;
-        }
-        bytecodeDecoration.push(lastIndex + "." + (++lastSubIndex));
-        lastLine = line;
-      });
-      if (trace.info.error) {
-        var lastBcref = trace.trace[trace.trace.length - 1];
-        if (lastBcref) {
-          decorationMap[lastBcref].push(trace.info.error);
-          var match = lastBcref.match(/BR(\d+):(\d+)/);
-          var proto = protos[match[1]-1];
-          var bcIndex = +match[2];
-          var line = proto.lines[proto.bytecodeMap[bcIndex-1]-1];
-          decorationMap[line.id].push(trace.info.error);
-        }
-      }
-      return function(aline, entity, visuallyExpanded) {
-        var highlightCurrent;
-        if (entity.bcindex) {
-          highlightCurrent = (highlightMap[entity.id] !== undefined);
-        } else if (visuallyExpanded) {
-          highlightCurrent = (entity.bytecode && entity.bytecode.every((bc) =>
-            highlightMap[bc.id] !== undefined
-          ));
-        } else {
-          highlightCurrent = (entity.bytecode && entity.bytecode.find((bc) =>
-            highlightMap[bc.id] !== undefined
-          ));
-        }
-        if (highlightCurrent) {
-          aline.className += " active-trace";
-          if (trace.info.error)
-            aline.className += " error";
-          aline.overlay = (
-            <div className="xcode-overlay">{
-              decorationMap[entity.id].map((decoration, i) => (
-                <span key={i}>{decoration}</span>
-              ))
-            }</div>
-          );
-        }
-        return aline;
-      }
-    }
-  }
   render () {
     var selection = this.state.selection;
     var data = this.state.data;
+    var protos = data.protos;
+    var lineDecorator;
+    var xselection = this.state.transientSelection || selection;
+    if (xselection) {
+      var traceSelected = xselection.match(/T([0-9]+)/);
+      if (traceSelected) {
+        var trace = this.state.data.traces[traceSelected[1]-1];
+        if (trace) {
+          lineDecorator = createLineDecorator(data, trace);
+          if (this.state.enableFilter) {
+            var keepProtos = {};
+            trace.trace.forEach(function(bcref) {
+              keepProtos[+bcref.match(/BR(\d+)/)[1]] = true;
+            });
+            protos = protos.filter((proto) => (
+              keepProtos[proto.index] || proto.id == selection
+            ));
+          }
+        }
+      }
+    }
     return (
       <div className="app-container">
         {
-          this.state.topPanel == false ? "" :
+          !this.state.showTopPanel ? "" :
           <div className="top-pane">
             <textarea
               rows="5" onChange={this.handleTextChange}
@@ -773,7 +792,7 @@ class App extends React.Component {
         }
         <div className="app-main">
           {
-            this.state.leftPanel == false ? "" :
+            !this.state.showLeftPanel ? "" :
             <TraceBrowserPanel
               data={data.traces}
               selection={selection}
@@ -782,15 +801,15 @@ class App extends React.Component {
             />
           }
           <PrimaryPanel
-            data={data.protos}
+            data={protos}
             error={data.error}
             selection={selection}
             selectItem={this.selectItem}
             makeMenu={this.makeMenu}
-            lineDecorator={this.createLineDecorator()}
+            lineDecorator={lineDecorator}
           />
           {
-            this.state.rightPanel == false ? "" : this.makeRightPanel()
+            !this.state.showRightPanel ? "" : this.makeRightPanel()
           }
         </div>
       </div>
