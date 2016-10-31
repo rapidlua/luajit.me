@@ -44,11 +44,67 @@ class ModeSwitcher extends React.Component {
 }
 
 class AppPanel extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleMouseDown = this.handleMouseDown.bind(this);
+    this.handleMouseUp = this.handleMouseUp.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
+  }
+  handleMouseDown(e) {
+    var parentNode = e.target.parentNode;
+    var panelRect = parentNode.getBoundingClientRect();
+    this.dragStartX = e.clientX;
+    this.dragDir = (
+      e.clientX < panelRect.left + panelRect.width/2 ? -1 : +1
+    );
+    this.resizee = parentNode;
+    this.initialWidth = panelRect.width;
+    var overlay = this.overlay;
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.setAttribute(
+          "style",
+          `position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          z-index: 10000;
+          cursor: col-resize;`
+      );
+      overlay.addEventListener("mousemove", this.handleMouseMove);
+      overlay.addEventListener("mouseup", this.handleMouseUp);
+      this.overlay = overlay;
+    }
+    $("#app").append(overlay);
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  computeWidth(e) {
+    var delta = this.dragDir*(e.clientX - this.dragStartX);
+    var width = this.initialWidth + delta;
+    return Math.min(400, width > 200 ? width : 0);
+  }
+  handleMouseUp(e) {
+    var overlay = this.overlay;
+    if (overlay)
+      overlay.remove();
+    var setPanelWidth = this.props.setPanelWidth;
+    if (setPanelWidth)
+      setPanelWidth(this.computeWidth(e));
+  }
+  handleMouseMove(e) {
+    var delta = this.dragDir*(e.clientX - this.dragStartX);
+    $(this.resizee).css("width", this.computeWidth(e) + "px");
+  }
   render() {
     var content   = this.props.content;
     var noContent = !content || Array.isArray(content) && content.length == 0;
     return (
-      <div className={this.props.className}>
+      <div
+        className={this.props.className}
+        style={{width:(this.props.panelWidth || 300)+"px"}}
+      >
         {this.props.toolbar}
         <div className="content-host" onClick={this.props.contentOnClick}>
         {
@@ -59,7 +115,10 @@ class AppPanel extends React.Component {
           <div className="content-area">{content}</div>
         }
         </div>
-        <div className="pane-resizer"></div>
+        <div
+            className="pane-resizer"
+            onMouseDown={this.handleMouseDown}
+        />
       </div>
     )
   }
@@ -335,6 +394,8 @@ class FuncProtoDetailPanel extends React.Component {
         content={content}
         toolbar={this.props.toolbar}
         placeholder="No Consts"
+        panelWidth={this.props.panelWidth}
+        setPanelWidth={this.props.setPanelWidth}
       />
     );
   }
@@ -396,6 +457,8 @@ class TraceBrowserPanel extends React.Component {
         ))}
         contentOnClick={selectItem}
         placeholder="No Traces"
+        panelWidth={this.props.panelWidth}
+        setPanelWidth={this.props.setPanelWidth}
       />
     );
   }
@@ -491,6 +554,8 @@ class TraceDetailPanel extends React.Component {
         toolbar={this.props.toolbar}
         content={content}
         placeholder={placeholder}
+        panelWidth={this.props.panelWidth}
+        setPanelWidth={this.props.setPanelWidth}
       />
     );
   }
@@ -614,6 +679,8 @@ class App extends React.Component {
     this.toolbarHover = this.toolbarHover.bind(this);
     this.toolbarUnhover = this.toolbarUnhover.bind(this);
     this.installSnippet = this.installSnippet.bind(this);
+    this.setWidthL = this.setWidthL.bind(this);
+    this.setWidthR = this.setWidthR.bind(this);
   }
   componentDidMount() {
     $(document.body).on("keydown", this.handleKeyDown);
@@ -844,6 +911,18 @@ class App extends React.Component {
       </div>
     );
   }
+  setWidthL(width) {
+    this.setState({
+      showLeftPanel: width!=0,
+      widthL: Math.max(200, width)
+    });
+  }
+  setWidthR(width) {
+    this.setState({
+      showRightPanel: width!=0,
+      widthR: Math.max(200, width)
+    });
+  }
   makeRightPanel() {
     var selection = this.state.selection;
     if (selection) {
@@ -857,6 +936,8 @@ class App extends React.Component {
               mode={this.state.protoMode}
               toolbar={this.makeProtoDetailToolbar()}
               data={this.state.data.protos[index]}
+              panelWidth={this.state.widthR}
+              setPanelWidth={this.setWidthR}
             />
           );
       }
@@ -870,6 +951,8 @@ class App extends React.Component {
               mode={this.state.traceMode}
               toolbar={this.makeTraceDetailToolbar()}
               data={this.state.data.traces[index]}
+              panelWidth={this.state.widthR}
+              setPanelWidth={this.setWidthR}
             />
           );
       }
@@ -884,6 +967,8 @@ class App extends React.Component {
           />
         }
         placeholder="No Selection"
+        panelWidth={this.state.widthR}
+        setPanelWidth={this.setWidthR}
       />
     );
   }
@@ -979,6 +1064,8 @@ class App extends React.Component {
               selection={selection}
               selectItem={this.selectItem}
               selectTransient={this.selectTransient}
+              panelWidth={this.state.widthL}
+              setPanelWidth={this.setWidthL}
             />
           }
           <PrimaryPanel

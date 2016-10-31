@@ -30,7 +30,6 @@
 
 .left-pane, .right-pane {
     background-color: #fafafa;
-    flex: 0 0 300px;
 }
 
 .pane-resizer {
