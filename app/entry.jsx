@@ -262,6 +262,7 @@ class PrimaryPanel extends React.Component {
         toolbar={this.props.toolbar}
         content={content}
         contentOnClick={selectItem}
+        placeholder=" "
       />
     );
   }
@@ -526,12 +527,15 @@ function createLineDecorator(data, trace)
     bytecodeDecoration.push(lastIndex + "." + (++lastSubIndex));
     lastLine = line;
   });
-  if (trace.info.error) {
+  var xmessage = trace.info.error || (
+    trace.info.linktype == "interpreter" && "→interpreter"
+  );
+  if (xmessage) {
     var lastBcref = trace.trace[trace.trace.length - 1];
     if (lastBcref) {
       var line = resolveBcref(data, lastBcref);
-      decorationMap[lastBcref].push(trace.info.error);
-      decorationMap[line.id].push(trace.info.error);
+      decorationMap[lastBcref].push(xmessage);
+      decorationMap[line.id].push(xmessage);
     }
   }
 
@@ -572,10 +576,11 @@ class App extends React.Component {
       data: {protos: [], traces: []},
       selection: null,
       input: input,
-      inPresentationMode: false,
+      enablePmode: false,
+      showEditorOverlay: false,
       showTopPanel: false,
       showLeftPanel: false,
-      showRightPanel: false,
+      showRightPanel: true,
       enableFilter: false,
       mode: "lua",
       protoMode: "info",
@@ -597,7 +602,8 @@ class App extends React.Component {
     ];
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
-    this.handleClear = this.handleClear.bind(this);
+    this.spawnEditor = this.spawnEditor.bind(this);
+    this.killEditor = this.killEditor.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.selectMode = this.selectMode.bind(this);
     this.selectProtoMode = this.selectProtoMode.bind(this);
@@ -607,9 +613,21 @@ class App extends React.Component {
     this.toggleOption = this.toggleOption.bind(this);
     this.toolbarHover = this.toolbarHover.bind(this);
     this.toolbarUnhover = this.toolbarUnhover.bind(this);
+    this.installSnippet = this.installSnippet.bind(this);
   }
   componentDidMount() {
     $(document.body).on("keydown", this.handleKeyDown);
+    this.handleSubmit();
+    $.ajax({
+      type: "GET",
+      url: "/snippets",
+      dataType: "json",
+      async: true,
+      success: function(response) {
+        console.log(response)
+        this.setState({snippets: response.snippets});
+      }.bind(this)
+    })
   }
   componenWillUnMount() {
     $(document.body).off("keydown", this.handleKeyDown);
@@ -620,7 +638,14 @@ class App extends React.Component {
     {
       return;
     }
-    console.log(e.keyCode);
+    var editorActive = this.state.showEditorOverlay;
+    if (e.keyCode == 13 /* Enter */) {
+      if (editorActive)
+        this.handleSubmit(e);
+      this.toggleOption(e, "showEditorOverlay");
+    }
+    if (editorActive)
+      return;
     if (e.keyCode == 48 /* 0 */)
       this.toggleOption(e, "showTopPanel");
     if (e.keyCode == 49 /* 1 */)
@@ -628,13 +653,15 @@ class App extends React.Component {
     if (e.keyCode == 50 /* 2 */)
       this.toggleOption(e, "showRightPanel");
     if (e.keyCode == 66 /* B */)
-      this.selectMode(e, "luabc");
+      this.selectMode(e, this.state.mode != "luabc" ? "luabc" : "lua");
+    if (e.keyCode == 70 /* F */)
+      this.toggleOption(e, "enableFilter");
     if (e.keyCode == 76 /* L */)
       this.selectMode(e, "lua");
     if (e.keyCode == 77 /* M */)
       this.selectMode(e, "mixed");
     if (e.keyCode == 80 /* P */)
-      this.toggleOption(e, "inPresentationMode");
+      this.toggleOption(e, "enablePmode");
     if (e.keyCode == 82 /* R */)
       this.handleSubmit(e);
     /* <- / -> */
@@ -661,12 +688,11 @@ class App extends React.Component {
     e.stopPropagation();
     var upd = {};
     upd[option] = !this.state[option];
-    if (upd.inPresentationMode || this.state.inPresentationMode) {
-      upd.showTopPanel = false;
-      if (option == "showRightPanel")
+    if (upd.enablePmode || this.state.enablePmode) {
+      if (option == "showRightPanel" ||
+          this.state.showLeftPanel && this.state.showRightPanel)
         upd.showLeftPanel = false;
-      else if (option == "showLeftPanel" ||
-               this.state.showLeftPanel && this.state.showRightPanel)
+      else if (option == "showLeftPanel")
         upd.showRightPanel = false;
     }
     this.setState(upd);
@@ -674,12 +700,15 @@ class App extends React.Component {
   handleTextChange(e) {
     this.setState({input: e.target.value})
   }
-  handleClear(e) {
-    e.stopPropagation();
-    this.setState({input: "", data: {protos: [], traces: []}, selection: null})
+  spawnEditor(e) {
+    this.setState({showEditorOverlay: true});
+  }
+  killEditor(e) {
+    this.handleSubmit(e);
+    this.setState({showEditorOverlay: false});
   }
   handleSubmit(e) {
-    e.stopPropagation();
+    e && e.stopPropagation();
     $.ajax({
       type: "POST",
       url: "/run",
@@ -729,7 +758,7 @@ class App extends React.Component {
   toolbarUnhover() {
     this.setState({toolbarHover: false});
   }
-  makeToolbar() {
+  makePrimaryToolbar() {
     var toggleOption = this.toggleOption;
     return (
       <div
@@ -738,7 +767,7 @@ class App extends React.Component {
       >
         <div className="toolbar-group">
           <span className="toolbar-btn" onClick={this.handleSubmit}>Run</span>
-          <span className="toolbar-btn" onClick={this.handleClear}>Clear</span>
+          <span className="toolbar-btn" onClick={this.spawnEditor}>Edit</span>
         </div>
         <ModeSwitcher
           currentMode = {this.state.mode}
@@ -858,6 +887,14 @@ class App extends React.Component {
       />
     );
   }
+  installSnippet(e) {
+    var snippets = this.state.snippets;
+    var snippet = snippets && snippets[
+      +e.target.getAttribute("data-snippet-id")
+    ];
+    if (snippet)
+      this.setState({input: snippet.code.replace(/\s*$/,"")});
+  }
   render () {
     var selection = this.state.selection;
     var data = this.state.data;
@@ -882,17 +919,51 @@ class App extends React.Component {
         }
       }
     }
+    var snippets = this.state.snippets;
+    var installSnippet = this.installSnippet;
     return (
       <div
         className={
           "app-container" +
-          (this.state.inPresentationMode ? " presentation" : "") +
+          (this.state.enablePmode ? " presentation" : "") +
           (this.state.toolbarHover ? " toolbar-hover" : "")
         }
       >
         {
+          !this.state.showEditorOverlay ? "" :
+          <div className="editor-overlay" onClick={this.killEditor}>
+            <div className="editor-form" onClick={(e)=>(e.stopPropagation())}>
+              <div className="top-btn-row">
+                {
+                  snippets && snippets.map((snippet, i)=>(
+                    <button
+                      key={i}
+                      type="button"
+                      className="btn btn-tiny btn-warning"
+                      data-snippet-id={i}
+                      onClick={installSnippet}
+                    >{snippet.label}</button>
+                  ))
+                }
+              </div>
+              <textarea
+                onChange={this.handleTextChange}
+                value={this.state.input}
+              />
+              <div className="bottom-btn-row">
+                <button
+                  type="button" className="btn btn-primary" onClick={this.killEditor}
+                >Apply</button>
+              </div>
+            </div>
+          </div>
+        }
+        {
           !this.state.showTopPanel ? "" :
-          <div className="top-pane">
+          <div
+            className="top-pane"
+            onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
+          >
             <textarea
               rows="5" onChange={this.handleTextChange}
               value={this.state.input}
@@ -916,7 +987,7 @@ class App extends React.Component {
             error={data.error}
             selection={selection}
             selectItem={this.selectItem}
-            toolbar={this.makeToolbar()}
+            toolbar={this.makePrimaryToolbar()}
             lineDecorator={lineDecorator}
           />
           {

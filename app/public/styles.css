@@ -6,7 +6,9 @@
     height: 100%;
 }
 
-.top-pane {}
+.top-pane {
+    background-color: #303030;
+}
 
 .app-main {
     display: flex;
@@ -29,19 +31,6 @@
 .left-pane, .right-pane {
     background-color: #fafafa;
     flex: 0 0 300px;
-}
-
-.left-pane {
-    border-right: solid 1px #999;
-}
-
-.right-pane {
-    border-left: solid 1px #999;
-}
-
-.presentation .left-pane,
-.presentation .right-pane {
-    border: none;
 }
 
 .pane-resizer {
@@ -137,22 +126,18 @@
 
 .toolbar {
     padding: 4px;
-    border-bottom: solid 1px #999;
     display: flex;
     flex-flow: row;
     justify-content: space-between;
-    min-height: 29px;
-    background-color: #ffffff;
-}
-
-.presentation .toolbar {
-    background-color: #404040;
-    border: none;
-    height: 12px;
-    min-height: 12px;
+    height: 28px;
+    background-color: #303030;
     position: relative;
     z-index: 4000;
     overflow: hidden;
+}
+
+.presentation .toolbar {
+    height: 12px;
 }
 
 .presentation .toolbar > * {
@@ -161,9 +146,8 @@
 
 .presentation.toolbar-hover .toolbar {
     overflow: visible;
-    height: 29px;
-    min-height: 29px;
-    margin-bottom: -17px;
+    height: 28px;
+    margin-bottom: -16px;
     z-index: 4000; /* on top of resizer strips */
 }
 
@@ -171,10 +155,14 @@
     visibility: visible;
 }
 
-.toolbar-group {}
+.presentation .toolbar-group.pane-toggle:after {
+    content: "P-mode";
+    color: #ffffff;
+    font-variant: small-caps;
+}
 
-.presentation .toolbar-group.pane-toggle {
-    visibility: hidden !important;
+.presentation .toolbar-group.pane-toggle > * {
+    display: none;
 }
 
 .toolbar-btn {
@@ -182,17 +170,13 @@
     padding: 3px 9px;
     border-radius: 4px;
     font-size: 13px;
-    color: #555;
+    color: #a0a0a0;
     border-color: #555;
     cursor: default;
     line-height: 1;
     margin: 0px 2px;
     vertical-align: middle;
     font-weight: 400;
-}
-
-.presentation .toolbar-btn {
-    color: #a0a0a0;
 }
 
 .toolbar-btn:first-child {
@@ -250,11 +234,75 @@
     min-width: calc(100% - 20px);
     max-width: calc(100% - 20px);
     padding: 8px;
-    margin: 10px 10px 0px 10px;
-    white-space: nowrap;
+    margin: 10px 10px 2px 10px;
+    /* white-space: nowrap; */
+    color: #ffffff;
     overflow: auto;
+    border: 1px #303030 solid;
     font-family: Menlo, monospace;
-    background-color: #f8f8ec;
+    background-color: #303030;
+}
+
+/***********************************************************************/
+
+.editor-overlay, .editor-form {
+    position: absolute;
+    top: 0; left: 0;
+    right: 0; bottom: 0;
+    z-index: 6000;
+}
+
+.editor-overlay {
+    background-color:rgba(0,0,0,.75);
+}
+
+.editor-form {
+    background-color: #303030;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    align-content: stretch;
+    border-radius: 4px;
+    margin: auto;
+    margin-top: 0;
+    max-height: 600px;
+    max-width: 800px;
+}
+
+.presentation .editor-form {
+    border-radius: 4px;
+    max-height: 100%;
+    max-width: 100%;
+}
+
+.editor-form > textarea {
+    flex: 1;
+    margin: 12px;
+    padding: 4px;
+    border-radius: 4px;
+    color: #ffffff;
+    background-color: #303030;
+    font-family: Menlo, monospace;
+    resize: none;
+    border: none;
+}
+
+.editor-form > .top-btn-row {
+    margin-left: 12px;
+}
+
+.editor-form > .top-btn-row > button {
+    margin-right: 12px;
+    margin-top: 12px;
+}
+
+.editor-form > .top-btn-row:empty {
+    display: none;
+}
+
+.editor-form > .bottom-btn-row {
+    margin: 12px;
+    margin-top: 0;
 }
 
 /***********************************************************************/
@@ -324,7 +372,7 @@
     flex-direction: row;
     align-items: center;
     background-color: inherit;
-    padding-right: 3px;
+    padding-right: 2px;
 }
 
 .xcode-overlay > span {
@@ -332,7 +380,7 @@
     padding: 0 6px;
     border-radius: 6px;
     font-size: 90%;
-    margin-left: 3px;
+    margin-left: 2px;
     color: #ffffff;
     font-family: Helvetica;
 }
