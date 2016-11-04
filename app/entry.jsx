@@ -73,10 +73,10 @@ class AppPanel extends React.Component {
           cursor: col-resize;`
       );
       overlay.addEventListener("mousemove", this.handleMouseMove);
-      overlay.addEventListener("mouseup", this.handleMouseUp);
       this.overlay = overlay;
     }
     $("#app").append(overlay);
+    $(window).on("mouseup", this.handleMouseUp);
     e.preventDefault();
     e.stopPropagation();
   }
@@ -86,6 +86,7 @@ class AppPanel extends React.Component {
     return Math.min(400, width > 200 ? width : 0);
   }
   handleMouseUp(e) {
+    $(window).off("mouseup", this.handleMouseUp);
     var overlay = this.overlay;
     if (overlay)
       overlay.remove();
@@ -126,7 +127,6 @@ class AppPanel extends React.Component {
 
 function findLineByBytecodeIndex(lines, index)
 {
-  if (!index) return;
   return lines.find((line)=>(
     line.bytecode && line.bytecode.length != 0 &&
     line.bytecode[0].index <= index &&

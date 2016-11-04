@@ -377,8 +377,9 @@
 .xcode-overlay > span {
     background-color: #000030;
     padding: 0 6px;
-    border-radius: 6px;
+    border-radius: 4px;
     font-size: 90%;
+    font-weight: 300;
     margin-left: 2px;
     color: #ffffff;
     font-family: Helvetica;
