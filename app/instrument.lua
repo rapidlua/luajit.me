@@ -10,23 +10,21 @@ local traceinfo, funcbc = jutil.traceinfo, jutil.funcbc
 local gsub, fmt, gmatch = string.gsub, string.format, string.gmatch
 local find, sub = string.find, string.sub
 local insert, concat = table.insert, table.concat
-local band = bit.band
+local band, bnot = bit.band, bit.bnot
+
+local function escapeluastr(s)
+    return gsub(fmt('%q', s), '\n', 'n')
+end
 
 -- JSON
 local __json_array__ = {}
-local __json_map__ = {}
-local __json_null__ = {}; setmetatable(__json_null__, __json_null__)
+local function json_array(a) return setmetatable(a or {}, __json_array__) end
 
-local function json_array(a, len)
-    for i = 1,len or 0 do
-        if a[i] == nil then a[i] = __json_null__ end
-    end
-    return setmetatable(a or {}, __json_array__)    
-end
+local __json_map__ = {}
 local function json_map(m) return setmetatable(m or {}, __json_map__) end
 
 -- (after JSON decode) " -> ", \ -> \\, NL -> \n, \? -> \\?
-local _json_str_esc_map = { ['\\"'] = '\\"', ['\\\\'] = '\\\\', ['\\\n'] = 'n' }
+local _json_str_esc_map = { ['\\"'] = '\\"', ['\\\\'] = '\\\\', ['\\\n'] = '\\n' }
 local function _json_str_esc(s) return _json_str_esc_map[s] or '\\'..s end
 local function _json_str(str)
     return (gsub(fmt('%q',str), '\\.', _json_str_esc))
@@ -44,10 +42,10 @@ _json_append_thing = function(chunks, thing)
         local mt = getmetatable(thing)
         if mt == __json_array__ then
             insert(chunks, '[')
-            for i = 1,HUGE_VAL do
+            for i = 0,HUGE_VAL do
                 local next_thing = thing[i]
                 if not next_thing then break end
-                if i ~= 1 then insert(chunks, ',') end
+                if i ~= 0 then insert(chunks, ',') end
                 _json_append_thing(chunks, next_thing)
             end
             insert(chunks, ']')
@@ -62,8 +60,6 @@ _json_append_thing = function(chunks, thing)
                 k = next_k
             end
             insert(chunks, '}')
-        elseif mt == __json_null__ then
-            insert(chunks, 'null')
         else
             error("Can't do thing")
         end
@@ -81,17 +77,17 @@ _dissect = function(func, res, M)
     local bc_map = json_array()
     local bc = json_array()
     local k_number, k_gc = json_array(), json_array()
-    local proto_pos = #res + 1
+    local proto_pos = res[0] and (#res + 1) or 0
     local info = funcinfo(func)
     M[info.proto or info.linedefined] = proto_pos
     res[proto_pos] = json_map({
         bc        = bc,
-        bcmap    = bc_map,
+        bcmap     = bc_map,
         consts    = k_number,
         gcconsts  = k_gc,
         info      = json_map(info)
     })
-    for i = 1,HUGE_VAL do
+    for i = 0,HUGE_VAL do
         local code = bcline(func, i)
         if not code then break end
         bc[i] = gsub(code, '%d+%s*(.*)\n', '%1') -- strip
@@ -100,29 +96,29 @@ _dissect = function(func, res, M)
     for i = 0, HUGE_VAL do
         local k = funck(func, i)
         if not k then break end
-        k_number[i+1] = k
+        k_number[i] = k
     end
     for i = -1,-HUGE_VAL,-1 do
         local k = funck(func, i)
         if not k then break end
         local t = type(k)
         if t == 'proto' then
-            k_gc[-i] = _dissect(k, res, M)
+            k_gc[bnot(i)] = _dissect(k, res, M)
         elseif t == 'table' then
             local items = {}
             for k, v in pairs(k) do
-                if type(k) == 'string' then k = fmt('%q', k) end
-                if type(v) == 'string' then v = fmt('%q', v) end
+                if type(k) == 'string' then k = escapeluastr(k) end
+                if type(v) == 'string' then v = escapeluastr(v) end
                 insert(items, fmt('[%s] = %s', k, v))
             end
-            k_gc[-i] = '{'..concat(items, ', ')..'}'
+            k_gc[bnot(i)] = '{'..concat(items, ', ')..'}'
         elseif t == 'string' then
-            k_gc[-i] = fmt('%q', k)
+            k_gc[bnot(i)] = escapeluastr(k)
         else
-            k_gc[-i] = tostring(k)
+            k_gc[bnot(i)] = tostring(k)
         end
     end
-    return json_map({['$func$'] = proto_pos})
+    return 'P'..proto_pos
 end
 local function dissect(root)
     local res, M = json_array(), {}
@@ -167,12 +163,13 @@ end
 
 local function run_code(source, ...)
     local traces = json_array({})
-    local result, M = json_map({source = json_array(split(source)), traces = traces})
-    local code, err = loadstring(source, '@<source>')
+    local sourceid = '@<source>'
+    local result, M = json_map({sourcefiles = json_map({[sourceid]=source}), traces = traces})
+    local code, err = loadstring(source, sourceid)
     if not code then
         result.error = err; return json_unparse(result)
     end
-    result.protos, M = dissect(code)
+    result.prototypes, M = dissect(code)
     local dump_texit, dump_record, dump_trace, fmterr
     local out = setmetatable({
         write = function(self, ...)
@@ -189,7 +186,7 @@ local function run_code(source, ...)
     local cur_trace, cur_trace_trace
     local function my_dump_trace(what, tr, func, pc, otr, oex)
         if     what == 'start' then
-            local id = #traces + 1
+            local id = traces[0] and (#traces + 1) or 0
             cur_trace_trace = json_array()
             cur_trace = json_map({
                 trace = cur_trace_trace,
@@ -208,11 +205,7 @@ local function run_code(source, ...)
             dump_trace(what, tr, func, pc, otr, oex)
             out.chunks = nil
             local ir_and_asm = split(concat(chunks, ''), '---- TRACE %d[^\n]*\n')
-            local ir = split(ir_and_asm[2]); ir[#ir] = nil
-            local asm = split(ir_and_asm[3]); asm[#asm] = nil
-            for i,item in ipairs(asm) do asm[i] = gsub(item, '\t', '    ') end
-            cur_trace.ir = json_array(ir)
-            cur_trace.asm = json_array(asm)
+            cur_trace.ir, cur_trace.asm = ir_and_asm[2], (gsub(ir_and_asm[3], "\t", "        "))
         elseif what == 'abort' then
             local info = traceinfo(tr)
             info.link = nil
@@ -228,12 +221,13 @@ local function run_code(source, ...)
         end
     end
     local function my_dump_record(tr, func, pc, depth, callee)
-        if pc > 0 then
-            local info = funcinfo(func)
-            local proto = M[info.proto or info.linedefined] or ''
-            insert(cur_trace_trace, fmt('BR%s:%d', proto, pc)) -- proto:bc (Bytecode Ref)
+        local nexti = cur_trace_trace[0] and (#cur_trace_trace+1) or 0
+        local info = funcinfo(func)
+        local proto = M[info.proto or info.linedefined]
+        if proto then
+            cur_trace_trace[nexti] = fmt('BC%s:%d', proto, pc) -- proto:bc (Bytecode Ref)
             if band(funcbc(func, pc), 0xff) < 16 then -- ORDER BC
-                insert(cur_trace_trace, fmt('BR%d:%d', proto, pc+1, depth))
+                cur_trace_trace[nexti] = fmt('BC%d:%d', proto, pc+1, depth)
                 -- Write JMP for cond.
             end
         end
@@ -251,13 +245,12 @@ local function run_code(source, ...)
     fmterr = assert(um[um.fmterr])
     jit.attach(my_dump_trace, 'trace')
     jit.attach(my_dump_record, 'record')
-    local start_ts, ok, err = os.clock(), pcall(code, ...)
-    local elapsed_time = os.clock() - start_ts
+    local starttime, ok, err = os.clock(), pcall(code, ...)
+    result.runtime = os.clock() - starttime
     jdump.off()
     jit.attach(my_dump_trace)
     jit.attach(my_dump_record)
     if not ok then result.error = tostring(err) end
-    result.elapsed_time = elapsed_time
     return json_unparse(result)
 end
 

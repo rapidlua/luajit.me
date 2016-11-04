@@ -129,15 +129,15 @@ function findLineByBytecodeIndex(lines, index)
   if (!index) return;
   return lines.find((line)=>(
     line.bytecode && line.bytecode.length != 0 &&
-    line.bytecode[0].bcindex <= index &&
-    index < line.bytecode[0].bcindex + line.bytecode.length
+    line.bytecode[0].index <= index &&
+    index < line.bytecode[0].index + line.bytecode.length
   ));
 }
 
 function findJumpTarget(lines, index)
 {
   var line = findLineByBytecodeIndex(lines, index);
-  var bytecode = line && line.bytecode[index-line.bytecode[0].bcindex].code;
+  var bytecode = line && line.bytecode[index-line.bytecode[0].index].code;
   if (bytecode) {
     var maybeTarget = bytecode.match(/=>\s*(\d{4})/);
     return maybeTarget && +maybeTarget[1];
@@ -174,8 +174,8 @@ class LuaCodeView extends React.Component {
       return;
     }
     e.stopPropagation();
-    var bcIndex = +e.currentTarget.getAttribute("data-lineno");
-    var line = findLineByBytecodeIndex(this.props.data, bcIndex);
+    var index = +e.currentTarget.getAttribute("data-lineno");
+    var line = findLineByBytecodeIndex(this.props.data, index);
     if (line) {
       var key = 'expand' + line.key;
       var upd = {};
@@ -187,14 +187,14 @@ class LuaCodeView extends React.Component {
     var index = +e.currentTarget.getAttribute('data-lineno');
     var jumpTarget = findJumpTarget(this.props.data, index);
     if (jumpTarget) {
-      this.setState({emBcIndex: jumpTarget});
+      this.setState({emBytecodeIndex: jumpTarget});
     }
   }
   bcLineOnMouseLeave(e) {
     var index = +e.currentTarget.getAttribute('data-lineno');
     var jumpTarget = findJumpTarget(this.props.data, index);
     if (jumpTarget) {
-      this.setState({emBcIndex: undefined});
+      this.setState({emBytecodeIndex: undefined});
     }
   }
   render() {
@@ -205,19 +205,19 @@ class LuaCodeView extends React.Component {
     var collapseViaBcLine = this.collapseViaBcLine;
     var bcLineOnMouseEnter = this.bcLineOnMouseEnter;
     var bcLineOnMouseLeave = this.bcLineOnMouseLeave;
-    var emBcIndex = this.state.emBcIndex;
+    var emBytecodeIndex = this.state.emBytecodeIndex;
     var content = [];
     var lineDecorator = this.props.lineDecorator || ((l) => l);
     lines.forEach(function(line, i) {
-      var mayExpand = line.bytecode || undefined;
+      var mayExpand = line.bytecode.length || undefined;
       var expanded = state['expand' + line.key];
       var visuallyExpanded = (
         mode != "lua" || expanded
       );
       var emThis = (
         line.bytecode && line.bytecode.length != 0 &&
-        line.bytecode[0].bcindex <= emBcIndex &&
-        emBcIndex < line.bytecode[0].bcindex + line.bytecode.length
+        line.bytecode[0].index <= emBytecodeIndex &&
+        emBytecodeIndex < line.bytecode[0].index + line.bytecode.length
       );
       content.push(
         <CodeView
@@ -247,10 +247,10 @@ class LuaCodeView extends React.Component {
             key={'luabc'+i}
             data={line.bytecode.map((bc, i)=>lineDecorator({
               key: i,
-              lineno: number4(bc.bcindex),
+              lineno: number4(bc.index),
               code: bc.code, codeHi: bc.codeHi,
               className: (
-                bc.bcindex == emBcIndex ? "xcode-line em": "xcode-line"
+                bc.index == emBytecodeIndex ? "xcode-line em": "xcode-line"
               ),
               onClick: collapseViaBcLine,
               onMouseEnter: bcLineOnMouseEnter,
@@ -299,9 +299,9 @@ class PrimaryPanel extends React.Component {
     var error = this.props.error;
     var lineDecorator = this.props.lineDecorator;
     var mode = this.props.mode;
-    var content = data.map((proto,i) => (
+    var content = data.map((proto) => (
       <FuncProtoView
-        key={i}
+        key={proto.id}
         data={proto}
         mode={mode}
         selection={selection}
@@ -312,7 +312,7 @@ class PrimaryPanel extends React.Component {
     if (error)
       content.splice(0, 0, (
         <div key="error" className="alert alert-danger" role="alert">
-          <strong>Something wrong!</strong> {error}
+          <strong>Something wrong!</strong> {error+""}
         </div>
       ));
     return (
@@ -422,7 +422,9 @@ class TraceThumb extends React.Component {
     var className = "trace-thumb";
     if (this.props.selection == data.id)
       className += " active";
-    if (data.info.linktype == "interpreter" || !data.info.parent || data.info.error)
+    var info = data.info;
+    var linkType = info.linktype;
+    if (info.parent === undefined || info.linktype == "interpreter" || data.info.error)
       className += " special";
     if (data.info.error)
       className += " error";
@@ -563,10 +565,9 @@ class TraceDetailPanel extends React.Component {
 
 function resolveBcref(data, bcref)
 {
-  var match = bcref.match(/BR(\d+):(\d+)/);
-  var proto = data.protos[match[1]-1];
-  var index = +match[2];
-  return proto.lines[proto.bytecodeMap[index-1]-proto.lines[0].lineno];
+  var match = bcref.match(/BC(\d+):(\d+)/);
+  var proto = data.prototypes[match[1]];
+  return proto.lines[proto.bytecodeMap[+match[2]]-proto.lines[0].lineno];
 }
 
 function createLineDecorator(data, trace)
@@ -605,15 +606,11 @@ function createLineDecorator(data, trace)
   }
 
   return function(aline, entity, visuallyExpanded) {
-    var highlightCurrent;
-    if (entity.bcindex) {
-      highlightCurrent = (decorationMap[entity.id] !== undefined);
-    } else if (visuallyExpanded) {
+    var highlightCurrent = (decorationMap[entity.id] !== undefined);
+    if (highlightCurrent && entity.id[0] == "L" && visuallyExpanded) {
+      // expanded line of Lua code - don't highlight, unless
+      // all bytecodes in the current line are highlighted as well
       highlightCurrent = (entity.bytecode && entity.bytecode.every((bc) =>
-        decorationMap[bc.id] !== undefined
-      ));
-    } else {
-      highlightCurrent = (entity.bytecode && entity.bytecode.find((bc) =>
         decorationMap[bc.id] !== undefined
       ));
     }
@@ -638,7 +635,7 @@ class App extends React.Component {
     const input = "local sum = 1\nfor i = 2,10000 do\n\u00a0\u00a0sum = sum + i\nend";
     super(props);
     this.state = {
-      data: {protos: [], traces: []},
+      data: {prototypes: [], traces: []},
       selection: null,
       input: input,
       enablePmode: false,
@@ -691,7 +688,6 @@ class App extends React.Component {
       dataType: "json",
       async: true,
       success: function(response) {
-        console.log(response)
         this.setState({snippets: response.snippets});
       }.bind(this)
     })
@@ -786,17 +782,18 @@ class App extends React.Component {
         console.log(response)
         this.handleResponse(response);
       }.bind(this),
-      error: function(response, _, errorText) {
-        this.handleResponse(response.responseJson || {error: errorText});
+      error: function(request, _, exception) {
+        this.handleResponse({error: request.responseText || exception || "Network error"});
       }.bind(this)
     })
   }
   handleResponse(response) {
+    console.log(response);
     var data = importData(response);
     var update = {data: data};
     /* auto-select first prototype */
-    if (this.state.selection == null && data.protos.length != 0)
-      update.selection = 'P1';
+    if (this.state.selection == null)
+      update.selection = 'P0';
     this.setState(update);
   }
   selectMode(e, mode) {
@@ -926,16 +923,16 @@ class App extends React.Component {
   makeRightPanel() {
     var selection = this.state.selection;
     if (selection) {
-      var protoSelected = selection.match(/P([0-9]+)/);
-      if (protoSelected) {
-        var index = protoSelected[1] - 1;
+      var prototypeselected = selection.match(/P([0-9]+)/);
+      if (prototypeselected) {
+        var index = prototypeselected[1];
         /* may become invalid after reload */
-        if (this.state.data.protos[index])
+        if (this.state.data.prototypes[index])
           return (
             <FuncProtoDetailPanel
               mode={this.state.protoMode}
               toolbar={this.makeProtoDetailToolbar()}
-              data={this.state.data.protos[index]}
+              data={this.state.data.prototypes[index]}
               panelWidth={this.state.widthR}
               setPanelWidth={this.setWidthR}
             />
@@ -943,7 +940,7 @@ class App extends React.Component {
       }
       var traceSelected = selection.match(/T([0-9]+)/);
       if (traceSelected) {
-        var index = traceSelected[1] - 1;
+        var index = traceSelected[1];
         /* may become invalid after reload */
         if (this.state.data.traces[index])
           return (
@@ -983,22 +980,22 @@ class App extends React.Component {
   render () {
     var selection = this.state.selection;
     var data = this.state.data;
-    var protos = data.protos;
+    var prototypes = data.prototypes;
     var lineDecorator;
     var xselection = this.state.transientSelection || selection;
     if (xselection) {
       var traceSelected = xselection.match(/T([0-9]+)/);
       if (traceSelected) {
-        var trace = this.state.data.traces[traceSelected[1]-1];
+        var trace = this.state.data.traces[traceSelected[1]];
         if (trace) {
           lineDecorator = createLineDecorator(data, trace);
           if (this.state.enableFilter) {
-            var keepProtos = {};
+            var keepprototypes = {};
             trace.trace.forEach(function(bcref) {
-              keepProtos[+bcref.match(/BR(\d+)/)[1]] = true;
+              keepprototypes[+bcref.match(/BC(\d+)/)[1]] = true;
             });
-            protos = protos.filter((proto) => (
-              keepProtos[proto.index] || proto.id == selection
+            prototypes = prototypes.filter((proto) => (
+              keepprototypes[proto.index] || proto.id == selection
             ));
           }
         }
@@ -1070,7 +1067,7 @@ class App extends React.Component {
           }
           <PrimaryPanel
             mode={this.state.mode}
-            data={protos}
+            data={prototypes}
             error={data.error}
             selection={selection}
             selectItem={this.selectItem}

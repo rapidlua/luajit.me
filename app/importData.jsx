@@ -1,101 +1,84 @@
 function convertConsts(consts) {
-  return consts.map((value) => ({
+  return consts.map((value) => {
+    value += "";
+    var match = value.match(/^P(\d+)$/);
+    return {
     value: value,
     valueHi: (
-      typeof(value)=='object' ?
-      "<span class=\"proto-ref\">Proto #"+value['$func$']+"</span>":
-      hljs.highlight('lua', value+'', true).value
-    )
-  }));
+      match ?
+      "<span class=\"proto-ref\">Proto #"+match[1]+"</span>":
+      hljs.highlight('lua', value, true).value
+    )};
+  });
 }
 
-function convertPrototype(proto, protoIdx, source, sourceHl) {
-  var firstLine = proto.info.linedefined;
-  var lastLine = proto.info.lastlinedefined;
+function convertPrototype(proto, protoIndex, src) {
+  var lines = src && src[0];
+  var linesHi = src && src[1];
+  var resultLines = [];
+  var atLineno = Math.max(0, proto.info.linedefined - 1);
+
+  function putLines(lastLineToPut) {
+    // there's no line #0 though it is sometimes referenced
+    lastLineToPut = Math.max(lastLineToPut, 1);
+    if (!lines) {
+      var line = {bytecode: []};
+      atLineno = 10000000; // make sure we put bogus line exactly once
+      resultLines[0] = line;
+      return line;
+    }
+    for (var i = atLineno + 1; i <= lastLineToPut; i++) {
+      resultLines.push({
+        key: i,
+        id: "L"+protoIndex+":"+i,
+        lineno: i,
+        code: lines[i],
+        codeHi: linesHi[i],
+        bytecode: []
+      });
+    }
+    atLineno = Math.max(atLineno, lastLineToPut);
+    return resultLines[resultLines.length - 1];
+  }
+
   var bcMap = proto.bcmap;
-  var bcAltMap = [];
-  var mappedLines = [];
-  var i;
-  // leading lines without bytecode
-  for (i = Math.max(1, firstLine); i<bcMap[0]; i++)
-    mappedLines.push({
-      key: i,
-      id: "L"+protoIdx+":"+i,
-      lineno: i,
-      code: source[i-1],
-      codeHi: sourceHl[i-1]
-    });
-  // process bytecodes
-  proto.bc.forEach(function(bc, bcIdx) {
-    bcIdx = bcIdx + 1; // 1-base indexing
-    var id = 'BR'+protoIdx+':'+bcIdx;
-    var atLineNo = bcMap[bcIdx-1];
-    var lastLine = mappedLines[mappedLines.length - 1];
-    var code = {
-        id: id,
-        bcindex: bcIdx,
+  var resultMap = [];
+  proto.bc.forEach(function(bc, index) {
+    var line = putLines(bcMap[index]);
+    line.bytecode.push({
+        id: 'BC'+protoIndex+':'+index,
+        index: index,
         code: bc,
         codeHi: hljs.highlight('lua', bc, true).value
-    };
-    if (lastLine && atLineNo && lastLine.lineno >= atLineNo) {
-      lastLine.bytecode.push(code);
-      bcAltMap[bcIdx - 1] = lastLine.lineno;
-    } else {
-      // middle lines without bytecodes
-      while (atLineNo && i+1 < atLineNo) {
-        mappedLines.push({
-          key: i+1,
-          id: "L"+protoIdx+":"+(i+1),
-          lineno: i+1,
-          code: source[i],
-          codeHi: sourceHl[i]
-        });
-        i = i + 1;
-      }
-      mappedLines.push({
-        key: atLineNo,
-        lineno: atLineNo,
-        id: "L"+protoIdx+":"+atLineNo,
-        code: source[atLineNo - 1],
-        codeHi: sourceHl[atLineNo - 1],
-        bytecode: [code]
-      });
-      bcAltMap[bcIdx - 1] = atLineNo;
-    }
-    if (atLineNo > i)
-      i = atLineNo;
-  });
-  // trailing lines without bytecode
-  for (; i < lastLine; i++)
-    mappedLines.push({
-      key: i+1,
-      lineno: i+1,
-      code: source[i],
-      codeHi: sourceHl[i]
     });
+    resultMap[index] = line.lineno;
+  });
+
+  putLines(proto.info.lastlinedefined); // in case of trailing lines w/o bytecode
+
   return {
-    id: 'P'+protoIdx,
-    index: protoIdx,
+    id: 'P'+protoIndex,
+    index: protoIndex,
     info: proto.info,
     consts: convertConsts(proto.consts),
     gcConsts: convertConsts(proto.gcconsts),
-    lines: mappedLines,
-    bytecodeMap: bcAltMap
+    lines: resultLines,
+    bytecodeMap: resultMap
   };
 }
 
 function convertIr(ir) {
-  if (!Array.isArray(ir))
+  if (!ir)
     return [];
-  return ir.map((ir) => ({
+  return ir.replace(/\s+$/,"").split("\n").map((ir) => ({
     code: ir.replace(/^\d+\s/,"")
   }));
 }
 
 function convertAsm(asm) {
-  if (!Array.isArray(asm))
+  if (!asm)
     return [];
-  return asm.map(function (asm) {
+  return asm.replace(/\s+$/, "").split("\n").map(function (asm) {
     asm = asm.replace(/^[0-9a-fA-F]+\s*/,"").replace(/->/,"; ->");
     return {
       code: asm,
@@ -131,30 +114,48 @@ function convertTrace(trace, traceIdx, trIndex) {
   return res;
 }
 
+function getSourceLines(sourceFiles, sourceId, cache) {
+  var result = cache && cache[sourceId];
+  if (result)
+    return result;
+  var source = sourceFiles[sourceId];
+  if (!source)
+    return;
+  var lines = ("\n"+source).split("\n"); // line numbers start with 1
+  var linesHi = [];
+  var hiContinuation;
+  for (var i = 0; i < lines.length; i++) {
+    var hiResult = hljs.highlight('lua', lines[i], true, hiContinuation);
+    linesHi[i] = hiResult.value;
+    hiContinuation = hiResult.top;
+  }
+  result = [lines, linesHi];
+  if (cache)
+    cache[sourceId] = result;
+  return result;
+}
+
 export function importData(jsonResponse) {
   var mappedData = {error: jsonResponse.error}
-  var source = jsonResponse.source; // 1-base indexing
-  var protos = jsonResponse.protos;
+  var sourceFiles = jsonResponse.sourcefiles;
+  var prototypes = jsonResponse.prototypes;
   var traces = jsonResponse.traces;
-  if (Array.isArray(protos) && Array.isArray(source)) {
-    // <FIXME> -- syntax highlighting
-    var i, cont, sourceHl = [];
-    for (i = 0; i < source.length; i++) {
-      var res = hljs.highlight('lua', source[i], true, cont);
-      sourceHl[i] = res.value;
-      cont = res.top;
-    }
-    // </FIXME>
-    mappedData.protos = protos.map((proto, protoIdx) => (
-      convertPrototype(proto, protoIdx+1, source, sourceHl)
+  if (Array.isArray(prototypes) && typeof(sourceFiles) == "object") {
+    var cache = {};
+    mappedData.prototypes = prototypes.map((proto, i) => (
+      convertPrototype(
+        proto, i,
+        typeof(proto.info) == "object" &&
+        getSourceLines(sourceFiles, proto.info.source, cache)
+      )
     ));
   } else {
-    mappedData.protos = [];
+    mappedData.prototypes = [];
   }
   if (Array.isArray(traces)) {
     var trIndex = {};
     mappedData.traces = traces.map(
-      (tr, idx) => convertTrace(tr, idx+1, trIndex)
+      (tr, idx) => convertTrace(tr, idx, trIndex)
     );
   } else {
     mappedData.traces = [];

@@ -25,16 +25,16 @@ app.get('/stat', (req, res) => res.send(
 
 app.post('/run', jsonParser, function(req, res) {
     if (num_jobs > helper_limit)
-        return res.status(500).send('{"error": "Too many requests"}\n')
+        return res.status(500).send('Too many requests')
     num_jobs = num_jobs + 1
     const source = req.body.source
     if (typeof source != 'string')
-        return res.status(400).send('{"error": "Bad request"}\n')
+        return res.status(400).send('Bad request')
     // run code in a new helper process
     var helper = child_process.spawn(helper_cmd, helper_args, helper_opts)
     var watchdog = setTimeout(function() {
         helper.kill();
-        res.send('{"error": "Timeout exceeded"}\n')
+        res.status(500).send("Timeout exceeded")
         res = null
     }, helper_timeout)
     helper.on('error', function(err) {
@@ -51,7 +51,7 @@ app.post('/run', jsonParser, function(req, res) {
     var meta_pipe = helper.stdio[helper_meta_fd];
     var response = ''
     meta_pipe.on('data', (buf) => response += buf)
-    meta_pipe.on('end', () => res && res.status(200).send(response))
+    meta_pipe.on('end', () => res && res.send(response))
 })
 
 app.use('/', express.static(__dirname + '/public'));
