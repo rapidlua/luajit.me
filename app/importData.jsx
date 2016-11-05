@@ -135,14 +135,51 @@ function getSourceLines(sourceFiles, sourceId, cache) {
   return result;
 }
 
+function createDot(traces) {
+  var dot = "digraph{graph[rankdir=TB];node[shape=circle]";
+  // do nodes
+  traces.forEach((trace) => {
+    if (trace) {
+      var info = trace.info;
+      dot = dot + ";" + trace.index + "[id=" + trace.id + (
+        info.parent === undefined ?
+        ",shape=doublecircle" : ""
+      )+ "]";
+    }
+  });
+  // do edges
+  traces.forEach((trace) => {
+    if (trace) {
+      var info = trace.info;
+      if (info.link !== undefined && info.link == info.parent) {
+        dot = dot + ";" + info.parent + "->" + trace.index + (
+          "[id=\"T"+info.parent + ":"+trace.id+"\", dir=both]"
+        );
+      } else {
+        if (info.link !== undefined) {
+          dot = dot + ";" + trace.index + "->" + info.link + (
+            "[id=\""+trace.id + ":T"+info.link+"\"]"
+          );
+        }
+        if (info.parent !== undefined) {
+          dot = dot + ";" + info.parent + "->" + trace.index + (
+            "[id=\"T"+info.parent + ":"+trace.id+"\"]"
+          );
+        }
+      }
+    }
+  });
+  return dot + "}";
+}
+
 export function importData(jsonResponse) {
-  var mappedData = {error: jsonResponse.error}
+  var result = {error: jsonResponse.error}
   var sourceFiles = jsonResponse.sourcefiles;
   var prototypes = jsonResponse.prototypes;
   var traces = jsonResponse.traces;
   if (Array.isArray(prototypes) && typeof(sourceFiles) == "object") {
     var cache = {};
-    mappedData.prototypes = prototypes.map((proto, i) => (
+    result.prototypes = prototypes.map((proto, i) => (
       convertPrototype(
         proto, i,
         typeof(proto.info) == "object" &&
@@ -150,16 +187,17 @@ export function importData(jsonResponse) {
       )
     ));
   } else {
-    mappedData.prototypes = [];
+    result.prototypes = [];
   }
   if (Array.isArray(traces)) {
     var trIndex = {};
-    mappedData.traces = traces.map(
+    result.traces = traces.map(
       (tr, idx) => convertTrace(tr, idx, trIndex)
     );
+    result.dot = createDot(result.traces);
   } else {
-    mappedData.traces = [];
+    result.traces = [];
   }
-  console.log(mappedData);
-  return mappedData;
+  console.log(result);
+  return result;
 }

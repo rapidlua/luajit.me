@@ -4,9 +4,12 @@ const stream = require('stream')
 const child_process = require('child_process')
 const fs = require('fs');
 const async = require('async');
+const tmp = require('tmp');
+const xml2json = require('xml2json');
 
 const app = express();
 const jsonParser = bodyParser.json({ type: '*/*' });
+const textParser = bodyParser.text({ type: '*/*' });
 
 const helper_timeout = 200
 const helper_limit = 50
@@ -79,6 +82,25 @@ app.get('/snippets', (req, res) => {
                 snippets: results
             }));
         })
+    });
+})
+
+const graphviz_dot_cmd = '/usr/bin/dot';
+app.post('/renderdot', textParser, function(req, res) {
+    tmp.file((error, temporaryPath, temporaryFd, temporaryCleanup) => {
+        if (error)
+            return res.status(500).send(error);
+        fs.writeSync(temporaryFd, req.body);
+        child_process.execFile(
+            graphviz_dot_cmd,
+            ['-Tsvg', temporaryPath],
+            (error, stdout, stderr) => {
+                temporaryCleanup();
+                if (error)
+                    return res.status(500).send(stderr);
+                res.send(xml2json.toJson(stdout));
+            }
+        );
     });
 })
 

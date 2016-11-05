@@ -401,7 +401,7 @@ class FuncProtoDetailPanel extends React.Component {
   }
 }
 
-class TraceThumb extends React.Component {
+class TraceBrowserPanel extends React.Component {
   constructor(props) {
     super(props);
     this.handleClick = this.handleClick.bind(this);
@@ -409,55 +409,114 @@ class TraceThumb extends React.Component {
     this.handleMouseOut = this.handleMouseOut.bind(this);
   }
   handleClick(e) {
-    this.props.selectItem(e, this.props.data.id);
+    this.props.selectItem(e, e.currentTarget.getAttribute("data-trace-id"));
   }
   handleMouseOver(e) {
-    this.props.selectTransient(e, this.props.data.id);
+    this.props.selectTransient(e, e.currentTarget.getAttribute("data-trace-id"));
   }
   handleMouseOut(e) {
     this.props.selectTransient(e, null);
   }
   render() {
     var data = this.props.data;
-    var className = "trace-thumb";
-    if (this.props.selection == data.id)
-      className += " active";
-    var info = data.info;
-    var linkType = info.linktype;
-    if (info.parent === undefined || info.linktype == "interpreter" || data.info.error)
-      className += " special";
-    if (data.info.error)
-      className += " error";
-    return (
-      <div
-        className={className}
-        onClick={this.handleClick}
-        onMouseOver={this.handleMouseOver} onMouseOut={this.handleMouseOut}
-      >
-        <div>{data.index}</div>
-      </div>
-    );
-  }
-}
-
-class TraceBrowserPanel extends React.Component {
-  render() {
-    var data = this.props.data;
     var selection = this.props.selection;
-    var selectItem = this.props.selectItem;
-    var selectTransient = this.props.selectTransient;
+    var handleClick = this.handleClick;
+    var handleMouseOver = this.handleMouseOver;
+    var handleMouseOut = this.handleMouseOut;
+    var svg = this.props.svg;
+    var content;
+    if (svg) {
+      var svgContent = [];
+      var gRoot = svg.svg.g;
+      if (!Array.isArray(gRoot.g))
+        gRoot.g = [gRoot.g];
+      gRoot.g.forEach((g) => {
+        if (g["class"] == "node") {
+          var className = "g-trace-thumb";
+          if (this.props.selection == g.id)
+            className += " active";
+          var match = g.id.match(/T(\d+)/);
+          if (match) {
+            var trace = data[+match[1]];
+            if (trace && trace.info.error)
+              className += " error";
+          }
+          var ring1, ring2;
+          if (Array.isArray(g.ellipse)) {
+            ring1 = (
+              <ellipse
+                className = "g-ring"
+                cx={g.ellipse[0].cx} cy={g.ellipse[0].cy}
+                rx={g.ellipse[0].rx} ry={g.ellipse[0].ry}
+              />
+            );
+            ring2 = (
+              <ellipse
+                className = "g-outter-ring"
+                cx={g.ellipse[1].cx} cy={g.ellipse[1].cy}
+                rx={g.ellipse[1].rx} ry={g.ellipse[1].ry}
+              />
+            );
+          } else {
+            ring1 = (
+              <ellipse
+                className="g-ring"
+                cx={g.ellipse.cx} cy={g.ellipse.cy}
+                rx={g.ellipse.rx} ry={g.ellipse.ry}
+              />
+            );
+            ring2 = "";
+          }
+          svgContent.push(
+            <g
+              key={g.id} className={className} data-trace-id={g.id}
+              onClick={handleClick}
+              onMouseOver={handleMouseOver}
+              onMouseOut={handleMouseOut}
+            >
+              {ring2}{ring1}
+              <text textAnchor="middle" x={g.text.x} y={g.text.y}>
+                {g.text["$t"]}
+              </text>
+            </g>
+          );
+        }
+        if (g["class"] == "edge") {
+          var head1, head2;
+          if (Array.isArray(g.polygon)) {
+            head1 = <polygon points={g.polygon[0].points}/>;
+            head2 = <polygon points={g.polygon[1].points}/>;
+          } else {
+            head1 = <polygon points={g.polygon.points}/>;
+            head2 = "";
+          }
+          svgContent.push(
+            <g key={g.id} className="g-trace-link">
+              <path fill="none" d={g.path.d}/>
+              {head1}{head2}
+            </g>
+          );
+        }
+      });
+      content = (
+        <div className="g-wrapper">
+          <div>
+            <svg
+              width={svg.svg.width.replace(/pt/,"px")}
+              height={svg.svg.height.replace(/pt/,"px")}
+            >
+              <g transform={gRoot.transform}>{svgContent}</g>
+            </svg>
+          </div>
+        </div>
+      );
+    }
     return (
       <AppPanel
         className="left-pane"
         toolbar={this.props.toolbar}
-        content={data.filter((item)=>item).map((item, i) => (
-          <TraceThumb
-            key={i} data={item}
-            selection={selection} selectItem={selectItem}
-            selectTransient={selectTransient}
-          />
-        ))}
-        contentOnClick={selectItem}
+        content={content}
+        contentOnClick={this.props.selectItem}
         placeholder="No Traces"
         panelWidth={this.props.panelWidth}
         setPanelWidth={this.props.setPanelWidth}
@@ -779,7 +838,7 @@ class App extends React.Component {
       async: true,
       data: JSON.stringify({source:this.state.input}),
       success: function(response) {
-        console.log(response)
+        console.log(response);
         this.handleResponse(response);
       }.bind(this),
       error: function(request, _, exception) {
@@ -794,6 +853,21 @@ class App extends React.Component {
     /* auto-select first prototype */
     if (this.state.selection == null)
       update.selection = 'P0';
+    if (data.dot) {
+      $.ajax({
+        type: "POST",
+        url: "/renderdot",
+        dataType: "json",
+        async: true,
+        data: data.dot,
+        success: function(response) {
+          console.log(response);
+          this.setState({svg: response});
+        }.bind(this)
+      });
+    } else {
+      update.svg = null;
+    }
     this.setState(update);
   }
   selectMode(e, mode) {
@@ -1058,6 +1132,7 @@ class App extends React.Component {
             <TraceBrowserPanel
               toolbar={this.makeTraceBrowserToolbar()}
               data={data.traces}
+              svg={this.state.svg}
               selection={selection}
               selectItem={this.selectItem}
               selectTransient={this.selectTransient}

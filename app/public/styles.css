@@ -516,62 +516,74 @@
 
 /***********************************************************************/
 
-.trace-thumb {
-    margin: 12px auto;
-    margin-bottom: 24px;
-    max-width: 48px;
-    width: 100%;
-}
-
-.trace-thumb > div {
-    width: 48px;
-    height: 48px;
-    font-size: 15px;
-    font-weight: 500;
+.g-wrapper {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    border-radius: 24px;
-    background-color: #e6e6e6;
-    border: solid 1px #c8c8c8;
+    padding-top: 16px;
+}
+.g-wrapper > div {
+    display: inline-block;
 }
 
-.trace-thumb.special {
-    padding: 4px;
-    max-width: 58px;
-    border: solid 1px #c8c8c8;
-    border-radius: 100px;
+.g-trace-thumb > text {
+    font-weight: 300;
+    font-size: 14px;
+}
+.g-trace-thumb > .g-ring {
+    stroke: #000000;
+    fill: #e6e6e6;
+}
+.g-trace-thumb > .g-outter-ring {
+    stroke: #000000;
+    fill: transparent;
 }
 
-.trace-thumb.error {
-    border-color: #ffb0b0;
+.g-trace-thumb:hover > .g-ring {
+    fill: #e0ff30;
 }
 
-.trace-thumb.error > div {
-    color: red;
-    border-color: #ffb0b0;
-    background-color: #ffe6e6;
+.g-trace-thumb.active > .g-outter-ring {
+    stroke: #337ab7;
+}
+.g-trace-thumb.active > .g-ring {
+    fill: #337ab7 !important;
+    stroke: #337ab7;
+}
+.g-trace-thumb.active > text {
+    fill: #ffffff;
 }
 
-.trace-thumb:hover > div {
-    background-color: #e0ff30;
+.g-trace-thumb.error > .g-ring {
+    stroke: red;
+    fill: #ffe6e6;
+}
+.g-trace-thumb.error > .g-outter-ring {
+    stroke: red;
+}
+.g-trace-thumb.error > text {
+    fill: red;
+}
+.g-trace-thumb.error:hover > .g-ring {
+    fill: #e0ff30;
 }
 
-.trace-thumb.error:hover > div {
-    background-color: #ff7060;
-    color: #ffffff;
+.g-trace-thumb.error.active > .g-ring {
+    fill: red !important;
+    stroke: red;
+}
+.g-trace-thumb.error.active > .g-outter-ring {
+    stroke: red;
+}
+.g-trace-thumb.error.active > text {
+    fill: #ffffff;
 }
 
-.trace-thumb.special.active {
-    border-color: #337ab7;
-}
+/***********************************************************************/
 
-.trace-thumb.active > div {
-    background-color: #337ab7 !important;
-    color: #ffffff;
-    border-color: #337ab7;
+.g-trace-link > path {
+    stroke: #000000;
 }
-
-.trace-thumb.error.active {
-    border-color: red;
+.g-trace-link > polygon {
+    fill: #000000;
 }
