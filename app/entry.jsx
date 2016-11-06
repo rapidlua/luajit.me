@@ -435,7 +435,7 @@ class TraceBrowserPanel extends React.Component {
           var className = "g-trace-thumb";
           if (this.props.selection == g.id)
             className += " active";
-          var match = g.id.match(/T(\d+)/);
+          var match = g.id.match(/^T(\d+)$/);
           if (match) {
             var trace = data[+match[1]];
             if (trace && trace.info.error)
@@ -482,6 +482,13 @@ class TraceBrowserPanel extends React.Component {
           );
         }
         if (g["class"] == "edge") {
+          var className = "g-trace-link";
+          var match = g.id.match(/^T(\d+):/);
+          if (match) {
+            var parentTrace = data[+match[1]];
+            if (parentTrace && parentTrace.info.linktype == "stitch")
+              className += " stitch";
+          }
           var head1, head2;
           if (Array.isArray(g.polygon)) {
             head1 = <polygon points={g.polygon[0].points}/>;
@@ -491,7 +498,7 @@ class TraceBrowserPanel extends React.Component {
             head2 = "";
           }
           svgContent.push(
-            <g key={g.id} className="g-trace-link">
+            <g key={g.id} className={className}>
               <path fill="none" d={g.path.d}/>
               {head1}{head2}
             </g>

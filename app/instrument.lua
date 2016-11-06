@@ -227,7 +227,7 @@ local function run_code(source, ...)
         if proto then
             cur_trace_trace[nexti] = fmt('BC%s:%d', proto, pc) -- proto:bc (Bytecode Ref)
             if band(funcbc(func, pc), 0xff) < 16 then -- ORDER BC
-                cur_trace_trace[nexti] = fmt('BC%d:%d', proto, pc+1, depth)
+                cur_trace_trace[nexti+1] = fmt('BC%d:%d', proto, pc+1, depth)
                 -- Write JMP for cond.
             end
         end
@@ -235,7 +235,7 @@ local function run_code(source, ...)
     -- hack
     local io_open = io.open
     io.open = function() return out end
-    jdump.on('tbim', '')
+    jdump.on('tbimT', '')
     io.open = io_open
     local um = upmap(jdump.start)
     dump_texit = assert(um[um.dump_texit])

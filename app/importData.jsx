@@ -59,7 +59,7 @@ function convertPrototype(proto, protoIndex, src) {
   return {
     id: 'P'+protoIndex,
     index: protoIndex,
-    info: proto.info,
+    info: Object(proto.info),
     consts: convertConsts(proto.consts),
     gcConsts: convertConsts(proto.gcconsts),
     lines: resultLines,
@@ -88,7 +88,7 @@ function convertAsm(asm) {
 }
 
 function convertTrace(trace, traceIdx, trIndex) {
-  var info = trace.info;
+  var info = Object(trace.info);
   var tr = trace.trace;
   var ir = trace.ir;
   var asm = trace.asm;
@@ -108,7 +108,10 @@ function convertTrace(trace, traceIdx, trIndex) {
   var res = {
     id: 'T'+traceIdx,
     index: traceIdx,
-    info: info, trace: tr, ir: convertIr(ir), asm: convertAsm(asm)
+    info: info,
+    trace: tr,
+    ir: convertIr(ir),
+    asm: convertAsm(asm)
   };
   trIndex[signature] = res;
   return res;
@@ -194,7 +197,8 @@ export function importData(jsonResponse) {
     result.traces = traces.map(
       (tr, idx) => convertTrace(tr, idx, trIndex)
     );
-    result.dot = createDot(result.traces);
+    if (traces.length != 0)
+      result.dot = createDot(result.traces);
   } else {
     result.traces = [];
   }
