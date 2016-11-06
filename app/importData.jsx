@@ -154,7 +154,14 @@ function createDot(traces) {
   traces.forEach((trace) => {
     if (trace) {
       var info = trace.info;
-      if (info.link !== undefined && info.link == info.parent) {
+      // if the trace links back to its parent, output
+      // single bi-directional edge, unless the total
+      // number of nodes is low (2 separate edges look better) or
+      // if link types are different
+      if (traces.length > 3 && info.link !== undefined &&
+          info.link == info.parent &&
+          traces[info.parent].info.linktype != "stitch")
+      {
         dot = dot + ";" + info.parent + "->" + trace.index + (
           "[id=\"T"+info.parent + ":"+trace.id+"\", dir=both]"
         );
