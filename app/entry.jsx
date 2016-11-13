@@ -507,14 +507,12 @@ class TraceBrowserPanel extends React.Component {
       });
       content = (
         <div className="g-wrapper">
-          <div>
-            <svg
-              width={svg.svg.width.replace(/pt/,"px")}
-              height={svg.svg.height.replace(/pt/,"px")}
-            >
-              <g transform={gRoot.transform}>{svgContent}</g>
-            </svg>
-          </div>
+          <svg
+            width={svg.svg.width.replace(/pt/,"px")}
+            height={svg.svg.height.replace(/pt/,"px")}
+          >
+            <g transform={gRoot.transform}>{svgContent}</g>
+          </svg>
         </div>
       );
     }
