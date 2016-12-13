@@ -586,3 +586,17 @@
     stroke-dasharray: 1 3;
     stroke-linecap: round;
 }
+
+/***********************************************************************/
+.github-url {
+    border: 0;
+    position: absolute;
+    bottom: 0;
+    right: 4px;
+    color: rgb(12,12,12) !important;
+}
+@media (max-width: 960px) {
+    .github-url { display: none; }
+}
+.github-url:hover .octo-arm { animation:octocat-wave 560ms ease-in-out; }
+@keyframes octocat-wave {0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}

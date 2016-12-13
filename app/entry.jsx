@@ -1093,6 +1093,12 @@ class App extends React.Component {
         {
           !this.state.showEditorOverlay ? "" :
           <div className="editor-overlay" onClick={this.killEditor}>
+            <a
+              className="github-url"
+              href="https://github.com/mejedi/luajit-web-inspector"
+              title="View source on GitHub"
+              dangerouslySetInnerHTML={{__html: require("raw-loader!./octocat.svg")}}
+            />
             <div className="editor-form" onClick={(e)=>(e.stopPropagation())}>
               <div className="top-btn-row">
                 {
