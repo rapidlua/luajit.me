@@ -3,7 +3,6 @@ const bodyParser = require('body-parser');
 const stream = require('stream')
 const child_process = require('child_process')
 const fs = require('fs');
-const async = require('async');
 const tmp = require('tmp');
 const xml2json = require('xml2json');
 
@@ -58,32 +57,6 @@ app.post('/run', jsonParser, function(req, res) {
 })
 
 app.use('/', express.static(__dirname + '/public'));
-
-const snippetsDir = __dirname + '/snippets';
-
-app.get('/snippets', (req, res) => {
-    fs.readdir(snippetsDir, (err, files) => {
-        if (err)
-            return res.status(500).send(err);
-        var tasks = files.filter((name)=>(name.match(/[.]lua$/))).map((name) => (
-            (callback) => {
-                fs.readFile(snippetsDir+"/"+name, (err, data) => {
-                    callback(err, {
-                        label: name.match(/(.*)[.]lua/)[1],
-                        code: data+""
-                    });
-                });
-            }
-        ));
-        async.parallel(tasks, (err, results) => {
-            if (err)
-                return res.status(500).send(err);
-            res.send(JSON.stringify({
-                snippets: results
-            }));
-        })
-    });
-})
 
 const graphviz_dot_cmd = '/usr/bin/dot';
 app.post('/renderdot', textParser, function(req, res) {

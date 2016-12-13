@@ -696,12 +696,23 @@ function createLineDecorator(data, trace)
 
 class App extends React.Component {
   constructor(props) {
-    const input = "local sum = 1\nfor i = 2,10000 do\n\u00a0\u00a0sum = sum + i\nend";
     super(props);
+    var snippets = [
+      {label: "for",        code: require("raw-loader!./snippets/for.lua")},
+      {label: "for2",       code: require("raw-loader!./snippets/for2.lua")},
+      {label: "jit.off",    code: require("raw-loader!./snippets/jit.off.lua")},
+      {label: "luacfunc",   code: require("raw-loader!./snippets/luacfunc.lua")},
+      {label: "mandelbrot", code: require("raw-loader!./snippets/mandelbrot.lua")},
+      {label: "reduce",     code: require("raw-loader!./snippets/reduce.lua")},
+      {label: "reduce2",    code: require("raw-loader!./snippets/reduce2.lua")},
+      {label: "repeat",     code: require("raw-loader!./snippets/repeat.lua")},
+      {label: "while",      code: require("raw-loader!./snippets/while.lua")}
+    ];
     this.state = {
       data: {prototypes: [], traces: []},
+      snippets: snippets,
       selection: null,
-      input: input,
+      input: snippets[0].code,
       enablePmode: false,
       showEditorOverlay: false,
       showTopPanel: false,
@@ -746,15 +757,6 @@ class App extends React.Component {
   componentDidMount() {
     $(document.body).on("keydown", this.handleKeyDown);
     this.handleSubmit();
-    $.ajax({
-      type: "GET",
-      url: "/snippets",
-      dataType: "json",
-      async: true,
-      success: function(response) {
-        this.setState({snippets: response.snippets});
-      }.bind(this)
-    })
   }
   componenWillUnMount() {
     $(document.body).off("keydown", this.handleKeyDown);
