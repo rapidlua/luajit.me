@@ -593,7 +593,7 @@
     position: absolute;
     bottom: 0;
     right: 4px;
-    color: rgb(12,12,12) !important;
+    color: #fff !important;
 }
 @media (max-width: 960px) {
     .github-url { display: none; }
