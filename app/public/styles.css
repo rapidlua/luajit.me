@@ -1,3 +1,19 @@
+/* ported to bootstrap 4.0, quick-and-dirty style */
+
+body {
+    font-size: 13px !important;
+}
+
+.card-title {
+    margin-bottom: 0px !important;
+}
+
+.card {
+		margin-bottom: 24px;
+}
+
+/* end hack */
+
 .app-container {
     display: flex;
     flex-direction: column;
@@ -103,15 +119,15 @@
     color: #c0c0c0;
 }
 
-.primary-pane .panel {
+.primary-pane .card {
     overflow: hidden; /* curved corners protrusion */
 }
 
-.primary-pane .panel-heading {
+.primary-pane .card-header {
     padding: 7px 8px;
 }
 
-.primary-pane .panel-heading .panel-title {
+.primary-pane .card-header .card-title {
     font-size: 15px;
     letter-spacing: .7px;
     font-weight: 500;
@@ -119,8 +135,13 @@
     border-color: #c8c8c8;
 }
 
-.primary-pane .panel-default > .panel-heading {
+.primary-pane .card > .card-header {
     background-color: #efefef;
+}
+
+.primary-pane .card.active > .card-header {
+    background-color: #337ab7;
+		color: #fff
 }
 
 .toolbar {

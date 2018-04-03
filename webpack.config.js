@@ -11,7 +11,7 @@ module.exports = {
         ]
     },
     resolveLoader: {
-        root: [
+        modules: [
             __dirname + "/node_modules"
         ]
     },

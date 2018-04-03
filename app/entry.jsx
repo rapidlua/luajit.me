@@ -274,12 +274,12 @@ class FuncProtoView extends React.Component {
     var selectItem = this.props.selectItem;
     return (
       <div
-        className={"panel panel-" + (this.props.selection == proto.id ?
-          "primary" : "default")}
+        className={"card " + (this.props.selection == proto.id ?
+          "active" : "")}
         onClick={(e)=>(selectItem(e,proto.id))}
       >
-        <div className="panel-heading">
-          <h3 className="panel-title">Proto #{proto.index}</h3>
+        <div className="card-header">
+          <h3 className="card-title">Proto #{proto.index}</h3>
         </div>
         <LuaCodeView
           data={proto.lines}
@@ -716,7 +716,7 @@ class App extends React.Component {
       enablePmode: false,
       showEditorOverlay: false,
       showTopPanel: false,
-      showLeftPanel: false,
+      showLeftPanel: true,
       showRightPanel: true,
       enableFilter: false,
       mode: "lua",
