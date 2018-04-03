@@ -1097,7 +1097,7 @@ class App extends React.Component {
           <div className="editor-overlay" onClick={this.killEditor}>
             <a
               className="github-url"
-              href="https://github.com/mejedi/luajit-web-inspector"
+              href="https://github.com/mejedi/luajit.me"
             >
               <div dangerouslySetInnerHTML={{__html: require("raw-loader!./octocat.svg")}}/>
               <div className="speach-bubble">★ me on GitHub!</div>
