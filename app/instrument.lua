@@ -65,8 +65,10 @@ _json_append_thing = function(chunks, thing)
         end
     elseif t == 'string' then
         insert(chunks, _json_str(thing))
-    else
+    elseif t == 'boolean' or t == 'number' then
         insert(chunks, tostring(thing))
+    else
+        insert(chunks, _json_str(tostring(thing)))
     end
 end
 

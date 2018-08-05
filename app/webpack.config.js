@@ -1,13 +1,13 @@
 module.exports = {
-    entry: "./app/entry.jsx",
+    entry: "./entry.jsx",
     output: {
-        path: __dirname + '/app/public',
+        path: __dirname + '/public',
         filename: "bundle.js"
     },
     module: {
-        loaders: [
+        rules: [
             { test: /\.css$/, loader: "style!css" },
-            { test: /\.jsx?/, loader: "babel-loader", exclude: /node_modules/, query: {presets:['es2015','react']} }
+            { test: /\.jsx?/, loader: "babel-loader", exclude: /node_modules/, query: {presets:['env','react']} }
         ]
     },
     resolveLoader: {

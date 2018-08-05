@@ -77,6 +77,6 @@ app.post('/renderdot', textParser, function(req, res) {
     });
 })
 
-app.listen(3000, function () {
-  console.log('LuaJIT WebInspector listening on port 3000');
+app.listen(8000, function () {
+  console.log('LuaJIT WebInspector listening on port 8000');
 });
