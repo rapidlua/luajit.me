@@ -1,7 +1,9 @@
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
 module.exports = {
-    entry: "./entry.jsx",
+    entry: __dirname + "/client/entry.jsx",
     output: {
-        path: __dirname + '/public',
+        path: __dirname + '/server/public',
         filename: "bundle.js"
     },
     module: {
@@ -15,4 +17,7 @@ module.exports = {
             __dirname + "/node_modules"
         ]
     },
+    plugins: [
+        new CopyWebpackPlugin(['client/index.html', 'client/styles.css'])
+    ]
 };
