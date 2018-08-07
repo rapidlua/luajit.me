@@ -712,7 +712,7 @@ class App extends React.Component {
       data: {prototypes: [], traces: []},
       snippets: snippets,
       selection: null,
-      input: snippets[0].code.replace(/\s*$/, ""),
+      input: require("raw-loader!./snippets/help.lua").replace(/\s*$/, ""),
       enablePmode: false,
       showEditorOverlay: false,
       showTopPanel: false,
