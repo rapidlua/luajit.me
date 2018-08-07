@@ -378,6 +378,7 @@ body {
 .xcode-line > .xcode > div {
     overflow: hidden;
     white-space: pre;
+    word-wrap: normal; /* undo settings inherited from bootstrap/card */
     text-overflow: ellipsis;
     position: relative;
     background-color: inherit;
