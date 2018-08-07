@@ -1,7 +1,7 @@
--- Hi! This is a tool to learn how LuaJit
+-- Hey! This is a tool to learn how LuaJIT
 -- works under the hood.
 
--- The code you submitted shows here.
+-- The code you submit shows here.
 awesome = 'foobar' .. 1;
 
 -- Press [Edit] to open code editor.
@@ -28,9 +28,9 @@ end
 -- Traces entered from the interpreter are depicted with
 -- double circles.
 
--- Right pane displays properties of the currently selected
--- trace or a function prototype. Inspect dynamically generated
--- machine code!
+-- Right pane displays properties of the currently
+-- selected trace or function prototype. Check out
+-- dynamically generated machine code!
 
 local function forEveryFunctionDefinedThereIsAPrototype()
   return 42

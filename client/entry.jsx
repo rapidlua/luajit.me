@@ -694,10 +694,15 @@ function createLineDecorator(data, trace)
   }
 }
 
+const SELECTION_AUTO = 'selection-auto';
+
 class App extends React.Component {
   constructor(props) {
     super(props);
+    var help = require("raw-loader!./snippets/help.lua");
     var snippets = [
+      {label: "blank",      code: ""},
+      {label: "help",       code: help},
       {label: "for",        code: require("raw-loader!./snippets/for.lua")},
       {label: "for2",       code: require("raw-loader!./snippets/for2.lua")},
       {label: "jit.off",    code: require("raw-loader!./snippets/jit.off.lua")},
@@ -711,8 +716,8 @@ class App extends React.Component {
     this.state = {
       data: {prototypes: [], traces: []},
       snippets: snippets,
-      selection: null,
-      input: require("raw-loader!./snippets/help.lua").replace(/\s*$/, ""),
+      selection: SELECTION_AUTO,
+      input: help,
       enablePmode: false,
       showEditorOverlay: false,
       showTopPanel: false,
@@ -843,7 +848,8 @@ class App extends React.Component {
       url: "/run",
       dataType: "json",
       async: true,
-      data: JSON.stringify({source:this.state.input}),
+      /* trim trailing whitespace otherwize we get extra empty line */
+      data: JSON.stringify({source:this.state.input.replace(/\n$/,'')}),
       success: function(response) {
         console.log(response);
         this.handleResponse(response);
@@ -857,9 +863,11 @@ class App extends React.Component {
     console.log(response);
     var data = importData(response);
     var update = {data: data};
-    /* auto-select first prototype */
-    if (this.state.selection == null)
-      update.selection = 'P0';
+    /* auto-select first trace or prototype - performed for the very
+     * first request only; this is to ensure that right pane is
+     * populated hence the App looks better on the first glance :) */
+    if (this.state.selection == SELECTION_AUTO)
+      update.selection = data.traces && data.traces[0] ? 'T0' : 'P0';
     if (data.dot) {
       $.ajax({
         type: "POST",
@@ -1109,7 +1117,7 @@ class App extends React.Component {
                     <button
                       key={i}
                       type="button"
-                      className="btn btn-tiny btn-warning"
+                      className={"btn btn-sm "+({help: "btn-info", blank: "btn-danger"}[snippet.label]||"btn-warning")}
                       data-snippet-id={i}
                       onClick={installSnippet}
                     >{snippet.label}</button>

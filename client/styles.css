@@ -460,6 +460,11 @@ body {
     filter: invert(100%);
 }
 
+/* increase comment visibility on inverted background */
+.xcode-view.primary .xcode-line:hover .hljs-comment {
+    color: #333;
+}
+
 .xgutter > .shevron {
     float: left;
 }
