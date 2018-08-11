@@ -12,6 +12,10 @@ module.exports = {
             { test: /\.jsx?/, loader: "babel-loader", exclude: /node_modules/, query: {presets:['env','react']} }
         ]
     },
+    externals: {
+            react: 'React',
+            'react-dom': 'ReactDOM'
+    },
     resolveLoader: {
         modules: [
             __dirname + "/node_modules"
