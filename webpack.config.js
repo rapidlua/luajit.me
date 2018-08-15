@@ -1,7 +1,9 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: __dirname + "/client/entry.jsx",
+    mode: process.env.NODE_ENV || "production",
     output: {
         path: __dirname + '/server/public',
         filename: "bundle.js"
@@ -22,6 +24,9 @@ module.exports = {
         ]
     },
     plugins: [
-        new CopyWebpackPlugin(['client/index.html', 'client/styles.css'])
+        new CopyWebpackPlugin(['client/styles.css']),
+        new HtmlWebpackPlugin({
+            template: 'client/index.html'
+        })
     ]
 };
