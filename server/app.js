@@ -12,7 +12,7 @@ const textParser = bodyParser.text({ type: '*/*' });
 
 const helper_timeout = 200
 const helper_limit = 50
-const helper_cmd = '/usr/bin/luajit'
+const helper_cmd = 'luajit'
 const helper_meta_fd = 20
 const helper_opts = {stdio: [
     'pipe', 'ignore', process.stderr,
