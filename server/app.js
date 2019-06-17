@@ -3,8 +3,6 @@ const bodyParser = require('body-parser');
 const stream = require('stream')
 const child_process = require('child_process')
 const fs = require('fs');
-const tmp = require('tmp');
-const xml2json = require('xml2json');
 
 const app = express();
 const jsonParser = bodyParser.json({ type: '*/*' });
@@ -60,22 +58,22 @@ app.use('/', express.static(__dirname + '/public'));
 
 const graphviz_dot_cmd = '/usr/bin/dot';
 app.post('/renderdot', textParser, function(req, res) {
-    tmp.file((error, temporaryPath, temporaryFd, temporaryCleanup) => {
-        if (error)
-            return res.status(500).send(error);
-        fs.writeSync(temporaryFd, req.body);
-        child_process.execFile(
-            graphviz_dot_cmd,
-            ['-Tsvg', temporaryPath],
-            (error, stdout, stderr) => {
-                temporaryCleanup();
-                if (error)
-                    return res.status(500).send(stderr);
-                res.send(xml2json.toJson(stdout));
-            }
-        );
+    const dot = child_process.spawn(
+        graphviz_dot_cmd, ['-Tjson', '-y'],
+        {stdio:['pipe', 'pipe', 'pipe']}
+    );
+    const output = [];
+    const error = [];
+    dot.stdin.end(req.body);
+    dot.stdout.on('data', data=>output.push(data));
+    dot.stderr.on('data', data=>error.push(data));
+    dot.on('close', code=>{
+        if (code===0)
+            res.status(200).send(Buffer.concat(output).toString('utf8'));
+        else
+            res.status(500).send(Buffer.concat(error).toString('utf8'));
     });
-})
+});
 
 app.listen(8000, function () {
   console.log('LuaJIT WebInspector listening on port 8000');

@@ -139,7 +139,7 @@ function getSourceLines(sourceFiles, sourceId, cache) {
 }
 
 function createDot(traces) {
-  var dot = "digraph{graph[rankdir=TB];node[shape=circle]";
+  var dot = "digraph{ranksep=.32;edge[arrowsize=.9];node[shape=circle,margin=.007,height=.41,width=0]";
   // do nodes
   traces.forEach((trace) => {
     if (trace) {

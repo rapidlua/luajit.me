@@ -4,6 +4,7 @@ import {render} from "react-dom";
 import {importData} from "./importData.jsx";
 import {PropListView} from "./propListView.jsx";
 import {CodeView} from "./codeView.jsx";
+import dotJSONRenderer from "./dotJSONRenderer.jsx";
 
 /* 1-> "0001" */
 function number4(i) {
@@ -423,95 +424,63 @@ class TraceBrowserPanel extends React.Component {
     var handleClick = this.handleClick;
     var handleMouseOver = this.handleMouseOver;
     var handleMouseOut = this.handleMouseOut;
-    var svg = this.props.svg;
+    var dotJSON = this.props.dotJSON;
     var content;
-    if (svg) {
-      var svgContent = [];
-      var gRoot = svg.svg.g;
-      if (!Array.isArray(gRoot.g))
-        gRoot.g = [gRoot.g];
-      gRoot.g.forEach((g) => {
-        if (g["class"] == "node") {
-          var className = "g-trace-thumb";
-          if (this.props.selection == g.id)
-            className += " active";
-          var match = g.id.match(/^T(\d+)$/);
-          if (match) {
-            var trace = data[+match[1]];
-            if (trace && trace.info.error)
-              className += " error";
-          }
-          var ring1, ring2;
-          if (Array.isArray(g.ellipse)) {
-            ring1 = (
-              <ellipse
-                className = "g-ring"
-                cx={g.ellipse[0].cx} cy={g.ellipse[0].cy}
-                rx={g.ellipse[0].rx} ry={g.ellipse[0].ry}
-              />
-            );
-            ring2 = (
-              <ellipse
-                className = "g-outter-ring"
-                cx={g.ellipse[1].cx} cy={g.ellipse[1].cy}
-                rx={g.ellipse[1].rx} ry={g.ellipse[1].ry}
-              />
-            );
-          } else {
-            ring1 = (
-              <ellipse
-                className="g-ring"
-                cx={g.ellipse.cx} cy={g.ellipse.cy}
-                rx={g.ellipse.rx} ry={g.ellipse.ry}
-              />
-            );
-            ring2 = "";
-          }
-          svgContent.push(
-            <g
-              key={g.id} className={className} data-trace-id={g.id}
-              onClick={handleClick}
-              onMouseOver={handleMouseOver}
-              onMouseOut={handleMouseOut}
-            >
-              {ring2}{ring1}
-              <text textAnchor="middle" x={g.text.x} y={g.text.y}>
-                {g.text["$t"]}
-              </text>
-            </g>
-          );
-        }
-        if (g["class"] == "edge") {
-          var className = "g-trace-link";
-          var match = g.id.match(/^T(\d+):/);
-          if (match) {
-            var parentTrace = data[+match[1]];
-            if (parentTrace && parentTrace.info.linktype == "stitch")
-              className += " stitch";
-          }
-          var head1, head2;
-          if (Array.isArray(g.polygon)) {
-            head1 = <polygon points={g.polygon[0].points}/>;
-            head2 = <polygon points={g.polygon[1].points}/>;
-          } else {
-            head1 = <polygon points={g.polygon.points}/>;
-            head2 = "";
-          }
-          svgContent.push(
-            <g key={g.id} className={className}>
-              <path fill="none" d={g.path.d}/>
-              {head1}{head2}
-            </g>
-          );
-        }
-      });
+    if (dotJSON) {
+      const noStroke = {stroke:null};
+      const noFontStyles = {fontFamily:null, fontSize:null};
       content = (
         <div className="g-wrapper">
-          <svg
-            width={svg.svg.width.replace(/pt/,"px")}
-            height={svg.svg.height.replace(/pt/,"px")}
-          >
-            <g transform={gRoot.transform}>{svgContent}</g>
+          <svg {...dotJSONRenderer.svgAttrs(dotJSON, {units:"px"})}>
+            {
+              (dotJSON.objects||[]).map(node=>{
+                const innerHTML = [];
+                const render = dotJSONRenderer.create(innerHTML);
+                node._draw_.filter(cmd=>cmd.op==="e").forEach((cmd,index)=>{
+                  const [x,y,w,h] = cmd.rect;
+                  innerHTML.push(
+                    '<ellipse class="', ["g-ring", "g-outter-ring"][index],
+                    '" cx="', x, '" cy="', y, '" rx="', w, '" ry="', h, '"/>'
+                  );
+                });
+                if (node._ldraw_)
+                  node._ldraw_.forEach(cmd=>render(cmd, noFontStyles));
+                let className = "g-trace-thumb";
+                if (this.props.selection===node.id) className += " active";
+                const trace = data[+node.id.substr(1)];
+                if (trace && trace.info.error) className += " error";
+                return (
+                  <g
+                   key={node.id}
+                   className={className}
+                   data-trace-id={node.id}
+                   onClick={handleClick}
+                   onMouseOver={handleMouseOver}
+                   onMouseOut={handleMouseOut}
+                   dangerouslySetInnerHTML={{__html: innerHTML.join("")}}
+                  />
+                );
+              })
+            }
+            {
+              (dotJSON.edges||[]).map(edge=>{
+                const innerHTML = [];
+                const render = dotJSONRenderer.create(innerHTML);
+                if (edge._draw_) edge._draw_.forEach(render);
+                if (edge._hdraw_) edge._hdraw_.forEach(cmd=>render(cmd, noStroke));
+                if (edge._tdraw_) edge._tdraw_.forEach(cmd=>render(cmd, noStroke));
+                let className = "g-trace-link";
+                const initiator = data[edge.id.substr(1).split(":")[0]];
+                if (initiator && initiator.info.linktype==="stitch") className += " stitch";
+                return (
+                  <g
+                   key={edge.id}
+                   className={className}
+                   dangerouslySetInnerHTML={{__html: innerHTML.join("")}}
+                  />
+                );
+              })
+            }
           </svg>
         </div>
       );
@@ -877,11 +846,11 @@ class App extends React.Component {
         data: data.dot,
         success: function(response) {
           console.log(response);
-          this.setState({svg: response});
+          this.setState({dotJSON: response});
         }.bind(this)
       });
     } else {
-      update.svg = null;
+      update.dotJSON = null;
     }
     this.setState(update);
   }
@@ -1154,7 +1123,7 @@ class App extends React.Component {
             <TraceBrowserPanel
               toolbar={this.makeTraceBrowserToolbar()}
               data={data.traces}
-              svg={this.state.svg}
+              dotJSON={this.state.dotJSON}
               selection={selection}
               selectItem={this.selectItem}
               selectTransient={this.selectTransient}
