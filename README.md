@@ -17,7 +17,7 @@ A power tool to peek into LuaJIT internals, primarily for educational purposes a
 
 ### Install
 
-Install `luajit` and `graphviz` first.
+Install `luajit` first.
 
 In the root of the source tree, invoke `npm install` to install JavaScript dependencies and prepare code for running.
 

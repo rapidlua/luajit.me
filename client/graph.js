@@ -1,3 +1,30 @@
+export const renderJSON = (function(){
+  const worker = require('worker-loader!./graphviz/graphviz.worker')();
+  const queue = [];
+  const stack = [];
+  worker.onmessage = function(e) {
+    if (stack.length===0) {
+      let callback;
+      while (callback = queue.pop()) stack.push(callback);
+    }
+    stack.pop()(
+      e.data[0] && new Error(e.data[0]),
+      e.data[1] && JSON.parse(e.data[1])
+    );
+  }
+  return function(input, options, callback) {
+    if (options===undefined) {
+      options = {};
+    } else if (callback === undefined && typeof options === 'function') {
+      callback = options;
+      options = {};
+    }
+    if (typeof callback !== 'function') callback();
+    worker.postMessage([input, options]);
+    queue.push(callback);
+  }
+})();
+
 function htmlEscape(text) {
   return text.toString().replace(/[<>&"]/g, x=>{
     switch(x) {
@@ -9,7 +36,7 @@ function htmlEscape(text) {
   });
 }
 
-export function svgAttrs(dotJSON, options) {
+export function getSVGAttrs(dotJSON, options) {
   const units = options && options.units || 'pt';
   const margin = options && options.margin !== undefined ? options.margin : 4;
   const [llx,lly,urx,ury] = dotJSON.bb.split(',');
@@ -22,7 +49,7 @@ export function svgAttrs(dotJSON, options) {
   }
 }
 
-export function create(target) {
+export function createSVGRenderer(target) {
   const context = {};
   function appendFill(fill) {
     if (fill===undefined) fill = context.fill;
@@ -116,4 +143,4 @@ export function create(target) {
   }
 }
 
-export default {svgAttrs, create};
+export default {getSVGAttrs, createSVGRenderer, renderJSON};

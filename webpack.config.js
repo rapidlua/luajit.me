@@ -25,6 +25,7 @@ module.exports = {
     },
     plugins: [
         new CopyWebpackPlugin(['client/styles.css']),
+        new CopyWebpackPlugin(['client/graphviz/graphviz.wasm']),
         new HtmlWebpackPlugin({
             template: 'client/index.html'
         })

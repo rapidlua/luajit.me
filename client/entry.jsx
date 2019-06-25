@@ -4,7 +4,7 @@ import {render} from "react-dom";
 import {importData} from "./importData.jsx";
 import {PropListView} from "./propListView.jsx";
 import {CodeView} from "./codeView.jsx";
-import dotJSONRenderer from "./dotJSONRenderer.jsx";
+import graph from "./graph.js";
 
 /* 1-> "0001" */
 function number4(i) {
@@ -431,11 +431,11 @@ class TraceBrowserPanel extends React.Component {
       const noFontStyles = {fontFamily:null, fontSize:null};
       content = (
         <div className="g-wrapper">
-          <svg {...dotJSONRenderer.svgAttrs(dotJSON, {units:"px"})}>
+          <svg {...graph.getSVGAttrs(dotJSON, {units:"px"})}>
             {
               (dotJSON.objects||[]).map(node=>{
                 const innerHTML = [];
-                const render = dotJSONRenderer.create(innerHTML);
+                const render = graph.createSVGRenderer(innerHTML);
                 node._draw_.filter(cmd=>cmd.op==="e").forEach((cmd,index)=>{
                   const [x,y,w,h] = cmd.rect;
                   innerHTML.push(
@@ -465,7 +465,7 @@ class TraceBrowserPanel extends React.Component {
             {
               (dotJSON.edges||[]).map(edge=>{
                 const innerHTML = [];
-                const render = dotJSONRenderer.create(innerHTML);
+                const render = graph.createSVGRenderer(innerHTML);
                 if (edge._draw_) edge._draw_.forEach(render);
                 if (edge._hdraw_) edge._hdraw_.forEach(cmd=>render(cmd, noStroke));
                 if (edge._tdraw_) edge._tdraw_.forEach(cmd=>render(cmd, noStroke));
@@ -838,17 +838,10 @@ class App extends React.Component {
     if (this.state.selection == SELECTION_AUTO)
       update.selection = data.traces && data.traces[0] ? 'T0' : 'P0';
     if (data.dot) {
-      $.ajax({
-        type: "POST",
-        url: "/renderdot",
-        dataType: "json",
-        async: true,
-        data: data.dot,
-        success: function(response) {
-          console.log(response);
-          this.setState({dotJSON: response});
-        }.bind(this)
-      });
+      graph.renderJSON(data.dot, function(error, result) {
+          console.log(result);
+          this.setState({dotJSON: result});
+        }.bind(this));
     } else {
       update.dotJSON = null;
     }
