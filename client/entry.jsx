@@ -6,6 +6,8 @@ import {PropListView} from "./propListView.jsx";
 import {CodeView} from "./codeView.jsx";
 import graph from "./graph.js";
 
+import "./styles.css";
+
 /* 1-> "0001" */
 function number4(i) {
   var s = "0000"+i

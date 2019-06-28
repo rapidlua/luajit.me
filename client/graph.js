@@ -1,5 +1,5 @@
 export const renderJSON = (function(){
-  const worker = require('worker-loader!./graphviz/graphviz.worker')();
+  const worker = require('./graphviz/graphviz.worker')();
   const queue = [];
   const stack = [];
   worker.onmessage = function(e) {
