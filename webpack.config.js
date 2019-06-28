@@ -67,7 +67,11 @@ module.exports = {
             {from: GRAPHVIZ_WASM_SRC, to: GRAPHVIZ_WASM_DEST}
         ]),
         new HtmlWebpackPlugin({
-            template: 'client/index.html'
+            template: 'client/index.html',
+            minify: {
+                collapseWhitespace: true,
+                removeComments: true
+            }
         }),
         new CssChunksHtmlPlugin({ inject: false })
     ]
