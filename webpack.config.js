@@ -6,6 +6,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractCssChunks = require('extract-css-chunks-webpack-plugin');
 const CssChunksHtmlPlugin = require('css-chunks-html-webpack-plugin');
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 const GRAPHVIZ_WASM_SRC = 'client/graphviz/graphviz.wasm';
 const GRAPHVIZ_WASM_DEST =
@@ -66,6 +67,12 @@ module.exports = {
         new CopyWebpackPlugin([
             {from: GRAPHVIZ_WASM_SRC, to: GRAPHVIZ_WASM_DEST}
         ]),
+        new OptimizeCssAssetsPlugin({
+            cssProcessor: require('cssnano'),
+            cssProcessorPluginOptions: {
+                preset: ['default', { discardComments: { removeAll: true } }]
+            }
+        }),
         new HtmlWebpackPlugin({
             template: 'client/index.html',
             minify: {
