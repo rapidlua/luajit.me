@@ -1,6 +1,6 @@
 {
-  "name": "LuaJIT-WebInspector",
-  "version": "0.0.0",
+  "name": "luajit.me",
+  "version": "0.0.1",
   "description": "",
   "main": "server/app.js",
   "scripts": {
