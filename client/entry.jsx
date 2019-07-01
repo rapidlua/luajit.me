@@ -677,7 +677,7 @@ class App extends React.Component {
       {label: "for",        code: require("raw-loader!./snippets/for.lua")},
       {label: "for2",       code: require("raw-loader!./snippets/for2.lua")},
       {label: "jit.off",    code: require("raw-loader!./snippets/jit.off.lua")},
-      {label: "luacfunc",   code: require("raw-loader!./snippets/luacfunc.lua")},
+      {label: "stitching",  code: require("raw-loader!./snippets/stitching.lua")},
       {label: "mandelbrot", code: require("raw-loader!./snippets/mandelbrot.lua")},
       {label: "reduce",     code: require("raw-loader!./snippets/reduce.lua")},
       {label: "reduce2",    code: require("raw-loader!./snippets/reduce2.lua")},
