@@ -30,10 +30,12 @@ app.post('/run', jsonParser, function(req, res) {
     function doRun(onJobDone) {
         res.socket.removeListener('close', socketOnClose);
         runLuaCode(req.body.source, { timeout }, function(error, result) {
-            if (error)
+            if (error) {
                 res.status(500).send(error.message);
-            else
+            } else {
+                res.set('Content-Type', 'application/json');
                 res.send(result);
+            }
             onJobDone();
         });
     }
@@ -41,9 +43,7 @@ app.post('/run', jsonParser, function(req, res) {
     runQueue.push(doRun);
 });
 
-app.get('/stat', (req, res) => res.send(
-    JSON.stringify({ jobs: runQueue.length, jobsMax })
-))
+app.get('/stat', (req, res) => res.json({ jobs: runQueue.length, jobsMax }));
 
 app.use('/', express.static(__dirname + '/public'));
 
