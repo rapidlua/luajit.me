@@ -18,7 +18,8 @@ module.exports = {
     entry: __dirname + "/client/entry.jsx",
     mode: process.env.NODE_ENV || "production",
     output: {
-        path: __dirname + '/server/public',
+        publicPath: '/static/',
+        path: __dirname + '/server/public/static',
         chunkFilename: '[name].[contenthash].js',
         filename: '[name].[contenthash].js'
     },
@@ -75,6 +76,7 @@ module.exports = {
         }),
         new HtmlWebpackPlugin({
             template: 'client/index.html',
+            filename: '../index.html',
             minify: {
                 collapseWhitespace: true,
                 removeComments: true
