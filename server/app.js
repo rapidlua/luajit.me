@@ -17,6 +17,10 @@ app.post('/run', jsonParser, function(req, res) {
     if (typeof req.body.source !== 'string')
         return res.status(400).send('Bad request');
 
+    // Safari quirk: replaces spaces with non-breaking spaces
+    // in a textarea with white-space: nowrap style
+    const source = req.body.source.replace(/\xa0/g, ' ');
+
     if (runQueue.length > jobsMax)
         return res.status(500).send('Too many requests');
 
@@ -29,7 +33,7 @@ app.post('/run', jsonParser, function(req, res) {
 
     function doRun(onJobDone) {
         res.socket.removeListener('close', socketOnClose);
-        runLuaCode(req.body.source, { timeout }, function(error, result) {
+        runLuaCode(source, { timeout }, function(error, result) {
             if (error) {
                 res.status(500).send(error.message);
             } else {

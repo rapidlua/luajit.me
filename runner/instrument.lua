@@ -3,6 +3,9 @@ local HUGE_VAL = 1000000000
 local bc  = require('jit.bc')
 local jutil = require('jit.util')
 local jdump = require('jit.dump')
+local cjson = require('cjson')
+
+cjson.encode_empty_table_as_object(false)
 
 local bcline, bctargets = bc.line, bc.targets
 local funcinfo, funck = jutil.funcinfo, jutil.funck
@@ -16,96 +19,39 @@ local function escapeluastr(s)
     return gsub(fmt('%q', s), '\n', 'n')
 end
 
--- JSON
-local __json_array__ = {}
-local function json_array(a) return setmetatable(a or {}, __json_array__) end
-
-local __json_map__ = {}
-local function json_map(m) return setmetatable(m or {}, __json_map__) end
-
--- (after JSON decode) " -> ", \ -> \\, NL -> \n, \? -> \\?
-local _json_str_esc_map = { ['\\"'] = '\\"', ['\\\\'] = '\\\\', ['\\\n'] = '\\n' }
-local function _json_str_esc(s) return _json_str_esc_map[s] or '\\'..s end
-local function _json_str(str)
-    return (gsub(fmt('%q',str), '\\.', _json_str_esc))
-end
-local _json_append_thing
-local function json_unparse(thing)
-    local chunks = {}
-    _json_append_thing(chunks, thing)
-    insert(chunks, '\n')
-    return concat(chunks, '')
-end
-_json_append_thing = function(chunks, thing)
-    local t = type(thing)
-    if t == 'table' then
-        local mt = getmetatable(thing)
-        if mt == __json_array__ then
-            insert(chunks, '[')
-            for i = 0,HUGE_VAL do
-                local next_thing = thing[i]
-                if not next_thing then break end
-                if i ~= 0 then insert(chunks, ',') end
-                _json_append_thing(chunks, next_thing)
-            end
-            insert(chunks, ']')
-        elseif mt == __json_map__ then
-            insert(chunks, '{')
-            local k
-            while true do
-                local next_k, next_thing = next(thing, k)
-                if not next_k then break end
-                insert(chunks, fmt('%s%s:', k and ',' or '', _json_str(tostring(next_k))))
-                _json_append_thing(chunks, next_thing)
-                k = next_k
-            end
-            insert(chunks, '}')
-        else
-            error("Can't do thing")
-        end
-    elseif t == 'string' then
-        insert(chunks, _json_str(thing))
-    elseif t == 'boolean' or t == 'number' then
-        insert(chunks, tostring(thing))
-    else
-        insert(chunks, _json_str(tostring(thing)))
-    end
-end
-
 -- FUNC dissector
 
 local _dissect
 _dissect = function(func, res, M)
-    local bc_map = json_array()
-    local bc = json_array()
-    local k_number, k_gc = json_array(), json_array()
-    local proto_pos = res[0] and (#res + 1) or 0
+    local bc, bc_map = {}, {}
+    local k_number, k_gc = {}, {}
+    local proto_id = #res
     local info = funcinfo(func)
-    M[info.proto or info.linedefined] = proto_pos
-    res[proto_pos] = json_map({
+    M[info.proto or info.linedefined] = proto_id
+    res[proto_id + 1] = {
         bc        = bc,
         bcmap     = bc_map,
         consts    = k_number,
         gcconsts  = k_gc,
-        info      = json_map(info)
-    })
+        info      = info
+    }
     for i = 0,HUGE_VAL do
         local code = bcline(func, i)
         if not code then break end
-        bc[i] = gsub(code, '%d+%s*(.*)\n', '%1') -- strip
-        bc_map[i] = funcinfo(func,i).currentline
+        bc[i+1] = gsub(code, '%d+%s*(.*)\n', '%1') -- strip
+        bc_map[i+1] = funcinfo(func,i).currentline
     end
     for i = 0, HUGE_VAL do
         local k = funck(func, i)
         if not k then break end
-        k_number[i] = k
+        k_number[i+1] = k
     end
     for i = -1,-HUGE_VAL,-1 do
         local k = funck(func, i)
         if not k then break end
         local t = type(k)
         if t == 'proto' then
-            k_gc[bnot(i)] = _dissect(k, res, M)
+            k_gc[bnot(i)+1] = _dissect(k, res, M)
         elseif t == 'table' then
             local items = {}
             for k, v in pairs(k) do
@@ -113,17 +59,18 @@ _dissect = function(func, res, M)
                 if type(v) == 'string' then v = escapeluastr(v) end
                 insert(items, fmt('[%s] = %s', k, v))
             end
-            k_gc[bnot(i)] = '{'..concat(items, ', ')..'}'
+            k_gc[bnot(i)+1] = '{'..concat(items, ', ')..'}'
         elseif t == 'string' then
-            k_gc[bnot(i)] = escapeluastr(k)
+            k_gc[bnot(i)+1] = escapeluastr(k)
         else
-            k_gc[bnot(i)] = tostring(k)
+            k_gc[bnot(i)+1] = tostring(k)
         end
     end
-    return 'P'..proto_pos
+    info.proto = nil
+    return 'P'..proto_id
 end
 local function dissect(root)
-    local res, M = json_array(), {}
+    local res, M = {}, {}
     _dissect(root, res, M)
     return res, M
 end
@@ -164,12 +111,12 @@ local function moveparent(trace, info)
 end
 
 local function run_code(source, ...)
-    local traces = json_array({})
+    local traces = {}
     local sourceid = '@<source>'
-    local result, M = json_map({sourcefiles = json_map({[sourceid]=source}), traces = traces})
+    local result, M = {sourcefiles = {[sourceid]=source}, traces = traces}
     local code, err = loadstring(source, sourceid)
     if not code then
-        result.error = err; return json_unparse(result)
+        result.error = err; return cjson.encode(result)
     end
     result.prototypes, M = dissect(code)
     local dump_texit, dump_record, dump_trace, fmterr
@@ -188,21 +135,21 @@ local function run_code(source, ...)
     local cur_trace, cur_trace_trace
     local function my_dump_trace(what, tr, func, pc, otr, oex)
         if     what == 'start' then
-            local id = traces[0] and (#traces + 1) or 0
-            cur_trace_trace = json_array()
-            cur_trace = json_map({
+            local id = #traces
+            cur_trace_trace = {}
+            cur_trace = {
                 trace = cur_trace_trace,
                 parent = t_by_tr[otr],
                 parentexit = oex
-            })
-            traces[id] = cur_trace 
+            }
+            traces[id+1] = cur_trace 
             t_by_tr[tr] = id
             dump_trace(what, tr, func, pc, otr, oex)
         elseif what == 'stop' then
             local info = traceinfo(tr)
             info.link = t_by_tr[info.link]
             moveparent(cur_trace, info)
-            cur_trace.info = json_map(info)
+            cur_trace.info = info
             local chunks = {}; out.chunks = chunks
             dump_trace(what, tr, func, pc, otr, oex)
             out.chunks = nil
@@ -213,7 +160,7 @@ local function run_code(source, ...)
             info.link = nil
             info.error = fmterr(otr, oex)
             moveparent(cur_trace, info)
-            cur_trace.info = json_map(info)
+            cur_trace.info = info
             dump_trace(what, tr, func, pc, otr, oex)
         elseif what == 'flush' then
             t_by_tr = {}
@@ -223,7 +170,7 @@ local function run_code(source, ...)
         end
     end
     local function my_dump_record(tr, func, pc, depth, callee)
-        local nexti = cur_trace_trace[0] and (#cur_trace_trace+1) or 0
+        local nexti = #cur_trace_trace + 1
         local info = funcinfo(func)
         local proto = M[info.proto or info.linedefined]
         if proto then
@@ -253,20 +200,23 @@ local function run_code(source, ...)
     jit.attach(my_dump_trace)
     jit.attach(my_dump_record)
     if not ok then result.error = tostring(err) end
-    return json_unparse(result)
+    return cjson.encode(result)
 end
 
-local args = args or {'', ...}
-local meta_fd = args and args[2] or '1'
-local write
-if meta_fd == '1' then
-    write = function(str) io.stdout:write(str) end
-else
-    -- Can't reopen a fd that's already open (Linux).
-    ffi = require('ffi')
-    ffi.cdef('size_t write(int, const char *, size_t)')
-    write = function(str) ffi.C.write(tonumber(meta_fd), str, #str) end
+local function open_checked(filename, mode)
+    local file, errmsg = io.open(filename, mode)
+    if not file then
+        io.stderr:write(errmsg..'\n')
+        os.exit(-1)
+    end
+    return file
 end
--- Safari quirk: replaces spaces with \xc2\xa0 in a textarea
--- with white-space: nowrap style
-write(run_code(gsub(io.stdin:read('*a'),'\194\160',' ')))
+
+local parser = require('argparse')()
+parser:argument('input', 'Source file to run', '-')
+parser:option('-o', 'Output file')
+local args = parser:parse()
+local input = args.input == '-' and io.stdin or open_checked(args.input, 'r')
+local output = not args.o and io.stdout or open_checked(args.o, 'w')
+
+output:write(run_code(input:read('*a')))

@@ -1,37 +1,98 @@
+const fs = require('fs');
 const child_process = require('child_process');
 
+function TmpFile(data) {
+    function randomName() {
+        for (;;) {
+            const name = Math.random().toString(36).substr(2, 8);
+            if (name.length >= 8) return name;
+        }
+    }
+    for (;;) {
+        const path = '/tmp/' + randomName();
+        try {
+            const fd = fs.openSync(
+                path, fs.constants.O_RDWR
+                | fs.constants.O_CREAT | fs.constants.O_EXCL);
+            if (data) fs.writeSync(fd, data, 0, data.length, 0);
+            this.path = path;
+            this.fd = fd;
+            this.destroy = function() {
+                fs.closeSync(fd);
+                fs.unlinkSync(path);
+            }
+            return;
+        } catch (e) {
+            if (e.code !== 'EEXIST') throw e;
+        }
+    }
+}
+
+function runInSandbox(options, callback) {
+    const sandals = child_process.spawn(
+        '/bin/sandals', [], { stdio: ['pipe', 'pipe', process.stderr] });
+    const responseChunks = [];
+    sandals.stdin.end(JSON.stringify(options));
+    sandals.stdout.on('data', buf => responseChunks.push(buf));
+    sandals.stdout.on('end', function() {
+        try {
+            const response = JSON.parse(
+                Buffer.concat(responseChunks).toString('utf8'));
+            switch (response.status) {
+            case 'internalError':
+            case 'requestInvalid':
+                callback(new Error(response.description));
+                break;
+            case 'timeLimit':
+                callback(new Error('Timeout exceeded'));
+                break;
+            default:
+                callback(null, response);
+                break;
+            }
+        } catch (e) {
+            callback(e);
+        }
+    });
+}
+
 function runLuaCode(code, options, callback) {
-    // run code in a new helper process
-    const meta_fd = 20;
-    const stdio = new Array(meta_fd).fill(null);
-    stdio[0] = 'pipe';
-    stdio[1] = 'ignore';
-    stdio[2] = process.stderr;
-    stdio[meta_fd] = 'pipe';
-    const luajit = child_process.spawn(
-        'luajit', [__dirname + '/instrument.lua', meta_fd], { stdio }
-    );
-    let error = null;
-    const watchdog = setTimeout(function(){
-        luajit.kill('SIGKILL');
-        error = new Error('Timeout exceeded');
-    }, options.timeout);
-    luajit.on('error', function(e) {
-        clearTimeout(watchdog);
-        error = e;
+    const sourceFile = new TmpFile(code);
+    const outputFile = new TmpFile();
+
+    runInSandbox({
+        cmd: ['/usr/bin/instrument.lua', '-o/tmp/instrument.out', '/tmp/source.lua'],
+        timeLimit: options.timeout/1000,
+        workDir: '/root',
+        chroot: '/usr/lib/luajit.me/images/luajit-2.1.0-beta3-gc64',
+        mounts: [
+            {type: 'bind', dest: '/dev', src: '/usr/lib/luajit.me/images/dev'},
+           // {type: 'proc', dest: '/proc'},
+            {type: 'tmpfs', dest: '/tmp'},
+            {type: 'tmpfs', dest: '/dev/shm'},
+            {type: 'tmpfs', dest: '/root'},
+            {type: 'bind', dest: '/tmp/source.lua', src: sourceFile.path, ro: true}
+        ],
+        pipes: [
+            {file: outputFile.path, fifo: '/tmp/instrument.out', limit: 2*1024*1024}
+        ],
+        seccompPolicy: `
+            ALLOW {
+                access, arch_prctl, brk, clock_gettime, clone, close,
+                execve, exit_group, fcntl, getcwd, getegid, geteuid,
+                getgid, getpid, getppid, getuid, ioctl, madvise, mmap,
+                mprotect, munmap, newfstat, newstat, open, read, readv,
+                rt_sigaction, rt_sigprocmask, rt_sigreturn,
+                set_tid_address, wait4, write, writev
+            }
+            DEFAULT KILL_PROCESS
+        `
+    }, function(error, response) {
+        const output = error ? undefined : fs.readFileSync(outputFile.fd);
+        sourceFile.destroy();
+        outputFile.destroy();
+        callback(error, output);
     });
-    luajit.on('exit', function(code, signal) {
-        clearTimeout(watchdog);
-        if (signal || code!==0)
-            error = error || new Error('Abnormal termination');
-    });
-    const meta_pipe = luajit.stdio[meta_fd];
-    const result = [];
-    meta_pipe.on('data', buf => result.push(buf));
-    meta_pipe.on('end', function() {
-        callback(error, Buffer.concat(result))
-    });
-    luajit.stdin.end(code);
 }
 
 module.exports = { runLuaCode };
