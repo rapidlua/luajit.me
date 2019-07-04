@@ -132,13 +132,15 @@ RUN mkdir -p /root/dist/usr/lib/luajit.me/images/dev/shm
 
 COPY --from=sandals-builder root/dist /root/dist
 COPY --from=luajit-2.0.5.builder root/dist /root/dist/usr/lib/luajit.me/images/luajit-2.0.5
+COPY --from=luajit-2.1.0-beta2.builder root/dist /root/dist/usr/lib/luajit.me/images/luajit-2.1.0-beta2
 COPY --from=luajit-2.1.0-beta3.builder root/dist /root/dist/usr/lib/luajit.me/images/luajit-2.1.0-beta3
 COPY --from=luajit-2.1.0-beta3-gc64.builder root/dist /root/dist/usr/lib/luajit.me/images/luajit-2.1.0-beta3-gc64
 
 COPY --from=luajit.me.builder root/dist /root/dist
 
 # replace duplicate files with hardlinks
-RUN fdupes -r1 /root/dist | sed -e 's/^/ln -f /' | sh
+RUN fdupes -r1 /root/dist | \
+    sed -e 's/^/TGT=/;s/ /; for SRC in /;s/$/; do ln -f $TGT $SRC; done/' | sh
 
 ###########
 
