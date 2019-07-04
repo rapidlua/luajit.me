@@ -138,50 +138,6 @@ function getSourceLines(sourceFiles, sourceId, cache) {
   return result;
 }
 
-function createDot(traces) {
-  var dot = "digraph{ranksep=.32;edge[arrowsize=.9];node[shape=circle,margin=.007,height=.41,width=0]";
-  // do nodes
-  traces.forEach((trace) => {
-    if (trace) {
-      var info = trace.info;
-      dot = dot + ";" + trace.index + "[id=" + trace.id + (
-        info.parent === undefined ?
-        ",shape=doublecircle" : ""
-      )+ "]";
-    }
-  });
-  // do edges
-  traces.forEach((trace) => {
-    if (trace) {
-      var info = trace.info;
-      // if the trace links back to its parent, output
-      // single bi-directional edge, unless the total
-      // number of nodes is low (2 separate edges look better) or
-      // if link types are different
-      if (traces.length > 3 && info.link !== undefined &&
-          info.link == info.parent &&
-          traces[info.parent].info.linktype != "stitch")
-      {
-        dot = dot + ";" + info.parent + "->" + trace.index + (
-          "[id=\"T"+info.parent + ":"+trace.id+"\", dir=both]"
-        );
-      } else {
-        if (info.link !== undefined) {
-          dot = dot + ";" + trace.index + "->" + info.link + (
-            "[id=\""+trace.id + ":T"+info.link+"\"]"
-          );
-        }
-        if (info.parent !== undefined) {
-          dot = dot + ";" + info.parent + "->" + trace.index + (
-            "[id=\"T"+info.parent + ":"+trace.id+"\"]"
-          );
-        }
-      }
-    }
-  });
-  return dot + "}";
-}
-
 export function importData(jsonResponse) {
   var result = {error: jsonResponse.error}
   var sourceFiles = jsonResponse.sourcefiles;
@@ -204,8 +160,6 @@ export function importData(jsonResponse) {
     result.traces = traces.map(
       (tr, idx) => convertTrace(tr, idx, trIndex)
     );
-    if (traces.length != 0)
-      result.dot = createDot(result.traces);
   } else {
     result.traces = [];
   }

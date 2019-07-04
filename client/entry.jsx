@@ -666,6 +666,54 @@ function createLineDecorator(data, trace)
   }
 }
 
+function createDot(traces, topple) {
+  var dot = "digraph{ranksep=.32;edge[arrowsize=.9];node[shape=circle,margin=.007,height=.41,width=0]";
+  if (topple) {
+    dot += ";rankdir=LR";
+    traces = traces.slice().reverse();
+  }
+  // do nodes
+  traces.forEach((trace) => {
+    if (trace) {
+      var info = trace.info;
+      dot = dot + ";" + trace.index + "[id=" + trace.id + (
+        info.parent === undefined ?
+        ",shape=doublecircle" : ""
+      )+ "]";
+    }
+  });
+  // do edges
+  traces.forEach((trace) => {
+    if (trace) {
+      var info = trace.info;
+      // if the trace links back to its parent, output
+      // single bi-directional edge, unless the total
+      // number of nodes is low (2 separate edges look better) or
+      // if link types are different
+      if (traces.length > 3 && info.link !== undefined &&
+          info.link == info.parent &&
+          traces[info.parent].info.linktype != "stitch")
+      {
+        dot = dot + ";" + info.parent + "->" + trace.index + (
+          "[id=\"T"+info.parent + ":"+trace.id+"\", dir=both]"
+        );
+      } else {
+        if (info.link !== undefined) {
+          dot = dot + ";" + trace.index + "->" + info.link + (
+            "[id=\""+trace.id + ":T"+info.link+"\"]"
+          );
+        }
+        if (info.parent !== undefined) {
+          dot = dot + ";" + info.parent + "->" + trace.index + (
+            "[id=\"T"+info.parent + ":"+trace.id+"\"]"
+          );
+        }
+      }
+    }
+  });
+  return dot + "}";
+}
+
 const SELECTION_AUTO = 'selection-auto';
 
 class App extends React.Component {
@@ -714,6 +762,7 @@ class App extends React.Component {
       {key:"ir",   label:"IR"},
       {key:"asm",  label:"Asm"}
     ];
+    this.toppleTraceGraph = false;
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
     this.spawnEditor = this.spawnEditor.bind(this);
@@ -827,7 +876,6 @@ class App extends React.Component {
         target: this.state.target
       }),
       success: function(response) {
-        console.log(response);
         this.handleResponse(response);
       }.bind(this),
       error: function(request, _, exception) {
@@ -836,7 +884,6 @@ class App extends React.Component {
     })
   }
   handleResponse(response) {
-    console.log(response);
     var data = importData(response);
     var update = {data: data};
     /* auto-select first trace or prototype - performed for the very
@@ -844,11 +891,24 @@ class App extends React.Component {
      * populated hence the App looks better on the first glance :) */
     if (this.state.selection == SELECTION_AUTO)
       update.selection = data.traces && data.traces[0] ? 'T0' : 'P0';
-    if (data.dot) {
-      graph.renderJSON(data.dot, function(error, result) {
-          console.log(result);
-          this.setState({dotJSON: result});
-        }.bind(this));
+    if (data.traces.length !== 0) {
+      graph.renderJSON(
+        createDot(data.traces, this.toppleTraceGraph),
+        (error, result) => {
+          const [llx,lly,urx,ury] = result.bb.split(',');
+          // toople if width exceeds height by 64px or more
+          if (urx - llx - lly + ury > 64 && this.state.data === data) {
+            graph.renderJSON(
+              createDot(
+                data.traces, this.toppleTraceGraph = !this.toppleTraceGraph
+              ),
+              (error, result)=>this.setState({dotJSON:result})
+            );
+          } else {
+            this.setState({dotJSON: result});
+          }
+        }
+      );
     } else {
       update.dotJSON = null;
     }
