@@ -113,6 +113,9 @@ COPY runner /root
 FROM lua-img-builder AS luajit-2.0.5.builder
 RUN REV=v2.0.5 /root/dist-build.sh
 
+FROM lua-img-builder AS luajit-2.1.0-beta2.builder
+RUN REV=v2.1.0-beta2 /root/dist-build.sh
+
 FROM lua-img-builder AS luajit-2.1.0-beta3.builder
 RUN REV=v2.1.0-beta3 /root/dist-build.sh
 
