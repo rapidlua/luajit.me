@@ -743,7 +743,7 @@ class App extends React.Component {
       showTopPanel: false,
       showLeftPanel: true,
       showRightPanel: true,
-      enableFilter: false,
+      enableFilter: true,
       mode: "lua",
       protoMode: "info",
       traceMode: "info"
