@@ -15,6 +15,7 @@ RUN cd /root/luajit.me && npm install
 # take advantage of the Docker cache (again :)
 COPY webpack.config.js /root/luajit.me
 COPY client /root/luajit.me/client
+COPY server/targets.js /root/luajit.me/server/
 RUN cd /root/luajit.me && npm config set unsafe-perm true \
     && npm install
 

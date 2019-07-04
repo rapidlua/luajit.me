@@ -5,6 +5,7 @@ import {importData} from "./importData.jsx";
 import {PropListView} from "./propListView.jsx";
 import {CodeView} from "./codeView.jsx";
 import graph from "./graph.js";
+import {targets} from "../server/targets.js";
 
 import "./styles.css";
 
@@ -689,6 +690,7 @@ class App extends React.Component {
       snippets: snippets,
       selection: SELECTION_AUTO,
       input: help,
+      target: targets[targets.length - 1],
       enablePmode: false,
       showEditorOverlay: false,
       showTopPanel: false,
@@ -727,6 +729,7 @@ class App extends React.Component {
     this.toolbarHover = this.toolbarHover.bind(this);
     this.toolbarUnhover = this.toolbarUnhover.bind(this);
     this.installSnippet = this.installSnippet.bind(this);
+    this.setTarget = this.setTarget.bind(this);
     this.setWidthL = this.setWidthL.bind(this);
     this.setWidthR = this.setWidthR.bind(this);
   }
@@ -820,7 +823,10 @@ class App extends React.Component {
       dataType: "json",
       async: true,
       /* trim trailing whitespace otherwize we get extra empty line */
-      data: JSON.stringify({source:this.state.input.replace(/\n$/,'')}),
+      data: JSON.stringify({
+        source: this.state.input.replace(/\n$/,''),
+        target: this.state.target
+      }),
       success: function(response) {
         console.log(response);
         this.handleResponse(response);
@@ -1030,6 +1036,9 @@ class App extends React.Component {
     if (snippet)
       this.setState({input: snippet.code.replace(/\s*$/,"")});
   }
+  setTarget(e) {
+    this.setState({target: e.target.value});
+  }
   render () {
     var selection = this.state.selection;
     var data = this.state.data;
@@ -1096,6 +1105,12 @@ class App extends React.Component {
                 <button
                   type="button" className="btn btn-primary" onClick={this.killEditor}
                 >Apply</button>
+                <select class="form-control" onChange={this.setTarget}>
+                  {targets.map((target,index)=>(
+                    <option key={index} selected={target===this.state.target}
+                    >{target}</option>)
+                  )}
+                </select>
               </div>
             </div>
           </div>

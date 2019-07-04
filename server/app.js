@@ -33,15 +33,18 @@ app.post('/run', jsonParser, function(req, res) {
 
     function doRun(onJobDone) {
         res.socket.removeListener('close', socketOnClose);
-        runLuaCode(source, { timeout }, function(error, result) {
-            if (error) {
-                res.status(500).send(error.message);
-            } else {
-                res.set('Content-Type', 'application/json');
-                res.send(result);
+        runLuaCode(
+            source, { timeout, target: req.body.target },
+            function(error, result) {
+                if (error) {
+                    res.status(500).send(error.message);
+                } else {
+                    res.set('Content-Type', 'application/json');
+                    res.send(result);
+                }
+                onJobDone();
             }
-            onJobDone();
-        });
+        );
     }
 
     runQueue.push(doRun);

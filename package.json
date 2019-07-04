@@ -17,7 +17,8 @@
   },
   "files": [
     "/server/public",
-    "/server/runner.js"
+    "/server/runner.js",
+    "/server/targets.js"
   ],
   "devDependencies": {
     "babel-core": "^6.26.3",

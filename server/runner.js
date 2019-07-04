@@ -1,5 +1,6 @@
 const fs = require('fs');
 const child_process = require('child_process');
+const targets = require('./targets').targets;
 
 function TmpFile(data) {
     function randomName() {
@@ -60,11 +61,14 @@ function runLuaCode(code, options, callback) {
     const sourceFile = new TmpFile(code);
     const outputFile = new TmpFile();
 
+    const target = targets.indexOf(options.target)===-1 ?
+        targets[targets.length - 1] : options.target;
+
     runInSandbox({
         cmd: ['/usr/bin/instrument.lua', '-o/tmp/instrument.out', '/tmp/source.lua'],
         timeLimit: options.timeout/1000,
         workDir: '/root',
-        chroot: '/usr/lib/luajit.me/images/luajit-2.1.0-beta3-gc64',
+        chroot: '/usr/lib/luajit.me/images/' + target,
         mounts: [
             {type: 'bind', dest: '/dev', src: '/usr/lib/luajit.me/images/dev'},
            // {type: 'proc', dest: '/proc'},

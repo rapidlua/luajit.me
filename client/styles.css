@@ -324,6 +324,12 @@ body {
 .editor-form > .bottom-btn-row {
     margin: 12px;
     margin-top: 0;
+		display: flex;
+}
+
+.editor-form > .bottom-btn-row > .form-control {
+		width: initial;
+		margin-left: auto;
 }
 
 /***********************************************************************/
