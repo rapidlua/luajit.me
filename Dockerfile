@@ -105,14 +105,14 @@ COPY runner /root
 
 #######################################################################
 #
-# luajit-2.0.5.builder
+# luajit-2.0.4.builder
 # luajit-2.1.0-beta3.builder
 # ...
 #   produces Lua runner images for various LuaJIT versions/flavours
 #
 #######################################################################
-FROM lua-img-builder AS luajit-2.0.5.builder
-RUN REV=v2.0.5 /root/dist-build.sh
+FROM lua-img-builder AS luajit-2.0.4.builder
+RUN REV=v2.0.4 /root/dist-build.sh
 
 FROM lua-img-builder AS luajit-2.1.0-beta2.builder
 RUN REV=v2.1.0-beta2 /root/dist-build.sh
@@ -135,7 +135,7 @@ RUN apk add fdupes
 RUN mkdir -p /root/dist/usr/lib/luajit.me/images/dev/shm
 
 COPY --from=sandals-builder root/dist /root/dist
-COPY --from=luajit-2.0.5.builder root/dist /root/dist/usr/lib/luajit.me/images/luajit-2.0.5
+COPY --from=luajit-2.0.4.builder root/dist /root/dist/usr/lib/luajit.me/images/luajit-2.0.4
 COPY --from=luajit-2.1.0-beta2.builder root/dist /root/dist/usr/lib/luajit.me/images/luajit-2.1.0-beta2
 COPY --from=luajit-2.1.0-beta3.builder root/dist /root/dist/usr/lib/luajit.me/images/luajit-2.1.0-beta3
 COPY --from=luajit-2.1.0-beta3-gc64.builder root/dist /root/dist/usr/lib/luajit.me/images/luajit-2.1.0-beta3-gc64

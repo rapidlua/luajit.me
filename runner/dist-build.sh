@@ -17,6 +17,9 @@ sed -i src/Makefile \
 make
 make install
 DESTDIR=/root/dist make install
+if [ "$REV" = "v2.0.4" ]; then
+    ln -s libluajit-5.1.so.2.0.4 /usr/lib/libluajit-5.1.so.2
+fi
 if [ "$REV" = "v2.1.0-beta2" ]; then
     ln -s libluajit-5.1.so.2.1.0 /usr/lib/libluajit-5.1.so.2
 fi
