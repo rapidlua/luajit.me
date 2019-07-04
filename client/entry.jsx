@@ -675,15 +675,14 @@ class App extends React.Component {
     var snippets = [
       {label: "blank",      code: ""},
       {label: "help",       code: help},
-      {label: "for",        code: require("raw-loader!./snippets/for.lua")},
-      {label: "for2",       code: require("raw-loader!./snippets/for2.lua")},
-      {label: "jit.off",    code: require("raw-loader!./snippets/jit.off.lua")},
-      {label: "stitching",  code: require("raw-loader!./snippets/stitching.lua")},
-      {label: "mandelbrot", code: require("raw-loader!./snippets/mandelbrot.lua")},
+      {label: "loops",      code: require("raw-loader!./snippets/loops.lua")},
+      {label: "recursion",  code: require("raw-loader!./snippets/recursion.lua")},
+      {label: "table",      code: require("raw-loader!./snippets/table.lua")},
       {label: "reduce",     code: require("raw-loader!./snippets/reduce.lua")},
       {label: "reduce2",    code: require("raw-loader!./snippets/reduce2.lua")},
-      {label: "repeat",     code: require("raw-loader!./snippets/repeat.lua")},
-      {label: "while",      code: require("raw-loader!./snippets/while.lua")}
+      {label: "mandelbrot", code: require("raw-loader!./snippets/mandelbrot.lua")},
+      {label: "jit.off",    code: require("raw-loader!./snippets/jit.off.lua")},
+      {label: "stitching",  code: require("raw-loader!./snippets/stitching.lua")},
     ];
     this.state = {
       data: {prototypes: [], traces: []},
