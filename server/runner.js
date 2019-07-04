@@ -83,13 +83,14 @@ function runLuaCode(code, options, callback) {
         seccompPolicy: `
             ALLOW {
                 access, arch_prctl, brk, clock_gettime, clone, close,
-                execve, exit_group, fcntl, getcwd, getegid, geteuid,
-                getgid, getpid, getppid, getuid, ioctl, madvise, mmap,
-                mprotect, munmap, newfstat, newstat, open, read, readv,
+                dup, dup2, execve, exit_group, fcntl, getcwd, getegid,
+                geteuid, getgid, getgroups, getpid, getppid, getuid,
+                ioctl, lseek, madvise, mmap, mprotect, munmap, newfstat,
+                newstat, newuname, open, pipe, pipe2, read, readv,
                 rt_sigaction, rt_sigprocmask, rt_sigreturn,
                 set_tid_address, wait4, write, writev
             }
-            DEFAULT KILL_PROCESS
+            DEFAULT LOG
         `
     }, function(error, response) {
         const output = error ? undefined : fs.readFileSync(outputFile.fd);
