@@ -78,7 +78,7 @@ RUN cd root && git clone https://github.com/LuaJIT/LuaJIT.git luajit && \
     git rev-parse -q --verify "refs/tags/v2.1.0-beta3" >/dev/null
 
 # pull sandals
-RUN cd root && git clone https://github.com/all-things-interactive/sandals.git \
+RUN cd root && git clone https://github.com/rapidlua/sandals.git \
     -c advice.detachedHead=false -b v1.0-beta
 
 #######################################################################
