@@ -1,3 +1,5 @@
 node_modules
 server/public
 .dockerid
+.terraform
+terraform.tfstate*
