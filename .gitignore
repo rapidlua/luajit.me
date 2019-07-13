@@ -1,5 +1,7 @@
 node_modules
-server/public
+app/server/public
 .dockerid
 .terraform
 terraform.tfstate*
+*.swp
+*.swo

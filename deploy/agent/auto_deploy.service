@@ -1,0 +1,13 @@
+[Unit]
+Description=Auto deploy agent
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/home/deploy/luajit.me.git
+ExecStart=/bin/sh -c ". /home/deploy/env.sh; /usr/bin/node /home/deploy/luajit.me.git/deploy/agent/agent.js"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
