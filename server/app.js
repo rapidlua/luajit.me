@@ -1,3 +1,4 @@
+const fs = require('fs');
 const express = require('express');
 const bodyParser = require('body-parser');
 const { runLuaCode } = require('./runner');
@@ -6,23 +7,25 @@ const app = express();
 const jsonParser = bodyParser.json({ type: '*/*' });
 const textParser = bodyParser.text({ type: '*/*' });
 
-const timeout = +process.env['TIMEOUT'] || 200;
-const concurrency = +process.env['CONCURRENCY'] || 1;
-const jobsMax = +process.env['JOBS_MAX'] || (3000/timeout)*concurrency;
+const TIMEOUT = +process.env['TIMEOUT'] || 200;
+const CONCURRENCY = +process.env['CONCURRENCY'] || 1;
+const JOBS_MAX = +process.env['JOBS_MAX'] || (3000/TIMEOUT)*CONCURRENCY;
+const GA_MEASUREMENT_ID = process.env['GA_MEASUREMENT_ID'] || '';
 
-const runQueue = new require('async-limiter')({ concurrency });
+app.set('etag', false);
 
+const runQueue = new require('async-limiter')({ concurrency: CONCURRENCY });
 app.post('/run', jsonParser, function(req, res) {
 
     if (typeof req.body.source !== 'string')
         return res.status(400).send('Bad request');
 
+    if (runQueue.length > JOBS_MAX)
+        return res.status(500).send('Too many requests');
+
     // Safari quirk: replaces spaces with non-breaking spaces
     // in a textarea with white-space: nowrap style
     const source = req.body.source.replace(/\xa0/g, ' ');
-
-    if (runQueue.length > jobsMax)
-        return res.status(500).send('Too many requests');
 
     function socketOnClose() {
         runQueue.splice(runQueue.jobs.indexOf(doRun), 1);
@@ -34,7 +37,7 @@ app.post('/run', jsonParser, function(req, res) {
     function doRun(onJobDone) {
         res.socket.removeListener('close', socketOnClose);
         runLuaCode(
-            source, { timeout, target: req.body.target },
+            source, { timeout: TIMEOUT, target: req.body.target },
             function(error, result) {
                 if (error) {
                     res.status(500).send(error.message);
@@ -52,7 +55,25 @@ app.post('/run', jsonParser, function(req, res) {
 
 app.get('/stat', (req, res) => res.json({ jobs: runQueue.length, jobsMax }));
 
-app.use('/', express.static(__dirname + '/public'));
+app.use('/static', express.static(__dirname + '/public/static'));
+
+app.use('/', function (req, res) {
+    let responseData = fs.readFileSync(__dirname + '/public/index.html');
+    if (GA_MEASUREMENT_ID) {
+        responseData = responseData.toString('utf-8').replace(
+            '</head>',
+            '<script async src="https://www.googletagmanager.com/gtag/js?id='
+            + GA_MEASUREMENT_ID + '"></script>'
+            + '<script>'
+            + 'window.dataLayer=window.dataLayer||[];'
+            + 'function gtag(){dataLayer.push(arguments)}'
+            + "gtag('js',new Date());gtag('config','" + GA_MEASUREMENT_ID + "')"
+            + '</script></head>'
+        );
+    }
+    res.set('Content-Type', 'text/html');
+    res.send(responseData);
+});
 
 app.listen(8000, function () {
   console.log('LuaJIT WebInspector listening on port 8000');
