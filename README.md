@@ -1,5 +1,8 @@
-# luajit-web-inspector
-A power tool to peek into LuaJIT internals, primarily for educational purposes and for talks on stage
+# luajit.me
+A power tool to peek into LuaJIT internals, primarily for educational purposes
+
+Try live at https://luajit.me
+
 
 ### Features
  1. execute arbitrary Lua code and see what happens
@@ -14,14 +17,6 @@ A power tool to peek into LuaJIT internals, primarily for educational purposes a
     * highligh source code lines and/or bytecodes participating in a trace
  1. examine trace properties, including general info, IR and the assembly
  1. *Presentation Mode* — hit **P** to reduce visual clutter; suitable for presenting after a moderate zoom
-
-### Install
-
-Install `luajit` first.
-
-In the root of the source tree, invoke `npm install` to install JavaScript dependencies and prepare code for running.
-
-To start the server, do `npm start`.
 
 ### Gallery
 
