@@ -39,11 +39,11 @@ fetch_source_code() {
   fi
 
   local OLD_DEPLOY_AGENT_CHECKSUM=$(
-    git archive ${GIT_BRANCH} deploy/agent | sha256sum | awk '{print$1}'
+    git ls-tree ${GIT_BRANCH} deploy/agent | awk '{print$3}'
   )
 
   local DEPLOY_AGENT_CHECKSUM=$(
-    git archive origin/${GIT_BRANCH} deploy/agent | sha256sum | awk '{print$1}'
+    git ls-tree origin/${GIT_BRANCH} deploy/agent | awk '{print$3}'
   )
 
   git reset --hard origin/${GIT_BRANCH}
@@ -94,7 +94,7 @@ deploy() {
   if [ -f "${HOME}/.agent-disable" ]; then exit 0; fi
 
   local IMAGE_CHECKSUM=$(
-    git archive ${GIT_BRANCH} deploy/image | sha256sum | awk '{print$1}'
+    git ls-tree ${GIT_BRANCH} deploy/image | awk '{print$3}'
   )
 
   echo "image_checksum=\"${IMAGE_CHECKSUM}\"" > deploy/image/image.auto.tfvars
@@ -130,7 +130,7 @@ https://deploy.luajit.me/${IMAGE_BUILD_LOG}"
 
   # deploy app
   (
-    echo "revision=\"$(git rev-parse "${GIT_BRANCH}")\""
+    echo "app_checksum=\"$(git ls-tree ${GIT_BRANCH} app | awk '{print$3}')\""
     echo "image_id=\"${IMAGE_ID}\""
   ) > deploy/app/app.auto.tfvars
 
