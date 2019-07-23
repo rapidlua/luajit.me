@@ -55,7 +55,8 @@ resource "digitalocean_droplet" "image_builder" {
 
   // Wait for poweroff until proceeding; prereq for a consistent snapshot 
   provisioner "local-exec" {
-    command = "while [ $(curl -sX GET -H 'Content-Type: application/json' -H 'Authorization: Bearer ${var.do_token}' 'https://api.digitalocean.com/v2/droplets/${self.id}' | jq -r .droplet.status) != off ]; do echo 'waiting for poweroff'; sleep 3; done"
+    command = "while [ $(curl -sX GET -H 'Content-Type: application/json' -H \"Authorization: Bearer $${DO_TOKEN}\" 'https://api.digitalocean.com/v2/droplets/${self.id}' | jq -r .droplet.status) != off ]; do echo 'waiting for poweroff'; sleep 3; done"
+    environment = { DO_TOKEN = var.do_token }
   }
 }
 
@@ -65,7 +66,8 @@ resource "digitalocean_droplet_snapshot" "image" {
 
   // Delete the droplet used to produce the snapshot
   provisioner "local-exec" {
-    command = "curl -sX DELETE -H 'Content-Type: application/json' -H 'Authorization: Bearer ${var.do_token}' 'https://api.digitalocean.com/v2/droplets/${digitalocean_droplet.image_builder.id}'"
+    command = "curl -sX DELETE -H 'Content-Type: application/json' -H \"Authorization: Bearer $${DO_TOKEN}\" 'https://api.digitalocean.com/v2/droplets/${digitalocean_droplet.image_builder.id}'"
+    environment = { DO_TOKEN = var.do_token }
   }
 }
 
