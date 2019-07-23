@@ -7,7 +7,8 @@ variable "image_id" {
   description = "Image to spawn droplets from; should have all system updates and prerequisite packages installed"
 }
 
-variable "app_checksum" {}
+variable "app_checksum" { default = "" }
+variable "deploy_checksum" { default = "" }
 
 variable "web_scale" {
   type = number
@@ -73,7 +74,8 @@ resource "digitalocean_loadbalancer" "default" {
 resource "digitalocean_droplet" "web" {
   count = var.web_scale
   lifecycle { create_before_destroy = true }
-  user_data = "app=${var.app_checksum}" # should trigger replacement if changed
+  user_data = "app=${var.app_checksum};deploy=${var.deploy_checksum}"
+  # should trigger replacement if changed
 
   image = var.image_id
   name = "web-${count.index+1}"
@@ -114,7 +116,8 @@ resource "digitalocean_droplet" "web" {
 resource "digitalocean_droplet" "compute" {
   count = var.compute_scale
   lifecycle { create_before_destroy = true }
-  user_data = "app=${var.app_checksum}" # should trigger replacement if changed
+  user_data = "app=${var.app_checksum};deploy=${var.deploy_checksum}"
+  # should trigger replacement if changed
 
   image = var.image_id
   name = "compute-${count.index+1}"

@@ -131,6 +131,7 @@ https://deploy.luajit.me/${IMAGE_BUILD_LOG}"
   # deploy app
   (
     echo "app_checksum=\"$(git ls-tree ${GIT_BRANCH} app | awk '{print$3}')\""
+    echo "deploy_checksum=\"$(git ls-tree ${GIT_BRANCH} deploy/app | awk '{print$3}')\""
     echo "image_id=\"${IMAGE_ID}\""
   ) > deploy/app/app.auto.tfvars
 
