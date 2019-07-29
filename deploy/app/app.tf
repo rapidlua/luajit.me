@@ -16,10 +16,14 @@ variable "web_scale" {
   description = "Number of web nodes to deploy"
 }
 
-variable "compute_scale" {
-  type = number
-  default = 5
-  description = "Number of compute nodes to deploy"
+variable "compute_cluster" {
+  type = list
+  default = [
+    "compute-1",
+    "compute-2",
+    "compute-3"
+  ]
+  description = "The list of compute nodes to deploy"
 }
 
 provider "digitalocean" {
@@ -104,7 +108,7 @@ resource "digitalocean_droplet" "web" {
       "mkdir -p /data/nginx/cache",
       "chown www-data: /data/nginx/cache",
       "sed '-es/<SELF_IPV4_ADDRESS>/${self.ipv4_address_private}/' /root/app.nginx.conf > /etc/nginx/sites-available/luajit.me",
-      "for IPV4_ADDRESS in ${join(" ", digitalocean_droplet.compute.*.ipv4_address_private)}; do sed -i /etc/nginx/sites-available/luajit.me -e \"/COMPUTE_IPV4_ADDRESS/a\\ \\ server $${IPV4_ADDRESS}:80;\"; done",
+      "for IPV4_ADDRESS in ${join(" ", values(digitalocean_droplet.compute).*.ipv4_address_private)}; do sed -i /etc/nginx/sites-available/luajit.me -e \"/COMPUTE_IPV4_ADDRESS/a\\ \\ server $${IPV4_ADDRESS}:80;\"; done",
       "ln -s /etc/nginx/sites-available/luajit.me /etc/nginx/sites-enabled/luajit.me",
       "rm /etc/nginx/sites-enabled/default",
       "systemctl enable nginx",
@@ -114,13 +118,13 @@ resource "digitalocean_droplet" "web" {
 }
 
 resource "digitalocean_droplet" "compute" {
-  count = var.compute_scale
+  for_each = zipmap(var.compute_cluster, var.compute_cluster)
   lifecycle { create_before_destroy = true }
   user_data = "app=${var.app_checksum};deploy=${var.deploy_checksum}"
   # should trigger replacement if changed
 
   image = var.image_id
-  name = "compute-${count.index+1}"
+  name = each.key
   region = "ams3"
   size = "s-1vcpu-1gb"
   private_networking = true
@@ -145,7 +149,7 @@ resource "digitalocean_droplet" "compute" {
 resource "null_resource" "update_compute_cluster_users" {
   count = length(digitalocean_droplet.web)
   triggers = {
-    compute_cluster_ips = join(" ", digitalocean_droplet.compute.*.ipv4_address_private)
+    compute_cluster_ips = join(" ", values(digitalocean_droplet.compute).*.ipv4_address_private)
   }
   connection {
     host = digitalocean_droplet.web[count.index].ipv4_address
@@ -156,8 +160,12 @@ resource "null_resource" "update_compute_cluster_users" {
   provisioner "remote-exec" {
     inline = [
       "sed -e '/COMPUTE_IPV4_ADDRESS/,/}/{/server/d}' -i /etc/nginx/sites-available/luajit.me",
-      "for IPV4_ADDRESS in ${join(" ", digitalocean_droplet.compute.*.ipv4_address_private)}; do sed -i /etc/nginx/sites-available/luajit.me -e \"/COMPUTE_IPV4_ADDRESS/a\\ \\ server $${IPV4_ADDRESS}:80;\"; done",
+      "for IPV4_ADDRESS in ${join(" ", values(digitalocean_droplet.compute).*.ipv4_address_private)}; do sed -i /etc/nginx/sites-available/luajit.me -e \"/COMPUTE_IPV4_ADDRESS/a\\ \\ server $${IPV4_ADDRESS}:80;\"; done",
       "service nginx reload"
     ]
   }
+}
+
+output "compute_cluster" {
+  value = zipmap(keys(digitalocean_droplet.compute), values(digitalocean_droplet.compute).*.id)
 }
