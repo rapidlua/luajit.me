@@ -108,7 +108,7 @@ export function createSVGRenderer(target) {
       {
         target.push(
           '<path d="M',
-          cmd.points.map(([x,y],i)=>(i==1?'C':'')+x+','+y).join(','),
+          cmd.points.map(([x,y],i)=>(i==1?'C':'')+x+' '+y).join(' '),
           '"'
         );
         appendFill(fill);
