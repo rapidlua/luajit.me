@@ -41,6 +41,16 @@ module.exports = {
                 test: /graphviz.js/,
                 loader: "string-replace-loader",
                 options: { search: "graphviz.wasm", replace: path.basename(GRAPHVIZ_WASM_DEST) }
+            },
+            {
+                test: /\.lua/, use: 'raw-loader'
+            },
+            {
+                test: /\.lua/, use: {
+                    // trim trailing whitespace
+                    loader: 'string-replace-loader',
+                    options: { flags: '', search: '\\s*$', replace: '' }
+                }
             }
         ]
     },

@@ -719,18 +719,18 @@ const SELECTION_AUTO = 'selection-auto';
 class App extends React.Component {
   constructor(props) {
     super(props);
-    var help = require("raw-loader!./snippets/help.lua");
+    var help = require("./snippets/help.lua");
     var snippets = [
       {label: "blank",      code: ""},
       {label: "help",       code: help},
-      {label: "loops",      code: require("raw-loader!./snippets/loops.lua")},
-      {label: "recursion",  code: require("raw-loader!./snippets/recursion.lua")},
-      {label: "table",      code: require("raw-loader!./snippets/table.lua")},
-      {label: "reduce",     code: require("raw-loader!./snippets/reduce.lua")},
-      {label: "reduce2",    code: require("raw-loader!./snippets/reduce2.lua")},
-      {label: "mandelbrot", code: require("raw-loader!./snippets/mandelbrot.lua")},
-      {label: "jit.off",    code: require("raw-loader!./snippets/jit.off.lua")},
-      {label: "stitching",  code: require("raw-loader!./snippets/stitching.lua")},
+      {label: "loops",      code: require("./snippets/loops.lua")},
+      {label: "recursion",  code: require("./snippets/recursion.lua")},
+      {label: "table",      code: require("./snippets/table.lua")},
+      {label: "reduce",     code: require("./snippets/reduce.lua")},
+      {label: "reduce2",    code: require("./snippets/reduce2.lua")},
+      {label: "mandelbrot", code: require("./snippets/mandelbrot.lua")},
+      {label: "jit.off",    code: require("./snippets/jit.off.lua")},
+      {label: "stitching",  code: require("./snippets/stitching.lua")},
     ];
     this.state = {
       data: {prototypes: [], traces: []},
@@ -870,9 +870,8 @@ class App extends React.Component {
       url: "/run",
       dataType: "json",
       async: true,
-      /* trim trailing whitespace otherwize we get extra empty line */
       data: JSON.stringify({
-        source: this.state.input.replace(/\n$/,''),
+        source: this.state.input,
         target: this.state.target
       }),
       success: function(response) {
