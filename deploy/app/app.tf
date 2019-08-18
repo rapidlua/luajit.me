@@ -80,6 +80,7 @@ resource "digitalocean_droplet" "web" {
   lifecycle { create_before_destroy = true }
   user_data = "app=${var.app_checksum};deploy=${var.deploy_checksum}"
   # should trigger replacement if changed
+  tags = [ "luajit-me" ]
 
   image = var.image_id
   name = "web-${count.index+1}"
@@ -122,6 +123,7 @@ resource "digitalocean_droplet" "compute" {
   lifecycle { create_before_destroy = true }
   user_data = "app=${var.app_checksum};deploy=${var.deploy_checksum}"
   # should trigger replacement if changed
+  tags = [ "luajit-me" ]
 
   image = var.image_id
   name = each.key
