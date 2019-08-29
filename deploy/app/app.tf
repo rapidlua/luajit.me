@@ -44,11 +44,8 @@ resource "digitalocean_record" "www" {
   value = "@"
 }
 
-resource "digitalocean_certificate" "default" {
-  lifecycle { create_before_destroy = true }
+data "digitalocean_certificate" "default" {
   name = "cert-1"
-  type = "lets_encrypt"
-  domains = ["luajit.me", "www.luajit.me"]
 }
 
 resource "digitalocean_loadbalancer" "default" {
@@ -67,7 +64,7 @@ resource "digitalocean_loadbalancer" "default" {
     entry_protocol = "https"
     target_port = 80
     target_protocol = "http"
-    certificate_id = digitalocean_certificate.default.id
+    certificate_id = data.digitalocean_certificate.default.id
   }
   
   redirect_http_to_https = true
