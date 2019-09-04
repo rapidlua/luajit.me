@@ -28,6 +28,7 @@ variable "compute_cluster" {
 
 provider "digitalocean" {
   token = var.do_token
+  version = 1.7
 }
 
 resource "digitalocean_record" "default" {
@@ -166,5 +167,5 @@ resource "null_resource" "update_compute_cluster_users" {
 }
 
 output "compute_cluster" {
-  value = zipmap(keys(digitalocean_droplet.compute), values(digitalocean_droplet.compute).*.id)
+  value = zipmap(keys(digitalocean_droplet.compute), values(digitalocean_droplet.compute).*.created_at)
 }

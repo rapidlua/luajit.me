@@ -68,7 +68,7 @@ resource "digitalocean_droplet" "deploy" {
 
       // terraform
       "apt-get install -y --no-install-recommends unzip",
-      "curl https://releases.hashicorp.com/terraform/0.12.4/terraform_0.12.4_linux_amd64.zip -o terraform.zip",
+      "curl https://releases.hashicorp.com/terraform/0.12.8/terraform_0.12.8_linux_amd64.zip -o terraform.zip",
       "unzip terraform.zip",
       "install terraform /usr/bin",
 
