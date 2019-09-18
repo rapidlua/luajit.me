@@ -2,7 +2,6 @@ import React from "react";
 import {render} from "react-dom";
 
 import {importData} from "./importData.js";
-import graph from "./graph.js";
 import {targets} from "../server/targets.js";
 
 import {AppPanel} from "./AppPanel.js"
@@ -12,6 +11,7 @@ import {ToggleButton} from "./ToggleButton.js";
 import {ModeSwitcher} from "./ModeSwitcher.js";
 import {TraceDetailPanel} from "./TraceDetailPanel.js";
 import {FuncProtoDetailPanel} from "./FuncProtoDetailPanel.js";
+import {TraceBrowserPanel} from "./TraceBrowserPanel.js";
 import {number4} from "./number4.js";
 
 import "./styles.css";
@@ -218,103 +218,6 @@ class PrimaryPanel extends React.Component {
   }
 }
 
-class TraceBrowserPanel extends React.Component {
-  constructor(props) {
-    super(props);
-    this.handleClick = this.handleClick.bind(this);
-    this.handleMouseOver = this.handleMouseOver.bind(this);
-    this.handleMouseOut = this.handleMouseOut.bind(this);
-  }
-  handleClick(e) {
-    this.props.selectItem(e, e.currentTarget.getAttribute("data-trace-id"));
-  }
-  handleMouseOver(e) {
-    this.props.selectTransient(e, e.currentTarget.getAttribute("data-trace-id"));
-  }
-  handleMouseOut(e) {
-    this.props.selectTransient(e, null);
-  }
-  render() {
-    var data = this.props.data;
-    var selection = this.props.selection;
-    var handleClick = this.handleClick;
-    var handleMouseOver = this.handleMouseOver;
-    var handleMouseOut = this.handleMouseOut;
-    var dotJSON = this.props.dotJSON;
-    var content;
-    if (dotJSON) {
-      const noStroke = {stroke:null};
-      const noFontStyles = {fontFamily:null, fontSize:null};
-      content = (
-        <div className="g-wrapper">
-          <svg {...graph.getSVGAttrs(dotJSON, {units:"px"})}>
-            {
-              (dotJSON.objects||[]).map(node=>{
-                const innerHTML = [];
-                const render = graph.createSVGRenderer(innerHTML);
-                node._draw_.filter(cmd=>cmd.op==="e").forEach((cmd,index)=>{
-                  const [x,y,w,h] = cmd.rect;
-                  innerHTML.push(
-                    '<ellipse class="', ["g-ring", "g-outter-ring"][index],
-                    '" cx="', x, '" cy="', y, '" rx="', w, '" ry="', h, '"/>'
-                  );
-                });
-                if (node._ldraw_)
-                  node._ldraw_.forEach(cmd=>render(cmd, noFontStyles));
-                let className = "g-trace-thumb";
-                if (this.props.selection===node.id) className += " active";
-                const trace = data[+node.id.substr(1)];
-                if (trace && trace.info.error) className += " error";
-                return (
-                  <g
-                   key={node.id}
-                   className={className}
-                   data-trace-id={node.id}
-                   onClick={handleClick}
-                   onMouseOver={handleMouseOver}
-                   onMouseOut={handleMouseOut}
-                   dangerouslySetInnerHTML={{__html: innerHTML.join("")}}
-                  />
-                );
-              })
-            }
-            {
-              (dotJSON.edges||[]).map(edge=>{
-                const innerHTML = [];
-                const render = graph.createSVGRenderer(innerHTML);
-                if (edge._draw_) edge._draw_.forEach(render);
-                if (edge._hdraw_) edge._hdraw_.forEach(cmd=>render(cmd, noStroke));
-                if (edge._tdraw_) edge._tdraw_.forEach(cmd=>render(cmd, noStroke));
-                let className = "g-trace-link";
-                const initiator = data[edge.id.substr(1).split(":")[0]];
-                if (initiator && initiator.info.linktype==="stitch") className += " stitch";
-                return (
-                  <g
-                   key={edge.id}
-                   className={className}
-                   dangerouslySetInnerHTML={{__html: innerHTML.join("")}}
-                  />
-                );
-              })
-            }
-          </svg>
-        </div>
-      );
-    }
-    return (
-      <AppPanel
-        className="left-pane"
-        toolbar={this.props.toolbar}
-        content={content}
-        contentOnClick={this.props.selectItem}
-        placeholder="No Traces"
-        panelWidth={this.props.panelWidth}
-        setPanelWidth={this.props.setPanelWidth}
-      />
-    );
-  }
-}
-
 function resolveBcref(data, bcref)
 {
   var match = bcref.match(/BC(\d+):(\d+)/);
@@ -382,54 +285,6 @@ function createLineDecorator(data, trace)
   }
 }
 
-function createDot(traces, topple) {
-  var dot = "digraph{ranksep=.32;edge[arrowsize=.9];node[shape=circle,margin=.007,height=.41,width=0]";
-  if (topple) {
-    dot += ";rankdir=LR";
-    traces = traces.slice().reverse();
-  }
-  // do nodes
-  traces.forEach((trace) => {
-    if (trace) {
-      var info = trace.info;
-      dot = dot + ";" + trace.index + "[id=" + trace.id + (
-        info.parent === undefined ?
-        ",shape=doublecircle" : ""
-      )+ "]";
-    }
-  });
-  // do edges
-  traces.forEach((trace) => {
-    if (trace) {
-      var info = trace.info;
-      // if the trace links back to its parent, output
-      // single bi-directional edge, unless the total
-      // number of nodes is low (2 separate edges look better) or
-      // if link types are different
-      if (traces.length > 3 && info.link !== undefined &&
-          info.link == info.parent &&
-          traces[info.parent].info.linktype != "stitch")
-      {
-        dot = dot + ";" + info.parent + "->" + trace.index + (
-          "[id=\"T"+info.parent + ":"+trace.id+"\", dir=both]"
-        );
-      } else {
-        if (info.link !== undefined) {
-          dot = dot + ";" + trace.index + "->" + info.link + (
-            "[id=\""+trace.id + ":T"+info.link+"\"]"
-          );
-        }
-        if (info.parent !== undefined) {
-          dot = dot + ";" + info.parent + "->" + trace.index + (
-            "[id=\"T"+info.parent + ":"+trace.id+"\"]"
-          );
-        }
-      }
-    }
-  });
-  return dot + "}";
-}
-
 const SELECTION_AUTO = 'selection-auto';
 
 class App extends React.Component {
@@ -478,7 +333,6 @@ class App extends React.Component {
       {key:"ir",   label:"IR"},
       {key:"asm",  label:"Asm"}
     ];
-    this.toppleTraceGraph = false;
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
     this.spawnEditor = this.spawnEditor.bind(this);
@@ -606,27 +460,6 @@ class App extends React.Component {
      * populated hence the App looks better on the first glance :) */
     if (this.state.selection == SELECTION_AUTO)
       update.selection = data.traces && data.traces[0] ? 'T0' : 'P0';
-    if (data.traces.length !== 0) {
-      graph.renderJSON(
-        createDot(data.traces, this.toppleTraceGraph),
-        (error, result) => {
-          const [llx,lly,urx,ury] = result.bb.split(',');
-          // toople if width exceeds height by 64px or more
-          if (urx - llx - lly + ury > 64 && this.state.data === data) {
-            graph.renderJSON(
-              createDot(
-                data.traces, this.toppleTraceGraph = !this.toppleTraceGraph
-              ),
-              (error, result)=>this.setState({dotJSON:result})
-            );
-          } else {
-            this.setState({dotJSON: result});
-          }
-        }
-      );
-    } else {
-      update.dotJSON = null;
-    }
     this.setState(update);
   }
   selectMode(e, mode) {

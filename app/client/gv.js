@@ -1,4 +1,4 @@
-export const renderJSON = (function(){
+export const gvRenderJSON = (function(){
   const worker = require('./graphviz/graphviz.worker')();
   const queue = [];
   const stack = [];
@@ -36,7 +36,12 @@ function htmlEscape(text) {
   });
 }
 
-export function getSVGAttrs(dotJSON, options) {
+export function gvJSONGetExtents(dotJSON) {
+  const [llx, lly, urx, ury] = dotJSON.bb.split(',');
+  return [/*width*/ urx - llx, /*height*/ lly - ury];
+}
+
+export function gvJSONGetSVGAttrs(dotJSON, options) {
   const units = options && options.units || 'pt';
   const margin = options && options.margin !== undefined ? options.margin : 4;
   const [llx,lly,urx,ury] = dotJSON.bb.split(',');
@@ -49,7 +54,7 @@ export function getSVGAttrs(dotJSON, options) {
   }
 }
 
-export function createSVGRenderer(target) {
+export function gvJSONCreateSVGRenderer(target) {
   const context = {};
   function appendFill(fill) {
     if (fill===undefined) fill = context.fill;
@@ -142,5 +147,3 @@ export function createSVGRenderer(target) {
     }
   }
 }
-
-export default {getSVGAttrs, createSVGRenderer, renderJSON};
