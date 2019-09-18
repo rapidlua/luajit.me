@@ -21,10 +21,11 @@
     "/server/targets.js"
   ],
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-loader": "^7.1.5",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-react": "^6.24.1",
+    "@babel/core": "^7.0.0",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
+    "@babel/preset-env": "^7.0.0",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.0",
     "copy-webpack-plugin": "^4.5.2",
     "css-chunks-html-webpack-plugin": "^1.1.1",
     "css-loader": "^3.0.0",
