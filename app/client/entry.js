@@ -2,10 +2,12 @@ import React from "react";
 import {render} from "react-dom";
 
 import {importData} from "./importData.js";
-import {PropListView} from "./PropListView.js";
-import {CodeView} from "./codeView.js";
 import graph from "./graph.js";
 import {targets} from "../server/targets.js";
+
+import {PropListView} from "./PropListView.js";
+import {CodeView} from "./codeView.js";
+import {ToggleButton} from "./ToggleButton.js";
 
 import "./styles.css";
 
@@ -15,18 +17,6 @@ function number4(i) {
   return s.substr(s.length-4)
 }
 
-class ToggleButton extends React.Component {
-  render() {
-    return (
-      <span
-        className={"toolbar-btn toolbar-sw-" + (this.props.isOn ? "on" : "off")}
-        onClick={this.props.onClick}
-      >
-        {this.props.label}
-      </span>
-    );
-  }
-}
 
 class ModeSwitcher extends React.Component {
   render() {

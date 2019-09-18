@@ -1,0 +1,27 @@
+/* Note: doubling .toolbar-sw-on in the first selector to increaase
+ * specificity (to prevent toolbar-btn from overriding the color). */
+.toolbar-sw-on.toolbar-sw-on,
+.toolbar-sw-on:hover, .toolbar-sw-on:active,
+.presentation .toolbar-sw-on {
+  color: rgb(39, 134, 243);
+  border-color: rgb(39, 134, 243);
+}
+
+.toolbar-em .toolbar-sw-on {
+  color: #fff;
+  background-color: rgb(39, 134, 243);
+}
+
+.toolbar-em .toolbar-sw-on:active {
+  background-color: rgb(36, 109, 233);
+}
+
+.toolbar-em .toolbar-sw-off:hover {
+  color: white;
+  background-color: rgb(147, 195, 249);
+}
+
+.toolbar-em .toolbar-sw-off:active {
+  color: white;
+  background-color: rgb(136, 189, 248);
+}
