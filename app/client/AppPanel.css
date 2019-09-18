@@ -1,0 +1,44 @@
+.pane-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  z-index: 2000;
+  cursor: col-resize;
+}
+
+.presentation .pane-resizer {
+  width: 8px;
+}
+
+.content-host {
+  flex: 1;
+  position: relative;
+  cursor: default;
+}
+
+.content-area {
+  display: block;
+  padding: 12px;
+  overflow: auto;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.content-placeholder {
+  overflow: hidden;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #c0c0c0;
+}
+

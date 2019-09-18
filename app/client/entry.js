@@ -5,6 +5,7 @@ import {importData} from "./importData.js";
 import graph from "./graph.js";
 import {targets} from "../server/targets.js";
 
+import {AppPanel} from "./AppPanel.js"
 import {PropListView} from "./PropListView.js";
 import {CodeView} from "./codeView.js";
 import {ToggleButton} from "./ToggleButton.js";
@@ -16,88 +17,6 @@ import "./styles.css";
 function number4(i) {
   var s = "0000"+i
   return s.substr(s.length-4)
-}
-
-class AppPanel extends React.Component {
-  constructor(props) {
-    super(props);
-    this.handleMouseDown = this.handleMouseDown.bind(this);
-    this.handleMouseUp = this.handleMouseUp.bind(this);
-    this.handleMouseMove = this.handleMouseMove.bind(this);
-  }
-  handleMouseDown(e) {
-    var parentNode = e.target.parentNode;
-    var panelRect = parentNode.getBoundingClientRect();
-    this.dragStartX = e.clientX;
-    this.dragDir = (
-      e.clientX < panelRect.left + panelRect.width/2 ? -1 : +1
-    );
-    this.resizee = parentNode;
-    this.initialWidth = panelRect.width;
-    var overlay = this.overlay;
-    if (!overlay) {
-      overlay = document.createElement("div");
-      overlay.setAttribute(
-          "style",
-          `position: absolute;
-          top: 0;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          z-index: 10000;
-          cursor: col-resize;`
-      );
-      overlay.addEventListener("mousemove", this.handleMouseMove);
-      this.overlay = overlay;
-    }
-    $("#app").append(overlay);
-    $(window).on("mouseup", this.handleMouseUp);
-    e.preventDefault();
-    e.stopPropagation();
-  }
-  computeWidth(e) {
-    var delta = this.dragDir*(e.clientX - this.dragStartX);
-    var width = this.initialWidth + delta;
-    return Math.min(400, width > 200 ? width : 0);
-  }
-  handleMouseUp(e) {
-    $(window).off("mouseup", this.handleMouseUp);
-    var overlay = this.overlay;
-    if (overlay)
-      overlay.remove();
-    var setPanelWidth = this.props.setPanelWidth;
-    if (setPanelWidth)
-      setPanelWidth(this.computeWidth(e));
-  }
-  handleMouseMove(e) {
-    var delta = this.dragDir*(e.clientX - this.dragStartX);
-    $(this.resizee).css("width", this.computeWidth(e) + "px");
-  }
-  render() {
-    var content   = this.props.content;
-    var noContent = !content || Array.isArray(content) && content.length == 0;
-    return (
-      <div
-        className={this.props.className}
-        style={{width:(this.props.panelWidth || 300)+"px"}}
-      >
-        {this.props.toolbar}
-        <div className="content-host" onClick={this.props.contentOnClick}>
-        {
-          noContent ?
-          <div className="content-placeholder">
-            {this.props.placeholder || "No Data"}
-          </div> :
-          <div className="content-area">{content}</div>
-        }
-        </div>
-        <div
-            className="pane-resizer"
-            onMouseDown={this.handleMouseDown}
-        />
-      </div>
-    )
-  }
 }
 
 function findLineByBytecodeIndex(lines, index)
