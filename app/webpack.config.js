@@ -15,7 +15,7 @@ const GRAPHVIZ_WASM_DEST =
     +'.wasm';
 
 module.exports = {
-    entry: __dirname + "/client/entry.jsx",
+    entry: __dirname + "/client/entry.js",
     mode: process.env.NODE_ENV || "production",
     output: {
         publicPath: '/static/',
@@ -26,7 +26,7 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.jsx?/,
+                test: /\.js/,
                 loader: "babel-loader",
                 exclude: /node_modules/,
                 query: { presets: ['env', 'react'] }

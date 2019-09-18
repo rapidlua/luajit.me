@@ -1,9 +1,9 @@
 import React from "react";
 import {render} from "react-dom";
 
-import {importData} from "./importData.jsx";
-import {PropListView} from "./propListView.jsx";
-import {CodeView} from "./codeView.jsx";
+import {importData} from "./importData.js";
+import {PropListView} from "./propListView.js";
+import {CodeView} from "./codeView.js";
 import graph from "./graph.js";
 import {targets} from "../server/targets.js";
 
