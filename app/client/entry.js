@@ -8,6 +8,7 @@ import {targets} from "../server/targets.js";
 import {PropListView} from "./PropListView.js";
 import {CodeView} from "./codeView.js";
 import {ToggleButton} from "./ToggleButton.js";
+import {ModeSwitcher} from "./ModeSwitcher.js";
 
 import "./styles.css";
 
@@ -15,26 +16,6 @@ import "./styles.css";
 function number4(i) {
   var s = "0000"+i
   return s.substr(s.length-4)
-}
-
-
-class ModeSwitcher extends React.Component {
-  render() {
-    var currentMode = this.props.currentMode;
-    var selectMode = this.props.selectMode;
-    return (
-      <div className="toolbar-group toolbar-em">
-        {this.props.modes.map((mode) => (
-          <ToggleButton
-            key     = {mode.key}
-            isOn    = {currentMode == mode.key}
-            onClick = {(e)=>selectMode(e, mode.key)}
-            label   = {mode.label || mode.name}
-          />
-        ))}
-      </div>
-    )
-  }
 }
 
 class AppPanel extends React.Component {
