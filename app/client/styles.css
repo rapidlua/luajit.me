@@ -334,34 +334,6 @@ body {
 
 /***********************************************************************/
 
-.prop-list-view {
-    display: table;
-}
-
-.prop-list-item {
-    display: table-row;
-}
-
-.prop-list-item-label, .prop-list-item-value {
-    display: table-cell;
-}
-
-.prop-list-item-label {
-    font-weight: 500;
-    text-align: right;
-    white-space: nowrap;
-    padding-right: 16px;
-}
-
-.prop-list-item-label:after {
-    content: ":";
-}
-
-.prop-list-item-value .error {
-    color: red;
-    font-style: italic;
-}
-
 .xcode .proto-ref {
     font-weight: bold;
 }

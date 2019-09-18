@@ -2,7 +2,7 @@ import React from "react";
 import {render} from "react-dom";
 
 import {importData} from "./importData.js";
-import {PropListView} from "./propListView.js";
+import {PropListView} from "./PropListView.js";
 import {CodeView} from "./codeView.js";
 import graph from "./graph.js";
 import {targets} from "../server/targets.js";
