@@ -352,11 +352,11 @@ class App extends React.Component {
     this.setWidthR = this.setWidthR.bind(this);
   }
   componentDidMount() {
-    $(document.body).on("keydown", this.handleKeyDown);
+    document.body.addEventListener("keydown", this.handleKeyDown);
     this.handleSubmit();
   }
   componenWillUnMount() {
-    $(document.body).off("keydown", this.handleKeyDown);
+    document.body.removeEventListener("keydown", this.handleKeyDown);
   }
   handleKeyDown(e) {
     if (e.metaKey || e.target.tagName == "INPUT" ||
@@ -435,22 +435,16 @@ class App extends React.Component {
   }
   handleSubmit(e) {
     e && e.stopPropagation();
-    $.ajax({
-      type: "POST",
-      url: "/run",
-      dataType: "json",
-      async: true,
-      data: JSON.stringify({
-        source: this.state.input,
-        target: this.state.target
-      }),
-      success: function(response) {
-        this.handleResponse(response);
-      }.bind(this),
-      error: function(request, _, exception) {
-        this.handleResponse({error: request.responseText || exception || "Network error"});
-      }.bind(this)
-    })
+    const req = new XMLHttpRequest();
+    req.open("POST", "run");
+    req.addEventListener("load", () => {
+      this.handleResponse(JSON.parse(req.responseText));
+    });
+    req.addEventListener("error", (e) => {
+      console.error(e);
+      this.handleResponse({error: "Network error"});
+    });
+    req.send(JSON.stringify({source: this.state.input, target: this.state.target}));
   }
   handleResponse(response) {
     var data = importData(response);

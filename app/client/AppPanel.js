@@ -27,8 +27,8 @@ export class AppPanel extends React.Component {
       overlay.addEventListener("mousemove", this.handleMouseMove);
       this.overlay = overlay;
     }
-    $("#app").append(overlay);
-    $(window).on("mouseup", this.handleMouseUp);
+    document.getElementById("app").append(overlay);
+    window.addEventListener("mouseup", this.handleMouseUp);
     e.preventDefault();
     e.stopPropagation();
   }
@@ -38,7 +38,7 @@ export class AppPanel extends React.Component {
     return Math.min(400, width > 200 ? width : 0);
   }
   handleMouseUp = (e) => {
-    $(window).off("mouseup", this.handleMouseUp);
+    window.removeEventListener("mouseup", this.handleMouseUp);
     const overlay = this.overlay;
     if (overlay) overlay.remove();
     const setPanelWidth = this.props.setPanelWidth;
@@ -46,7 +46,7 @@ export class AppPanel extends React.Component {
   }
   handleMouseMove = (e) => {
     const delta = this.dragDir*(e.clientX - this.dragStartX);
-    $(this.resizee).css("width", this.computeWidth(e) + "px");
+    this.resizee.setAttribute("style", "width: " + this.computeWidth(e) + "px;");
   }
   render() {
     const content   = this.props.content;
