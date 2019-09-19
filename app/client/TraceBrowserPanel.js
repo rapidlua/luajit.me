@@ -9,12 +9,8 @@ import {
 
 import "./TraceBrowserPanel.css";
 
-function createDot(traces, topple) {
+function createDot(traces) {
   let dot = "digraph{ranksep=.32;edge[arrowsize=.9];node[shape=circle,margin=.007,height=.41,width=0]";
-  if (topple) {
-    dot += ";rankdir=LR";
-    traces = traces.slice().reverse();
-  }
   // do nodes
   traces.forEach((trace) => {
     if (trace) {
@@ -57,35 +53,16 @@ function createDot(traces, topple) {
 
 export class TraceBrowserPanel extends React.PureComponent {
   state = {graph: null};
-  updateGraph = memoizeOne(debounce((() => {
-    let topple = false;
-    return (traceList) => gvRenderJSON(
-      createDot(traceList, topple), (error, result) => {
-        if (traceList !== this.props.data) return;
-        if (error) {
-          this.setState({graph: null});
-          console.error(error);
-          return;
-        }
-        const [width, height] = gvJSONGetExtents(result);
-        if (width < height + 60)
-          this.setState({graph: result});
-        else
-          gvRenderJSON(
-            createDot(traceList, !topple), (error, result2) => {
-              if (traceList !== this.props.data) return;
-              if (error) {
-                this.setState({graph: null});
-                console.error(error);
-                return;
-              }
-              const [width2] = gvJSONGetExtents(result2);
-              this.setState({
-                graph: width < width2 ? result : (topple = !topple, result2)
-              });
-          });
-    });
-  })(), 250, true));
+  updateGraph = memoizeOne(debounce(traceList => gvRenderJSON(
+    createDot(traceList), (error, result) => {
+      if (traceList !== this.props.data) return;
+      if (error) {
+        this.setState({graph: null});
+        console.error(error);
+        return;
+      }
+      this.setState({graph: result});
+  }), 250, true));
   handleClick = (e) => {
     this.props.selectItem(e, e.currentTarget.getAttribute("data-trace-id"));
   }
@@ -97,20 +74,20 @@ export class TraceBrowserPanel extends React.PureComponent {
   }
   render() {
     const data = this.props.data;
-    const dotJSON = data.length ? (this.updateGraph(data), this.state.graph) : null;
+    const graph = data.length ? (this.updateGraph(data), this.state.graph) : null;
     const selection = this.props.selection;
-    const handleClick = this.handleClick;
-    const handleMouseOver = this.handleMouseOver;
-    const handleMouseOut = this.handleMouseOut;
     let content;
-    if (dotJSON) {
-      const noStroke = {stroke:null};
-      const noFontStyles = {fontFamily:null, fontSize:null};
+    if (graph) {
+      const [width, height] = gvJSONGetExtents(graph);
+      const swapAxes = width > 250 && height < width || height < 250 && width < height;
+      const arrowHeadStyle = {stroke:null};
+      const labelStyle = {fontFamily:null, fontSize:null};
       content = (
         <div className="g-wrapper">
-          <svg {...gvJSONGetSVGAttrs(dotJSON, {units:"px"})}>
+          <svg {...gvJSONGetSVGAttrs(graph, {units:"px", swapAxes})}>
+            <g transform={swapAxes ? "matrix(0,1,1,0,0,0)" : null}>
             {
-              (dotJSON.objects||[]).map(node=>{
+              (graph.objects||[]).map(node=>{
                 const innerHTML = [];
                 const render = gvJSONCreateSVGRenderer(innerHTML);
                 node._draw_.filter(cmd=>cmd.op==="e").forEach((cmd,index)=>{
@@ -119,9 +96,11 @@ export class TraceBrowserPanel extends React.PureComponent {
                     '<ellipse class="', ["g-ring", "g-outter-ring"][index],
                     '" cx="', x, '" cy="', y, '" rx="', w, '" ry="', h, '"/>'
                   );
+                  if (swapAxes)
+                    labelStyle.transform = "matrix(0,1,1,0,"+(x-y)+","+(y-x)+")";
                 });
                 if (node._ldraw_)
-                  node._ldraw_.forEach(cmd=>render(cmd, noFontStyles));
+                  node._ldraw_.forEach(cmd=>render(cmd, labelStyle));
                 let className = "g-trace-thumb";
                 if (this.props.selection===node.id) className += " active";
                 const trace = data[+node.id.substr(1)];
@@ -131,21 +110,21 @@ export class TraceBrowserPanel extends React.PureComponent {
                    key={node.id}
                    className={className}
                    data-trace-id={node.id}
-                   onClick={handleClick}
-                   onMouseOver={handleMouseOver}
-                   onMouseOut={handleMouseOut}
+                   onClick={this.handleClick}
+                   onMouseOver={this.handleMouseOver}
+                   onMouseOut={this.handleMouseOut}
                    dangerouslySetInnerHTML={{__html: innerHTML.join("")}}
                   />
                 );
               })
             }
             {
-              (dotJSON.edges||[]).map(edge=>{
+              (graph.edges||[]).map(edge=>{
                 const innerHTML = [];
                 const render = gvJSONCreateSVGRenderer(innerHTML);
                 if (edge._draw_) edge._draw_.forEach(render);
-                if (edge._hdraw_) edge._hdraw_.forEach(cmd=>render(cmd, noStroke));
-                if (edge._tdraw_) edge._tdraw_.forEach(cmd=>render(cmd, noStroke));
+                if (edge._hdraw_) edge._hdraw_.forEach(cmd=>render(cmd, arrowHeadStyle));
+                if (edge._tdraw_) edge._tdraw_.forEach(cmd=>render(cmd, arrowHeadStyle));
                 let className = "g-trace-link";
                 const initiator = data[edge.id.substr(1).split(":")[0]];
                 if (initiator && initiator.info.linktype==="stitch") className += " stitch";
@@ -158,6 +137,7 @@ export class TraceBrowserPanel extends React.PureComponent {
                 );
               })
             }
+            </g>
           </svg>
         </div>
       );

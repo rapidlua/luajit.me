@@ -45,8 +45,9 @@ export function gvJSONGetSVGAttrs(dotJSON, options) {
   const units = options && options.units || 'pt';
   const margin = options && options.margin !== undefined ? options.margin : 4;
   const [llx,lly,urx,ury] = dotJSON.bb.split(',');
-  const width = urx - llx + 2*margin;
-  const height = lly - ury + 2*margin;
+  let width = urx - llx + 2*margin;
+  let height = lly - ury + 2*margin;
+  if (options && options.swapAxes) [width,height] = [height,width];
   return {
     width: width + units,
     height: height + units,
@@ -64,11 +65,15 @@ export function gvJSONCreateSVGRenderer(target) {
     if (stroke===undefined) stroke = context.stroke;
     if (stroke) target.push(' stroke="', htmlEscape(stroke), '"');
   }
+  function appendTransform(transform) {
+    if (transform) target.push(' transform="', transform, '"');
+  }
   return function(cmd, overrideContext) {
-    let fill, stroke;
+    let fill, stroke, transform;
     if (overrideContext) {
       fill = overrideContext.fill;
       stroke = overrideContext.stroke;
+      transform = overrideContext.transform;
     }
     switch (cmd.op) {
     case 'c':
@@ -92,6 +97,7 @@ export function gvJSONCreateSVGRenderer(target) {
         );
         appendFill(fill);
         appendStroke(stroke);
+        appendTransform(transform);
         target.push('/>');
       } break;
     case 'p':
@@ -105,6 +111,7 @@ export function gvJSONCreateSVGRenderer(target) {
         );
         appendFill(fill);
         appendStroke(stroke);
+        appendTransform(transform);
         target.push('/>');
       } break;
     case 'b':
@@ -118,6 +125,7 @@ export function gvJSONCreateSVGRenderer(target) {
         );
         appendFill(fill);
         appendStroke(stroke);
+        appendTransform(transform);
         target.push('/>');
       } break;
     case 'T':
@@ -138,6 +146,7 @@ export function gvJSONCreateSVGRenderer(target) {
         );
         appendFill(fill);
         appendStroke(stroke);
+        appendTransform(transform);
         if (fontFamily)
           target.push(' font-family="', htmlEscape(fontFamily), '"');
         if (fontSize)
