@@ -333,23 +333,6 @@ class App extends React.Component {
       {key:"ir",   label:"IR"},
       {key:"asm",  label:"Asm"}
     ];
-    this.handleKeyDown = this.handleKeyDown.bind(this);
-    this.handleTextChange = this.handleTextChange.bind(this);
-    this.spawnEditor = this.spawnEditor.bind(this);
-    this.killEditor = this.killEditor.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.selectMode = this.selectMode.bind(this);
-    this.selectProtoMode = this.selectProtoMode.bind(this);
-    this.selectTraceMode = this.selectTraceMode.bind(this);
-    this.selectItem = this.selectItem.bind(this);
-    this.selectTransient = this.selectTransient.bind(this);
-    this.toggleOption = this.toggleOption.bind(this);
-    this.toolbarHover = this.toolbarHover.bind(this);
-    this.toolbarUnhover = this.toolbarUnhover.bind(this);
-    this.installSnippet = this.installSnippet.bind(this);
-    this.setTarget = this.setTarget.bind(this);
-    this.setWidthL = this.setWidthL.bind(this);
-    this.setWidthR = this.setWidthR.bind(this);
   }
   componentDidMount() {
     document.body.addEventListener("keydown", this.handleKeyDown);
@@ -358,7 +341,7 @@ class App extends React.Component {
   componenWillUnMount() {
     document.body.removeEventListener("keydown", this.handleKeyDown);
   }
-  handleKeyDown(e) {
+  handleKeyDown = (e) => {
     if (e.metaKey || e.target.tagName == "INPUT" ||
         e.target.tagName == "TEXTAREA")
     {
@@ -410,7 +393,7 @@ class App extends React.Component {
       }
     }
   }
-  toggleOption(e, option) {
+  toggleOption = (e, option) => {
     e.stopPropagation();
     var upd = {};
     upd[option] = !this.state[option];
@@ -423,17 +406,17 @@ class App extends React.Component {
     }
     this.setState(upd);
   }
-  handleTextChange(e) {
+  handleTextChange = (e) => {
     this.setState({input: e.target.value})
   }
-  spawnEditor(e) {
+  spawnEditor = (e) => {
     this.setState({showEditorOverlay: true});
   }
-  killEditor(e) {
+  killEditor = (e) => {
     this.handleSubmit(e);
     this.setState({showEditorOverlay: false});
   }
-  handleSubmit(e) {
+  handleSubmit = (e) => {
     e && e.stopPropagation();
     const req = new XMLHttpRequest();
     req.open("POST", "run");
@@ -464,30 +447,30 @@ class App extends React.Component {
       update.selection = data.traces && data.traces[0] ? 'T0' : 'P0';
     this.setState(update);
   }
-  selectMode(e, mode) {
+  selectMode = (e, mode) => {
     e.stopPropagation();
     this.setState({mode: mode})
   }
-  selectProtoMode(e, mode) {
+  selectProtoMode = (e, mode) => {
     e.stopPropagation();
     this.setState({protoMode: mode})
   }
-  selectTraceMode(e, mode) {
+  selectTraceMode = (e, mode) => {
     e.stopPropagation();
     this.setState({traceMode: mode})
   }
-  selectItem(e, id) {
+  selectItem = (e, id) => {
     e.stopPropagation();
     this.setState({selection: id})
   }
-  selectTransient(e, id) {
+  selectTransient = (e, id) => {
     e.stopPropagation();
     this.setState({transientSelection: id})
   }
-  toolbarHover() {
+  toolbarHover = () => {
     this.setState({toolbarHover: true});
   }
-  toolbarUnhover() {
+  toolbarUnhover = () => {
     this.setState({toolbarHover: false});
   }
   makePrimaryToolbar() {
@@ -576,13 +559,13 @@ class App extends React.Component {
       </div>
     );
   }
-  setWidthL(width) {
+  setWidthL = (width) => {
     this.setState({
       showLeftPanel: width!=0,
       widthL: Math.max(200, width)
     });
   }
-  setWidthR(width) {
+  setWidthR = (width) => {
     this.setState({
       showRightPanel: width!=0,
       widthR: Math.max(200, width)
@@ -637,7 +620,7 @@ class App extends React.Component {
       />
     );
   }
-  installSnippet(e) {
+  installSnippet = (e) => {
     var snippets = this.state.snippets;
     var snippet = snippets && snippets[
       +e.target.getAttribute("data-snippet-id")
@@ -645,7 +628,7 @@ class App extends React.Component {
     if (snippet)
       this.setState({input: snippet.code.replace(/\s*$/,"")});
   }
-  setTarget(e) {
+  setTarget = (e) => {
     this.setState({target: e.target.value});
   }
   render () {
@@ -683,7 +666,7 @@ class App extends React.Component {
         }
       >
         {
-          !this.state.showEditorOverlay ? "" :
+          !this.state.showEditorOverlay ? null :
           <div className="editor-overlay" onClick={this.killEditor}>
             <a
               className="github-url"
@@ -725,7 +708,7 @@ class App extends React.Component {
           </div>
         }
         {
-          !this.state.showTopPanel ? "" :
+          !this.state.showTopPanel ? null :
           <div
             className="top-pane"
             onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
@@ -738,7 +721,7 @@ class App extends React.Component {
         }
         <div className="app-main">
           {
-            !this.state.showLeftPanel ? "" :
+            !this.state.showLeftPanel ? null :
             <TraceBrowserPanel
               toolbar={this.makeTraceBrowserToolbar()}
               data={data.traces}
@@ -760,7 +743,7 @@ class App extends React.Component {
             lineDecorator={lineDecorator}
           />
           {
-            !this.state.showRightPanel ? "" : this.makeRightPanel()
+            !this.state.showRightPanel ? null : this.makeRightPanel()
           }
         </div>
       </div>
