@@ -1,10 +1,7 @@
 import {debounce} from "./debounce.js";
 import React from "react";
 import {AppPanel} from "./AppPanel.js";
-import {
-  gvRenderJSON, gvJSONGetExtents, gvJSONGetSVGAttrs,
-  gvJSONCreateSVGRenderer
-} from "./gv.js";
+import * as gv from "./gv.js";
 
 import "./TraceBrowserPanel.css";
 
@@ -59,7 +56,7 @@ export class TraceBrowserPanel extends React.PureComponent {
         this.setState({graph: null});
         return;
       }
-      gvRenderJSON(
+      gv.renderJSON(
         createDot(traceList), (error, result) => {
           if (traceList !== this.props.data) return;
           if (error) {
@@ -98,18 +95,18 @@ export class TraceBrowserPanel extends React.PureComponent {
     const selection = this.props.selection;
     let content;
     if (graph) {
-      const [width, height] = gvJSONGetExtents(graph);
+      const [width, height] = gv.jsonGetExtents(graph);
       const swapAxes = width > 250 && height < width || height < 250 && width < height;
       const arrowHeadStyle = {stroke:null};
       const labelStyle = {fontFamily:null, fontSize:null};
       content = (
         <div className="g-wrapper">
-          <svg {...gvJSONGetSVGAttrs(graph, {units:"px", swapAxes})}>
+          <svg {...gv.jsonGetSVGAttrs(graph, {units:"px", swapAxes})}>
             <g transform={swapAxes ? "matrix(0,1,1,0,0,0)" : null}>
             {
               (graph.objects||[]).map(node=>{
                 const innerHTML = [];
-                const render = gvJSONCreateSVGRenderer(innerHTML);
+                const render = gv.jsonCreateSVGRenderer(innerHTML);
                 node._draw_.filter(cmd=>cmd.op==="e").forEach((cmd,index)=>{
                   const [x,y,w,h] = cmd.rect;
                   innerHTML.push(
@@ -141,7 +138,7 @@ export class TraceBrowserPanel extends React.PureComponent {
             {
               (graph.edges||[]).map(edge=>{
                 const innerHTML = [];
-                const render = gvJSONCreateSVGRenderer(innerHTML);
+                const render = gv.jsonCreateSVGRenderer(innerHTML);
                 if (edge._draw_) edge._draw_.forEach(render);
                 if (edge._hdraw_) edge._hdraw_.forEach(cmd=>render(cmd, arrowHeadStyle));
                 if (edge._tdraw_) edge._tdraw_.forEach(cmd=>render(cmd, arrowHeadStyle));
