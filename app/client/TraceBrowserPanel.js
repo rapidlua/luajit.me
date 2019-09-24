@@ -1,5 +1,4 @@
-import {debounce} from "debounce";
-import memoizeOne from "memoize-one";
+import {debounce} from "./debounce.js";
 import React from "react";
 import {AppPanel} from "./AppPanel.js";
 import {
@@ -53,16 +52,37 @@ function createDot(traces) {
 
 export class TraceBrowserPanel extends React.PureComponent {
   state = {graph: null};
-  updateGraph = memoizeOne(debounce(traceList => gvRenderJSON(
-    createDot(traceList), (error, result) => {
-      if (traceList !== this.props.data) return;
-      if (error) {
+  componentDidMount() {
+    const updateGraph = (traceList) => {
+      if (!traceList) return;
+      if (!traceList.length) {
         this.setState({graph: null});
-        console.error(error);
         return;
       }
-      this.setState({graph: result});
-  }), 250, true));
+      gvRenderJSON(
+        createDot(traceList), (error, result) => {
+          if (traceList !== this.props.data) return;
+          if (error) {
+            this.setState({graph: null});
+            console.error(error);
+            return;
+          }
+          this.setState({graph: result});
+      });
+    }
+    updateGraph(this.props.data);
+    const updateGraphDebounced = debounce(updateGraph, 250);
+    this.componentWillUnmount = () => updateGraphDebounced.clear();
+    this.componentDidUpdate = (prevProps) => {
+      if (this.props.data === prevProps.data) return;
+      if (updateGraphDebounced.isPending)
+        updateGraphDebounced(this.props.data);
+      else {
+        updateGraph(this.props.data);
+        updateGraphDebounced();
+      }
+    }
+  }
   handleClick = (e) => {
     this.props.selectItem(e, e.currentTarget.getAttribute("data-trace-id"));
   }
@@ -74,7 +94,7 @@ export class TraceBrowserPanel extends React.PureComponent {
   }
   render() {
     const data = this.props.data;
-    const graph = data.length ? (this.updateGraph(data), this.state.graph) : null;
+    const graph = this.state.graph;
     const selection = this.props.selection;
     let content;
     if (graph) {
