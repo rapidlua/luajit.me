@@ -438,7 +438,15 @@ class App extends React.Component {
     const req = new XMLHttpRequest();
     req.open("POST", "run");
     req.addEventListener("load", () => {
-      this.handleResponse(JSON.parse(req.responseText));
+      try {
+        this.handleResponse(
+          req.status === 200 ? JSON.parse(req.responseText)
+          : {error: req.responseText}
+        );
+      } catch (e) {
+        console.error(e);
+        this.handleResponse({error: "Bad response"});
+      }
     });
     req.addEventListener("error", (e) => {
       console.error(e);
