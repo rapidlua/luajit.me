@@ -5,7 +5,6 @@
 awesome = 'foobar' .. 1;
 
 -- Press [Edit] to open code editor.
--- Press [Run] to re-run code.
 
 -- Choose [Lua] / [Bytecode] / [Mixed] display mode.
 -- This will display either a source code,

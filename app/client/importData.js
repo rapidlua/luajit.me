@@ -139,7 +139,7 @@ function getSourceLines(sourceFiles, sourceId, cache) {
 }
 
 export function importData(jsonResponse) {
-  var result = {error: jsonResponse.error}
+  var result = {error: jsonResponse.error, input: jsonResponse.input}
   var sourceFiles = jsonResponse.sourcefiles;
   var prototypes = jsonResponse.prototypes;
   var traces = jsonResponse.traces;

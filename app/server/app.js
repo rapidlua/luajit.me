@@ -17,7 +17,7 @@ app.set('etag', false);
 const runQueue = new require('async-limiter')({ concurrency: CONCURRENCY });
 app.post('/run', jsonParser, function(req, res) {
 
-    if (typeof req.body.source !== 'string')
+    if (typeof req.body.text !== 'string')
         return res.status(400).send('Bad request');
 
     if (runQueue.length > JOBS_MAX)
@@ -25,7 +25,7 @@ app.post('/run', jsonParser, function(req, res) {
 
     // Safari quirk: replaces spaces with non-breaking spaces
     // in a textarea with white-space: nowrap style
-    const source = req.body.source.replace(/\xa0/g, ' ');
+    const source = req.body.text.replace(/\xa0/g, ' ');
 
     function socketOnClose() {
         runQueue.splice(runQueue.jobs.indexOf(doRun), 1);

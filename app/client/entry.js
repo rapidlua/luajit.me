@@ -1,9 +1,12 @@
+import {debounce} from "./debounce";
+
 import React from "react";
 import {render} from "react-dom";
 
 import {importData} from "./importData.js";
 import {targets} from "../server/targets.js";
 
+import {ProgressIndicator} from "./ProgressIndicator.js";
 import {AppPanel} from "./AppPanel.js"
 import {PropListView} from "./PropListView.js";
 import {CodeView} from "./codeView.js";
@@ -13,6 +16,8 @@ import {TraceDetailPanel} from "./TraceDetailPanel.js";
 import {FuncProtoDetailPanel} from "./FuncProtoDetailPanel.js";
 import {TraceBrowserPanel} from "./TraceBrowserPanel.js";
 import {number4} from "./number4.js";
+
+import * as Action from "./Action.js";
 
 import "./styles.css";
 
@@ -287,59 +292,126 @@ function createLineDecorator(data, trace)
 
 const SELECTION_AUTO = 'selection-auto';
 
+const snippets = [
+  { label: "blank",      text: "" },
+  { label: "help",       text: require("./snippets/help.lua") },
+  { label: "loops",      text: require("./snippets/loops.lua") },
+  { label: "recursion",  text: require("./snippets/recursion.lua") },
+  { label: "table",      text: require("./snippets/table.lua") },
+  { label: "reduce",     text: require("./snippets/reduce.lua") },
+  { label: "reduce2",    text: require("./snippets/reduce2.lua") },
+  { label: "mandelbrot", text: require("./snippets/mandelbrot.lua") },
+  { label: "jit.off",    text: require("./snippets/jit.off.lua") },
+  { label: "stitching",  text: require("./snippets/stitching.lua") },
+];
+
 class App extends React.Component {
-  constructor(props) {
-    super(props);
-    var help = require("./snippets/help.lua");
-    var snippets = [
-      {label: "blank",      code: ""},
-      {label: "help",       code: help},
-      {label: "loops",      code: require("./snippets/loops.lua")},
-      {label: "recursion",  code: require("./snippets/recursion.lua")},
-      {label: "table",      code: require("./snippets/table.lua")},
-      {label: "reduce",     code: require("./snippets/reduce.lua")},
-      {label: "reduce2",    code: require("./snippets/reduce2.lua")},
-      {label: "mandelbrot", code: require("./snippets/mandelbrot.lua")},
-      {label: "jit.off",    code: require("./snippets/jit.off.lua")},
-      {label: "stitching",  code: require("./snippets/stitching.lua")},
-    ];
-    this.state = {
-      data: {prototypes: [], traces: []},
-      snippets: snippets,
-      selection: SELECTION_AUTO,
-      input: help,
-      target: targets[targets.length - 1],
-      enablePmode: false,
-      showEditorOverlay: false,
-      showTopPanel: false,
-      showLeftPanel: true,
-      showRightPanel: true,
-      enableFilter: true,
-      mode: "lua",
-      protoMode: "info",
-      traceMode: "info"
-    };
-    this.modes = [
-      {key:"lua",   label:"Lua"},
-      {key:"luabc", label:"Bytecode"},
-      {key:"mixed", label:"Mixed"}
-    ];
-    this.protoModes = [
-      {key:"info",   label:"Info"},
-      {key:"consts", label:"Consts"},
-    ];
-    this.traceModes = [
-      {key:"info", label:"Info"},
-      {key:"ir",   label:"IR"},
-      {key:"asm",  label:"Asm"}
-    ];
-  }
+  state = {
+    response: {prototypes: [], traces: []},
+    selection: SELECTION_AUTO,
+    _input: {
+      text: require("./snippets/help.lua"),
+      target: targets[targets.length - 1]
+    },
+    enablePmode: false,
+    showEditorOverlay: false,
+    showTopPanel: false,
+    showLeftPanel: true,
+    showRightPanel: true,
+    enableFilter: true,
+    mode: "lua",
+    protoMode: "info",
+    traceMode: "info"
+  };
+  modes = [
+    {key:"lua",   label:"Lua"},
+    {key:"luabc", label:"Bytecode"},
+    {key:"mixed", label:"Mixed"}
+  ];
+  protoModes = [
+    {key:"info",   label:"Info"},
+    {key:"consts", label:"Consts"},
+  ];
+  traceModes = [
+    {key:"info", label:"Info"},
+    {key:"ir",   label:"IR"},
+    {key:"asm",  label:"Asm"}
+  ];
   componentDidMount() {
+    const installResponse = (response) => {
+      response = importData(response);
+      const update = { response };
+      /* auto-select first trace or prototype - performed for the very
+       * first request only; this is to ensure that right pane is
+       * populated hence the App looks better on the first glance :) */
+      if (this.state.selection == SELECTION_AUTO)
+        update.selection = response.traces && response.traces[0] ? 'T0' : 'P0';
+      this.setState(update);
+    }
+    const submitRequest = (input) => {
+      const req = new XMLHttpRequest();
+      req.open("POST", "run");
+      req.addEventListener("load", () => {
+        if (this.state._input !== input) return;
+        try {
+          const response = req.status === 200
+            ? JSON.parse(req.responseText) : { error: req.responseText };
+          response.input = input;
+          installResponse(response);
+        } catch (e) {
+          console.error(e);
+          installResponse({ error: "Bad response", input });
+        }
+      });
+      req.addEventListener("error", (e) => {
+        console.error(e);
+        if (this.state._input !== input) return;
+        installResponse({ error: "Network error", input });
+      });
+      req.send(JSON.stringify(input));
+      this.setState({ _inputSubmitted: this.state._input });
+    }
+
+    const submitRequestDebounced = debounce((input) => {
+      if (!input) return;
+      if (!submitRequestDebounced.isPending) submitRequestDebounced();
+      submitRequest(input);
+    }, 500);
+
+    let lastInput = this.state._input;
+    this.componentDidUpdate = () => {
+      if (this.state.showEditorOverlay
+        || this.state._input === lastInput) return;
+      lastInput = this.state._input;
+      if (submitRequestDebounced.isPending || this.state._input._delay)
+        submitRequestDebounced(this.state._input);
+      else {
+        submitRequest(this.state._input);
+        submitRequestDebounced();
+      }
+    }
+
     document.body.addEventListener("keydown", this.handleKeyDown);
-    this.handleSubmit();
+    window.addEventListener("resize", this.handleWindowResize);
+
+    this.componentWillUnmount = () => {
+      document.body.removeEventListener("keydown", this.handleKeyDown);
+      window.removeEventListener("resize", this.handleWindowResize);
+      submitRequestDebounced.clear();
+    }
+
+    this.dispatch(Action.windowResize(window.innerWidth, window.innerHeight));
+    submitRequest(this.state._input);
   }
-  componenWillUnMount() {
-    document.body.removeEventListener("keydown", this.handleKeyDown);
+  dispatch = (action) => {
+    this.setState(state => {
+      const result = Action.apply(state, action);
+      // console.log(result);
+      return result;
+    });
+  }
+  handleWindowResize = () => {
+    this.dispatch(Action.windowResize(window.innerWidth, window.innerHeight));
   }
   handleKeyDown = (e) => {
     if (e.metaKey || e.target.tagName == "INPUT" ||
@@ -348,11 +420,8 @@ class App extends React.Component {
       return;
     }
     var editorActive = this.state.showEditorOverlay;
-    if (e.keyCode == 13 /* Enter */) {
-      if (editorActive)
-        this.handleSubmit(e);
+    if (e.keyCode == 13 /* Enter */)
       this.toggleOption(e, "showEditorOverlay");
-    }
     if (editorActive)
       return;
     if (e.keyCode == 48 /* 0 */)
@@ -372,7 +441,7 @@ class App extends React.Component {
     if (e.keyCode == 80 /* P */)
       this.toggleOption(e, "enablePmode");
     if (e.keyCode == 82 /* R */)
-      this.handleSubmit(e);
+      this.handleRefresh(e);
     /* <- / -> */
     if ((e.keyCode == 37 || e.keyCode == 39) && this.state.selection) {
       var modeKey, modes;
@@ -407,45 +476,22 @@ class App extends React.Component {
     this.setState(upd);
   }
   handleTextChange = (e) => {
-    this.setState({input: e.target.value})
+    this.dispatch(Action.inputPropertySet({ text: e.target.value }));
+  }
+  handleTextChangeDelayed = (e) => {
+    this.dispatch(Action.inputPropertySet({
+      text: e.target.value, _delay: true
+    }));
   }
   spawnEditor = (e) => {
     this.setState({showEditorOverlay: true});
   }
   killEditor = (e) => {
-    this.handleSubmit(e);
     this.setState({showEditorOverlay: false});
   }
-  handleSubmit = (e) => {
+  handleRefresh = (e) => {
     e && e.stopPropagation();
-    const req = new XMLHttpRequest();
-    req.open("POST", "run");
-    req.addEventListener("load", () => {
-      try {
-        this.handleResponse(
-          req.status === 200 ? JSON.parse(req.responseText)
-          : {error: req.responseText}
-        );
-      } catch (e) {
-        console.error(e);
-        this.handleResponse({error: "Bad response"});
-      }
-    });
-    req.addEventListener("error", (e) => {
-      console.error(e);
-      this.handleResponse({error: "Network error"});
-    });
-    req.send(JSON.stringify({source: this.state.input, target: this.state.target}));
-  }
-  handleResponse(response) {
-    var data = importData(response);
-    var update = {data: data};
-    /* auto-select first trace or prototype - performed for the very
-     * first request only; this is to ensure that right pane is
-     * populated hence the App looks better on the first glance :) */
-    if (this.state.selection == SELECTION_AUTO)
-      update.selection = data.traces && data.traces[0] ? 'T0' : 'P0';
-    this.setState(update);
+    this.dispatch(Action.inputPropertySet({}));
   }
   selectMode = (e, mode) => {
     e.stopPropagation();
@@ -481,8 +527,8 @@ class App extends React.Component {
         onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
       >
         <div className="toolbar-group">
-          <span className="toolbar-btn" onClick={this.handleSubmit}>Run</span>
           <span className="toolbar-btn" onClick={this.spawnEditor}>Edit</span>
+          <span className="toolbar-btn" onClick={this.handleRefresh}>Refresh</span>
         </div>
         <ModeSwitcher
           currentMode = {this.state.mode}
@@ -578,12 +624,12 @@ class App extends React.Component {
       if (prototypeselected) {
         var index = prototypeselected[1];
         /* may become invalid after reload */
-        if (this.state.data.prototypes[index])
+        if (this.state.response.prototypes[index])
           return (
             <FuncProtoDetailPanel
               mode={this.state.protoMode}
               toolbar={this.makeProtoDetailToolbar()}
-              data={this.state.data.prototypes[index]}
+              data={this.state.response.prototypes[index]}
               panelWidth={this.state.widthR}
               setPanelWidth={this.setWidthR}
             />
@@ -593,12 +639,12 @@ class App extends React.Component {
       if (traceSelected) {
         var index = traceSelected[1];
         /* may become invalid after reload */
-        if (this.state.data.traces[index])
+        if (this.state.response.traces[index])
           return (
             <TraceDetailPanel
               mode={this.state.traceMode}
               toolbar={this.makeTraceDetailToolbar()}
-              data={this.state.data.traces[index]}
+              data={this.state.response.traces[index]}
               panelWidth={this.state.widthR}
               setPanelWidth={this.setWidthR}
             />
@@ -621,26 +667,25 @@ class App extends React.Component {
     );
   }
   installSnippet = (e) => {
-    var snippets = this.state.snippets;
-    var snippet = snippets && snippets[
+    const snippet = snippets[
       +e.target.getAttribute("data-snippet-id")
     ];
     if (snippet)
-      this.setState({input: snippet.code.replace(/\s*$/,"")});
+      this.dispatch(Action.inputPropertySet({ text: snippet.text }));
   }
   setTarget = (e) => {
-    this.setState({target: e.target.value});
+    this.dispatch(Action.inputPropertySet({ target: e.target.value }));
   }
   render () {
     var selection = this.state.selection;
-    var data = this.state.data;
+    var data = this.state.response;
     var prototypes = data.prototypes;
     var lineDecorator;
     var xselection = this.state.transientSelection || selection;
     if (xselection) {
       var traceSelected = xselection.match(/T([0-9]+)/);
       if (traceSelected) {
-        var trace = this.state.data.traces[traceSelected[1]];
+        var trace = data.traces[traceSelected[1]];
         if (trace) {
           lineDecorator = createLineDecorator(data, trace);
           if (this.state.enableFilter) {
@@ -655,7 +700,6 @@ class App extends React.Component {
         }
       }
     }
-    var snippets = this.state.snippets;
     var installSnippet = this.installSnippet;
     return (
       <div
@@ -665,6 +709,10 @@ class App extends React.Component {
           (this.state.toolbarHover ? " toolbar-hover" : "")
         }
       >
+        <ProgressIndicator
+         activity={this.state._inputSubmitted !== this.state.response.input
+           ? this.state._inputSubmitted : null
+         }/>
         {
           !this.state.showEditorOverlay ? null :
           <div className="editor-overlay" onClick={this.killEditor}>
@@ -678,7 +726,7 @@ class App extends React.Component {
             <div className="editor-form" onClick={(e)=>(e.stopPropagation())}>
               <div className="top-btn-row">
                 {
-                  snippets && snippets.map((snippet, i)=>(
+                  snippets.map((snippet, i)=>(
                     <button
                       key={i}
                       type="button"
@@ -691,7 +739,7 @@ class App extends React.Component {
               </div>
               <textarea
                 onChange={this.handleTextChange}
-                value={this.state.input}
+                value={this.state._input.text}
               />
               <div className="bottom-btn-row">
                 <button
@@ -699,7 +747,7 @@ class App extends React.Component {
                 >Apply</button>
                 <select class="form-control" onChange={this.setTarget}>
                   {targets.map((target,index)=>(
-                    <option key={index} selected={target===this.state.target}
+                    <option key={index} selected={target===this.state._input.target}
                     >{target}</option>)
                   )}
                 </select>
@@ -714,8 +762,8 @@ class App extends React.Component {
             onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
           >
             <textarea
-              rows="5" onChange={this.handleTextChange}
-              value={this.state.input}
+              rows="5" onChange={this.handleTextChangeDelayed}
+              value={this.state._input.text}
             />
           </div>
         }

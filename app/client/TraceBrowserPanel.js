@@ -51,7 +51,6 @@ export class TraceBrowserPanel extends React.PureComponent {
   state = {graph: null};
   componentDidMount() {
     const updateGraph = (traceList) => {
-      if (!traceList) return;
       if (!traceList.length) {
         this.setState({graph: null});
         return;
@@ -68,7 +67,11 @@ export class TraceBrowserPanel extends React.PureComponent {
       });
     }
     updateGraph(this.props.data);
-    const updateGraphDebounced = debounce(updateGraph, 250);
+    const updateGraphDebounced = debounce((traceList) => {
+      if (!traceList) return;
+      if (!updateGraphDebounced.isPending) updateGraphDebounced();
+      updateGraph(traceList);
+    }, 250);
     this.componentWillUnmount = () => updateGraphDebounced.clear();
     this.componentDidUpdate = (prevProps) => {
       if (this.props.data === prevProps.data) return;
