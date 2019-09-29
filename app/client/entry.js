@@ -15,6 +15,7 @@ import {ModeSwitcher} from "./ModeSwitcher.js";
 import {TraceDetailPanel} from "./TraceDetailPanel.js";
 import {FuncProtoDetailPanel} from "./FuncProtoDetailPanel.js";
 import {TraceBrowserPanel} from "./TraceBrowserPanel.js";
+import {Toolbar, ToolbarGroupLeft, ToolbarGroupRight} from "./Toolbar.js";
 import {EditorOverlay} from "./EditorOverlay.js";
 import {number4} from "./number4.js";
 
@@ -495,28 +496,25 @@ class App extends React.Component {
     this.setState({transientSelection: id})
   }
   toolbarHover = () => {
-    this.setState({toolbarHover: true});
+    this.setState({_toolbarHover: true});
   }
   toolbarUnhover = () => {
-    this.setState({toolbarHover: false});
+    this.setState({_toolbarHover: false});
   }
   makePrimaryToolbar() {
     var toggleOption = this.toggleOption;
     return (
-      <div
-        className="toolbar"
-        onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
-      >
-        <div className="toolbar-group">
+      <Toolbar state={this.state} dispatch={this.dispatch}>
+        <ToolbarGroupLeft>
           <span className="toolbar-btn" onClick={this.spawnEditor}>Edit</span>
           <span className="toolbar-btn" onClick={this.handleRefresh}>Refresh</span>
-        </div>
+        </ToolbarGroupLeft>
         <ModeSwitcher
           currentMode = {this.state.mode}
           selectMode = {this.selectMode}
           modes = {this.modes}
         />
-        <div className="toolbar-group pane-toggle">
+        <ToolbarGroupRight className="pane-toggle">
           <ToggleButton
             isOn    = {this.state.showLeftPanel}
             onClick = {(e)=>toggleOption(e, "showLeftPanel")}
@@ -532,58 +530,44 @@ class App extends React.Component {
             onClick = {(e)=>toggleOption(e, "showRightPanel")}
             label   = {<span className="pane-toggle-icon">&#x2595;</span>}
           />
-        </div>
-      </div>
+        </ToolbarGroupRight>
+      </Toolbar>
     );
   }
   makeTraceBrowserToolbar() {
     var toggleOption = this.toggleOption;
     return (
-      <div
-        className="toolbar"
-        onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
-      >
-        <div/>
-        <div className="toolbar-group">
+      <Toolbar state={this.state} dispatch={this.dispatch}>
+        <ToolbarGroupRight>
           <ToggleButton
             isOn    = {this.state.enableFilter}
             onClick = {(e)=>toggleOption(e, "enableFilter")}
             label   = "&#x25d2;"
           />
-        </div>
-      </div>
+        </ToolbarGroupRight>
+      </Toolbar>
     );
   }
   makeProtoDetailToolbar() {
     return (
-      <div
-        className="toolbar"
-        onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
-      >
-        <div/>
+      <Toolbar state={this.state} dispatch={this.dispatch}>
         <ModeSwitcher
           currentMode = {this.state.protoMode}
           selectMode = {this.selectProtoMode}
           modes = {this.protoModes}
         />
-        <div/>
-      </div>
+      </Toolbar>
     );
   }
   makeTraceDetailToolbar() {
     return (
-      <div
-        className="toolbar"
-        onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
-      >
-        <div/>
+      <Toolbar state={this.state} dispatch={this.dispatch}>
         <ModeSwitcher
           currentMode = {this.state.traceMode}
           selectMode = {this.selectTraceMode}
           modes = {this.traceModes}
         />
-        <div/>
-      </div>
+      </Toolbar>
     );
   }
   setWidthL = (width) => {
@@ -635,12 +619,7 @@ class App extends React.Component {
     return (
       <AppPanel
         className="right-pane"
-        toolbar={
-          <div
-            className="toolbar"
-            onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
-          />
-        }
+        toolbar={<Toolbar state={this.state} dispatch={this.dispatch}/>}
         placeholder="No Selection"
         panelWidth={this.state.widthR}
         setPanelWidth={this.setWidthR}
@@ -675,8 +654,7 @@ class App extends React.Component {
       <div
         className={
           "app-container" +
-          (this.state.enablePmode ? " presentation" : "") +
-          (this.state.toolbarHover ? " toolbar-hover" : "")
+          (this.state.enablePmode ? " presentation" : "")
         }
       >
         <ProgressIndicator
