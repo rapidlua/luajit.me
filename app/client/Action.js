@@ -8,12 +8,12 @@ export function apply(state, action) {
   return state;
 }
 
-/* setProperty - generic toplevel property setter */
+/* propertySet - generic toplevel property setter */
 export function propertySet(properties) {
   return { id: propertySet, properties };
 }
 actionMap[propertySet] = (state, action) => Object.assign(
-  {}, state, properties
+  {}, state, action.properties
 );
 
 /* inputSetProperty - generic input property setter */

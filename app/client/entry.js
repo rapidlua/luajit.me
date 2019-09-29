@@ -15,6 +15,7 @@ import {ModeSwitcher} from "./ModeSwitcher.js";
 import {TraceDetailPanel} from "./TraceDetailPanel.js";
 import {FuncProtoDetailPanel} from "./FuncProtoDetailPanel.js";
 import {TraceBrowserPanel} from "./TraceBrowserPanel.js";
+import {EditorOverlay} from "./EditorOverlay.js";
 import {number4} from "./number4.js";
 
 import * as Action from "./Action.js";
@@ -292,19 +293,6 @@ function createLineDecorator(data, trace)
 
 const SELECTION_AUTO = 'selection-auto';
 
-const snippets = [
-  { label: "blank",      text: "" },
-  { label: "help",       text: require("./snippets/help.lua") },
-  { label: "loops",      text: require("./snippets/loops.lua") },
-  { label: "recursion",  text: require("./snippets/recursion.lua") },
-  { label: "table",      text: require("./snippets/table.lua") },
-  { label: "reduce",     text: require("./snippets/reduce.lua") },
-  { label: "reduce2",    text: require("./snippets/reduce2.lua") },
-  { label: "mandelbrot", text: require("./snippets/mandelbrot.lua") },
-  { label: "jit.off",    text: require("./snippets/jit.off.lua") },
-  { label: "stitching",  text: require("./snippets/stitching.lua") },
-];
-
 class App extends React.Component {
   state = {
     response: {prototypes: [], traces: []},
@@ -314,7 +302,6 @@ class App extends React.Component {
       target: targets[targets.length - 1]
     },
     enablePmode: false,
-    showEditorOverlay: false,
     showTopPanel: false,
     showLeftPanel: true,
     showRightPanel: true,
@@ -380,7 +367,7 @@ class App extends React.Component {
 
     let lastInput = this.state._input;
     this.componentDidUpdate = () => {
-      if (this.state.showEditorOverlay
+      if (this.state._showEditorOverlay
         || this.state._input === lastInput) return;
       lastInput = this.state._input;
       if (submitRequestDebounced.isPending || this.state._input._delay)
@@ -419,9 +406,9 @@ class App extends React.Component {
     {
       return;
     }
-    var editorActive = this.state.showEditorOverlay;
+    var editorActive = this.state._showEditorOverlay;
     if (e.keyCode == 13 /* Enter */)
-      this.toggleOption(e, "showEditorOverlay");
+      this.toggleOption(e, "_showEditorOverlay");
     if (editorActive)
       return;
     if (e.keyCode == 48 /* 0 */)
@@ -476,18 +463,12 @@ class App extends React.Component {
     this.setState(upd);
   }
   handleTextChange = (e) => {
-    this.dispatch(Action.inputPropertySet({ text: e.target.value }));
-  }
-  handleTextChangeDelayed = (e) => {
     this.dispatch(Action.inputPropertySet({
       text: e.target.value, _delay: true
     }));
   }
   spawnEditor = (e) => {
-    this.setState({showEditorOverlay: true});
-  }
-  killEditor = (e) => {
-    this.setState({showEditorOverlay: false});
+    this.setState({_showEditorOverlay: true});
   }
   handleRefresh = (e) => {
     e && e.stopPropagation();
@@ -666,16 +647,6 @@ class App extends React.Component {
       />
     );
   }
-  installSnippet = (e) => {
-    const snippet = snippets[
-      +e.target.getAttribute("data-snippet-id")
-    ];
-    if (snippet)
-      this.dispatch(Action.inputPropertySet({ text: snippet.text }));
-  }
-  setTarget = (e) => {
-    this.dispatch(Action.inputPropertySet({ target: e.target.value }));
-  }
   render () {
     var selection = this.state.selection;
     var data = this.state.response;
@@ -700,7 +671,6 @@ class App extends React.Component {
         }
       }
     }
-    var installSnippet = this.installSnippet;
     return (
       <div
         className={
@@ -713,48 +683,7 @@ class App extends React.Component {
          activity={this.state._inputSubmitted !== this.state.response.input
            ? this.state._inputSubmitted : null
          }/>
-        {
-          !this.state.showEditorOverlay ? null :
-          <div className="editor-overlay" onClick={this.killEditor}>
-            <a
-              className="github-url"
-              href="https://github.com/rapidlua/luajit.me"
-            >
-              <div dangerouslySetInnerHTML={{__html: require("raw-loader!./octocat.svg")}}/>
-              <div className="speach-bubble">★ me on GitHub!</div>
-            </a>
-            <div className="editor-form" onClick={(e)=>(e.stopPropagation())}>
-              <div className="top-btn-row">
-                {
-                  snippets.map((snippet, i)=>(
-                    <button
-                      key={i}
-                      type="button"
-                      className={"btn btn-sm "+({help: "btn-info", blank: "btn-danger"}[snippet.label]||"btn-warning")}
-                      data-snippet-id={i}
-                      onClick={installSnippet}
-                    >{snippet.label}</button>
-                  ))
-                }
-              </div>
-              <textarea
-                onChange={this.handleTextChange}
-                value={this.state._input.text}
-              />
-              <div className="bottom-btn-row">
-                <button
-                  type="button" className="btn btn-primary" onClick={this.killEditor}
-                >Apply</button>
-                <select class="form-control" onChange={this.setTarget}>
-                  {targets.map((target,index)=>(
-                    <option key={index} selected={target===this.state._input.target}
-                    >{target}</option>)
-                  )}
-                </select>
-              </div>
-            </div>
-          </div>
-        }
+        <EditorOverlay dispatch={this.dispatch} state={this.state}/>
         {
           !this.state.showTopPanel ? null :
           <div
@@ -762,7 +691,7 @@ class App extends React.Component {
             onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
           >
             <textarea
-              rows="5" onChange={this.handleTextChangeDelayed}
+              rows="5" onChange={this.handleTextChange}
               value={this.state._input.text}
             />
           </div>
