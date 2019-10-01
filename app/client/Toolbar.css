@@ -28,13 +28,13 @@
   visibility: hidden;
 }
 
-.presentation .toolbar.toolbar-hover {
+.presentation .toolbar.hover {
   overflow: visible;
   height: 28px;
   margin-bottom: -16px;
   z-index: 4000; /* on top of resizer strips */
 }
 
-.presentation .toolbar.toolbar-hover > * {
+.presentation .toolbar.hover > * {
   visibility: visible;
 }

@@ -101,18 +101,6 @@ body {
 		color: #fff
 }
 
-
-.presentation .toolbar-group.pane-toggle:after {
-    content: "P-mode";
-    color: #ffffff;
-    font-variant: small-caps;
-}
-
-.presentation .toolbar-group.pane-toggle > * {
-    display: none;
-}
-
-
 .pane-toggle-icon {
     display: inline-block;
     border: solid 1px;

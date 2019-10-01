@@ -13,7 +13,7 @@ export class Toolbar extends React.Component {
     return (
       <div
         className={
-          "toolbar" + (this.props.state._toolbarHover ? " toolbar-hover" : "")
+          "toolbar" + (this.props.state._toolbarHover ? " hover" : "")
         }
         onMouseEnter={this.hover} onMouseLeave={this.unhover}
       >{
