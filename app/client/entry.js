@@ -14,7 +14,7 @@ import {ModeSwitcher} from "./ModeSwitcher.js";
 import {TraceDetailPanel} from "./TraceDetailPanel.js";
 import {FuncProtoDetailPanel} from "./FuncProtoDetailPanel.js";
 import {TraceBrowserPanel} from "./TraceBrowserPanel.js";
-import {Toolbar, ToolbarGroupLeft, ToolbarGroupRight} from "./Toolbar.js";
+import {ToolbarHoverTrigger, Toolbar, ToolbarGroupLeft, ToolbarGroupRight} from "./Toolbar.js";
 import {EditorOverlay} from "./EditorOverlay.js";
 import {PrimaryToolbar} from "./PrimaryToolbar.js";
 import {number4} from "./number4.js";
@@ -472,12 +472,6 @@ class App extends React.Component {
     e.stopPropagation();
     this.setState({transientSelection: id})
   }
-  toolbarHover = () => {
-    this.setState({_toolbarHover: true});
-  }
-  toolbarUnhover = () => {
-    this.setState({_toolbarHover: false});
-  }
   makeTraceBrowserToolbar() {
     var toggleOption = this.toggleOption;
     return (
@@ -608,15 +602,15 @@ class App extends React.Component {
         <EditorOverlay dispatch={this.dispatch} state={this.state}/>
         {
           !this.state.showTopPanel ? null :
-          <div
+          <ToolbarHoverTrigger
             className="top-pane"
-            onMouseEnter={this.toolbarHover} onMouseLeave={this.toolbarUnhover}
+            state={this.state} dispatch={this.dispatch}
           >
             <textarea
               rows="5" onChange={this.handleTextChange}
               value={this.state._input.text}
             />
-          </div>
+          </ToolbarHoverTrigger>
         }
         <div className="app-main">
           {
