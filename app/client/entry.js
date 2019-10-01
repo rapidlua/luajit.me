@@ -8,7 +8,6 @@ import {targets} from "../server/targets.js";
 
 import {ProgressIndicator} from "./ProgressIndicator.js";
 import {AppPanel} from "./AppPanel.js"
-import {PropListView} from "./PropListView.js";
 import {CodeView} from "./codeView.js";
 import {ToggleButton} from "./ToggleButton.js";
 import {ModeSwitcher} from "./ModeSwitcher.js";
@@ -17,6 +16,7 @@ import {FuncProtoDetailPanel} from "./FuncProtoDetailPanel.js";
 import {TraceBrowserPanel} from "./TraceBrowserPanel.js";
 import {Toolbar, ToolbarGroupLeft, ToolbarGroupRight} from "./Toolbar.js";
 import {EditorOverlay} from "./EditorOverlay.js";
+import {PrimaryToolbar} from "./PrimaryToolbar.js";
 import {number4} from "./number4.js";
 
 import * as Action from "./Action.js";
@@ -311,11 +311,6 @@ class App extends React.Component {
     protoMode: "info",
     traceMode: "info"
   };
-  modes = [
-    {key:"lua",   label:"Lua"},
-    {key:"luabc", label:"Bytecode"},
-    {key:"mixed", label:"Mixed"}
-  ];
   protoModes = [
     {key:"info",   label:"Info"},
     {key:"consts", label:"Consts"},
@@ -429,7 +424,7 @@ class App extends React.Component {
     if (e.keyCode == 80 /* P */)
       this.toggleOption(e, "enablePmode");
     if (e.keyCode == 82 /* R */)
-      this.handleRefresh(e);
+      this.dispatch(Action.inputPropertySet({}));
     /* <- / -> */
     if ((e.keyCode == 37 || e.keyCode == 39) && this.state.selection) {
       var modeKey, modes;
@@ -454,30 +449,12 @@ class App extends React.Component {
     e.stopPropagation();
     var upd = {};
     upd[option] = !this.state[option];
-    if (upd.enablePmode || this.state.enablePmode) {
-      if (option == "showRightPanel" ||
-          this.state.showLeftPanel && this.state.showRightPanel)
-        upd.showLeftPanel = false;
-      else if (option == "showLeftPanel")
-        upd.showRightPanel = false;
-    }
     this.setState(upd);
   }
   handleTextChange = (e) => {
     this.dispatch(Action.inputPropertySet({
       text: e.target.value, _delay: true
     }));
-  }
-  spawnEditor = (e) => {
-    this.setState({_showEditorOverlay: true});
-  }
-  handleRefresh = (e) => {
-    e && e.stopPropagation();
-    this.dispatch(Action.inputPropertySet({}));
-  }
-  selectMode = (e, mode) => {
-    e.stopPropagation();
-    this.setState({mode: mode})
   }
   selectProtoMode = (e, mode) => {
     e.stopPropagation();
@@ -500,39 +477,6 @@ class App extends React.Component {
   }
   toolbarUnhover = () => {
     this.setState({_toolbarHover: false});
-  }
-  makePrimaryToolbar() {
-    var toggleOption = this.toggleOption;
-    return (
-      <Toolbar state={this.state} dispatch={this.dispatch}>
-        <ToolbarGroupLeft>
-          <span className="toolbar-btn" onClick={this.spawnEditor}>Edit</span>
-          <span className="toolbar-btn" onClick={this.handleRefresh}>Refresh</span>
-        </ToolbarGroupLeft>
-        <ModeSwitcher
-          currentMode = {this.state.mode}
-          selectMode = {this.selectMode}
-          modes = {this.modes}
-        />
-        <ToolbarGroupRight className="pane-toggle">
-          <ToggleButton
-            isOn    = {this.state.showLeftPanel}
-            onClick = {(e)=>toggleOption(e, "showLeftPanel")}
-            label   = {<span className="pane-toggle-icon">&#x258f;</span>}
-          />
-          <ToggleButton
-            isOn    = {this.state.showTopPanel}
-            onClick = {(e)=>toggleOption(e, "showTopPanel")}
-            label   = {<span className="pane-toggle-icon">&#x2594;</span>}
-          />
-          <ToggleButton
-            isOn    = {this.state.showRightPanel}
-            onClick = {(e)=>toggleOption(e, "showRightPanel")}
-            label   = {<span className="pane-toggle-icon">&#x2595;</span>}
-          />
-        </ToolbarGroupRight>
-      </Toolbar>
-    );
   }
   makeTraceBrowserToolbar() {
     var toggleOption = this.toggleOption;
@@ -694,7 +638,7 @@ class App extends React.Component {
             error={data.error}
             selection={selection}
             selectItem={this.selectItem}
-            toolbar={this.makePrimaryToolbar()}
+            toolbar={<PrimaryToolbar state={this.state} dispatch={this.dispatch} />}
             lineDecorator={lineDecorator}
           />
           {
