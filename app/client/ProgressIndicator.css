@@ -1,4 +1,4 @@
-.app-progress-indicator {
+.progress-indicator {
   position: fixed;
   top: 0;
   left: 0;
@@ -7,22 +7,22 @@
   background-color: #039be5;
   opacity: 0;
   transition: opacity 250ms;
-	z-index: 10000;
+  z-index: 10000;
 }
 
-.app-progress-indicator-initial {
+.progress-indicator.starting {
   opacity: 1;
   transform: translateX(-100%);
   transition: none;
 }
 
-.app-progress-indicator-running {
+.progress-indicator.running {
   opacity: 1;
   transform: translateX(-20%);
   transition: transform 1s, opacity 250ms;
 }
 
-.app-progress-indicator-finishing {
+.progress-indicator.finishing {
   opacity: 1;
   transform: translateX(0);
   transition: transform 150ms, opacity 250ms;
