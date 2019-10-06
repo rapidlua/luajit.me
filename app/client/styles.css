@@ -47,34 +47,6 @@ body {
     background-color: #f6f6f6;
 }
 
-.primary-pane .pane-resizer {
-    display: none;
-}
-
-.left-pane .pane-resizer {
-    right: 0;
-    margin-right: -8px;
-}
-
-.presentation .left-pane .pane-resizer {
-    margin-right: -4px;
-}
-
-.right-pane .pane-resizer {
-    left: 0;
-    margin-left: -8px;
-}
-
-.presentation .right-pane .pane-resizer {
-    left: 0;
-    margin-left: -4px;
-}
-
-
-.primary-pane .content-area {
-    padding: 2em 1.5em .5em 1.5em;
-}
-
 
 .primary-pane .card {
     overflow: hidden; /* curved corners protrusion */

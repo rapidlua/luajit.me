@@ -1,29 +1,29 @@
 import * as Action from './Action.js';
 
-const TRACE_PANE_WIDTH_MIN            = 200
-const TRACE_PANE_VISIBILITY_DEFAULT   = true
-const TRACE_PANE_WIDTH_DEFAULT        = 300
-const SOURCE_PANE_WIDTH_MIN           = 300
-const DETAILS_PANE_WIDTH_MIN          = 200
-const DETAILS_PANE_VISIBILITY_DEFAULT = true
-const DETAILS_PANE_WIDTH_DEFAULT      = 300
+const TRACE_PANE_WIDTH_MIN            = 250;
+const TRACE_PANE_VISIBILITY_DEFAULT   = true;
+const TRACE_PANE_WIDTH_DEFAULT        = 300;
+const SOURCE_PANE_WIDTH_MIN           = 300;
+const DETAILS_PANE_WIDTH_MIN          = 250;
+const DETAILS_PANE_VISIBILITY_DEFAULT = true;
+const DETAILS_PANE_WIDTH_DEFAULT      = 300;
 
 function updateInternal(layout, action, ww) {
   // TracePane
   const tpWidthInitial = layout.tracePaneWidth;
   let tpWidth = tpWidthInitial;
-  let tpVisible = layout.tracePaneVisible;
+  let tpVisible = layout.tracePaneIsVisible;
   // DetailsPane
   const dpWidthInitial = layout.detailsPaneWidth;
   let dpWidth = dpWidthInitial;
-  let dpVisible = layout.detailsPaneVisible;
+  let dpVisible = layout.detailsPaneIsVisible;
   // Apply PaneVisibilitySet action
   if (action.id === Action.paneVisibilitySet) {
     switch (action.paneId) {
     case 'tracePane':
       tpVisible = action.isVisible; break;
     case 'detailsPane':
-      dpVisible = action.isVisibile; break;
+      dpVisible = action.isVisible; break;
     }
   }
   // Apply paneResize action
@@ -69,9 +69,9 @@ function updateInternal(layout, action, ww) {
   if (dpWidth < DETAILS_PANE_WIDTH_MIN) { dpVisible = false; dpWidth = dpWidthInitial; }
   
   return {
-    tracePaneVisible: tpVisible,
+    tracePaneIsVisible: tpVisible,
     tracePaneWidth: tpWidth,
-    detailsPaneVisible: dpVisible,
+    detailsPaneIsVisible: dpVisible,
     detailsPaneWidth: dpWidth
   };
 }
@@ -79,18 +79,18 @@ function updateInternal(layout, action, ww) {
 export default function update(layout, action, appState) {
   const ww = appState._windowWidth || 0;
   const newLayout = updateInternal(layout || {
-    tracePaneVisible: TRACE_PANE_VISIBILITY_DEFAULT,
+    tracePaneIsVisible: TRACE_PANE_VISIBILITY_DEFAULT,
     tracePaneWidth: TRACE_PANE_WIDTH_DEFAULT,
-    detailsPaneVisible: DETAILS_PANE_VISIBILITY_DEFAULT,
+    detailsPaneIsVisible: DETAILS_PANE_VISIBILITY_DEFAULT,
     detailsPaneWidth: DETAILS_PANE_WIDTH_DEFAULT
   }, action, ww);
-  if (!newLayout.tracePaneVisible)
+  if (!newLayout.tracePaneIsVisible)
     newLayout._tracePaneCanShow = updateInternal(
       newLayout, Action.paneVisibilitySet(undefined, 'tracePane', true), ww
-    ).tracePaneVisible;
-  if (!newLayout.detailsPaneVisible)
+    ).tracePaneIsVisible;
+  if (!newLayout.detailsPaneIsVisible)
     newLayout._detailsPaneCanShow = updateInternal(
       newLayout, Action.paneVisibilitySet(undefined, 'detailsPane', true), ww
-    ).detailsPaneVisible;
+    ).detailsPaneIsVisible;
   return newLayout;
 }

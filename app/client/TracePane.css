@@ -1,6 +1,5 @@
 .g-wrapper {
-  display: table;
-  margin: 0 auto;
+  text-align: center;
 }
 
 .g-trace-thumb > text {

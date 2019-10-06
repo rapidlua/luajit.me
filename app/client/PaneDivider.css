@@ -1,0 +1,36 @@
+.pane-divider {
+  z-index: 2000;
+}
+
+.pane-divider.active {
+  background-color: rgba(0,0,0,.15);
+}
+
+.pane-divider.active::after {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  content: "";
+}
+
+.pane-divider.h {
+  height: 12px;
+  margin: -6px 0;
+  cursor: row-resize;
+}
+
+.pane-divider.v {
+  width: 12px;
+  margin: 0 -6px;
+  cursor: col-resize;
+}
+
+.pane-divider.h.active::after {
+  cursor: row-resize;
+}
+
+.pane-divider.v.active::after {
+  cursor: col-resize;
+}

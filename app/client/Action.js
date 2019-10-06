@@ -1,11 +1,7 @@
-import * as State from "./State.js";
-
 const actionMap = {};
 
 export function apply(state, action) {
-  for (let action of Array.prototype.slice.call(arguments, 1))
-    state = actionMap[action.id](state, action);
-  return state;
+  return actionMap[action.id](state, action);
 }
 
 /* propertySet - generic toplevel property setter */
@@ -16,7 +12,15 @@ actionMap[propertySet] = (state, action) => Object.assign(
   {}, state, action.properties
 );
 
-/* inputSetProperty - generic input property setter */
+/**/
+export function propertyToggle(key) {
+  return { id: propertyToggle, key };
+}
+actionMap[propertyToggle] = (state, action) => Object.assign(
+  {}, state, { [action.key]: !state[action.key] }
+);
+
+/* inputPropertySet - generic input property setter */
 export function inputPropertySet(properties) {
   return { id: inputPropertySet, properties };
 }
@@ -31,8 +35,8 @@ actionMap[inputPropertySet] = (state, action) => {
 
 /* Layout management */
 const layoutMap = {
-  [State.inspectorTab.paneLayout]:
-    require("./InspectorTabPaneLayout.js").default
+  ["inspectorPanel.paneLayout"]:
+    require("./InspectorPanelPaneLayout.js").default
 };
 
 export function windowResize(width, height) {
@@ -58,5 +62,15 @@ export function paneVisibilitySet(layoutId, paneId, isVisible) {
 actionMap[paneResize] =
 actionMap[paneVisibilitySet] = (state, action) => Object.assign(
   {}, state,
-  { [layoutId]: layoutMap[layoutId](state[layoutId], action, state) }
+  { [action.layoutId]: layoutMap[action.layoutId](state[action.layoutId], action, state) }
+);
+
+export function paneVisibilityToggle(layoutId, paneId) {
+  return { id: paneVisibilityToggle, layoutId, paneId };
+}
+actionMap[paneVisibilityToggle] = (state, action) => apply(
+  state, paneVisibilitySet(
+    action.layoutId, action.paneId,
+    !state[action.layoutId][action.paneId + "IsVisible"]
+  )
 );

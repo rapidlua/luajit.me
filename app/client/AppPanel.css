@@ -11,12 +11,6 @@
   width: 8px;
 }
 
-.content-host {
-  flex: 1;
-  position: relative;
-  cursor: default;
-}
-
 .content-area {
   display: block;
   padding: 12px;

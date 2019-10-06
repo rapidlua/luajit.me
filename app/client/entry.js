@@ -9,14 +9,12 @@ import {targets} from "../server/targets.js";
 import {ProgressIndicator} from "./ProgressIndicator.js";
 import {AppPanel} from "./AppPanel.js"
 import {CodeView} from "./codeView.js";
-import {ToggleButton} from "./ToggleButton.js";
-import {ModeSwitcher} from "./ModeSwitcher.js";
-import {TraceDetailPanel} from "./TraceDetailPanel.js";
-import {FuncProtoDetailPanel} from "./FuncProtoDetailPanel.js";
-import {TraceBrowserPanel} from "./TraceBrowserPanel.js";
-import {ToolbarHoverTrigger, Toolbar, ToolbarGroupLeft, ToolbarGroupRight} from "./Toolbar.js";
+import {TracePane} from "./TracePane.js";
+import {DetailsPane} from "./DetailsPane.js";
+import {ToolbarHoverTrigger} from "./Toolbar.js";
 import {EditorOverlay} from "./EditorOverlay.js";
 import {PrimaryToolbar} from "./PrimaryToolbar.js";
+import {PaneDivider} from "./PaneDivider.js";
 import {number4} from "./number4.js";
 
 import * as Action from "./Action.js";
@@ -189,40 +187,37 @@ class FuncProtoView extends React.Component {
   }
 }
 
-class PrimaryPanel extends React.Component {
-  render() {
-    var selectItem = this.props.selectItem;
-    var selection = this.props.selection;
-    var data = this.props.data;
-    var error = this.props.error;
-    var lineDecorator = this.props.lineDecorator;
-    var mode = this.props.mode;
-    var content = data.map((proto) => (
-      <FuncProtoView
-        key={proto.id}
-        data={proto}
-        mode={mode}
-        selection={selection}
-        selectItem={selectItem}
-        lineDecorator={lineDecorator}
-      />
+function PrimaryPanel(props) {
+  const selectItem = props.selectItem;
+  const selection = props.selection;
+  const data = props.data;
+  const error = props.error;
+  const lineDecorator = props.lineDecorator;
+  const mode = props.mode;
+  const content = data.map((proto) => (
+    <FuncProtoView
+      key={proto.id}
+      data={proto}
+      mode={mode}
+      selection={selection}
+      selectItem={selectItem}
+      lineDecorator={lineDecorator}
+    />
+  ));
+  if (error)
+    content.splice(0, 0, (
+      <div key="error" className="alert alert-danger" role="alert">
+        <strong>Something wrong!</strong> {error+""}
+      </div>
     ));
-    if (error)
-      content.splice(0, 0, (
-        <div key="error" className="alert alert-danger" role="alert">
-          <strong>Something wrong!</strong> {error+""}
-        </div>
-      ));
-    return (
-      <AppPanel
-        className="primary-pane"
-        toolbar={this.props.toolbar}
-        content={content}
-        contentOnClick={selectItem}
-        placeholder=" "
-      />
-    );
-  }
+  return (
+    <AppPanel
+      className="primary-pane"
+      toolbar={props.toolbar}
+      content={content}
+      contentOnClick={selectItem}
+    />
+  );
 }
 
 function resolveBcref(data, bcref)
@@ -294,9 +289,9 @@ function createLineDecorator(data, trace)
 
 const SELECTION_AUTO = 'selection-auto';
 
-class App extends React.Component {
-  state = {
-    response: {prototypes: [], traces: []},
+function initial() {
+  const state = {
+    response: { prototypes: [], traces: [] },
     selection: SELECTION_AUTO,
     _input: {
       text: require("./snippets/help.lua"),
@@ -304,22 +299,18 @@ class App extends React.Component {
     },
     enablePmode: false,
     showTopPanel: false,
-    showLeftPanel: true,
-    showRightPanel: true,
     enableFilter: true,
     mode: "lua",
     protoMode: "info",
     traceMode: "info"
   };
-  protoModes = [
-    {key:"info",   label:"Info"},
-    {key:"consts", label:"Consts"},
-  ];
-  traceModes = [
-    {key:"info", label:"Info"},
-    {key:"ir",   label:"IR"},
-    {key:"asm",  label:"Asm"}
-  ];
+  return Action.apply(
+    state, Action.windowResize(window.innerWidth, window.innerHeight)
+  );
+}
+
+class App extends React.Component {
+  state = initial();
   componentDidMount() {
     const installResponse = (response) => {
       response = importData(response);
@@ -383,7 +374,6 @@ class App extends React.Component {
       submitRequestDebounced.clear();
     }
 
-    this.dispatch(Action.windowResize(window.innerWidth, window.innerHeight));
     submitRequest(this.state._input);
   }
   dispatch = (action) => {
@@ -410,40 +400,27 @@ class App extends React.Component {
     if (e.keyCode == 48 /* 0 */)
       this.toggleOption(e, "showTopPanel");
     if (e.keyCode == 49 /* 1 */)
-      this.toggleOption(e, "showLeftPanel");
+      this.dispatch(
+        Action.paneVisibilityToggle("inspectorPanel.paneLayout", "tracePane")
+      );
     if (e.keyCode == 50 /* 2 */)
-      this.toggleOption(e, "showRightPanel");
+      this.dispatch(
+        Action.paneVisibilityToggle("inspectorPanel.paneLayout", "detailsPane")
+      );
     if (e.keyCode == 66 /* B */)
-      this.selectMode(e, this.state.mode != "luabc" ? "luabc" : "lua");
+      this.setState({
+        mode: this.state.mode != "luabc" ? "luabc" : "lua"
+      });
     if (e.keyCode == 70 /* F */)
       this.toggleOption(e, "enableFilter");
     if (e.keyCode == 76 /* L */)
-      this.selectMode(e, "lua");
+      this.setState({ mode: "lua" });
     if (e.keyCode == 77 /* M */)
-      this.selectMode(e, "mixed");
+      this.setState({ mode: "mixed" });
     if (e.keyCode == 80 /* P */)
       this.toggleOption(e, "enablePmode");
     if (e.keyCode == 82 /* R */)
       this.dispatch(Action.inputPropertySet({}));
-    /* <- / -> */
-    if ((e.keyCode == 37 || e.keyCode == 39) && this.state.selection) {
-      var modeKey, modes;
-      if (this.state.selection[0] == 'P') {
-        modeKey = "protoMode"; modes = this.protoModes;
-      } else {
-        modeKey = "traceMode"; modes = this.traceModes;
-      }
-      var currentMode = this.state[modeKey];
-      var index = modes.findIndex((mode) => (mode.key == currentMode));
-      if (index !== undefined) {
-        var nextIndex = (
-          index + modes.length + (e.keyCode == 37 ? -1 : 1)
-        ) % modes.length;
-        var upd = {};
-        upd[modeKey] = modes[nextIndex].key;
-        this.setState(upd);
-      }
-    }
   }
   toggleOption = (e, option) => {
     e.stopPropagation();
@@ -456,113 +433,9 @@ class App extends React.Component {
       text: e.target.value, _delay: true
     }));
   }
-  selectProtoMode = (e, mode) => {
-    e.stopPropagation();
-    this.setState({protoMode: mode})
-  }
-  selectTraceMode = (e, mode) => {
-    e.stopPropagation();
-    this.setState({traceMode: mode})
-  }
   selectItem = (e, id) => {
     e.stopPropagation();
     this.setState({selection: id})
-  }
-  selectTransient = (e, id) => {
-    e.stopPropagation();
-    this.setState({transientSelection: id})
-  }
-  makeTraceBrowserToolbar() {
-    var toggleOption = this.toggleOption;
-    return (
-      <Toolbar state={this.state} dispatch={this.dispatch}>
-        <ToolbarGroupRight>
-          <ToggleButton
-            isOn    = {this.state.enableFilter}
-            onClick = {(e)=>toggleOption(e, "enableFilter")}
-            label   = "&#x25d2;"
-          />
-        </ToolbarGroupRight>
-      </Toolbar>
-    );
-  }
-  makeProtoDetailToolbar() {
-    return (
-      <Toolbar state={this.state} dispatch={this.dispatch}>
-        <ModeSwitcher
-          currentMode = {this.state.protoMode}
-          selectMode = {this.selectProtoMode}
-          modes = {this.protoModes}
-        />
-      </Toolbar>
-    );
-  }
-  makeTraceDetailToolbar() {
-    return (
-      <Toolbar state={this.state} dispatch={this.dispatch}>
-        <ModeSwitcher
-          currentMode = {this.state.traceMode}
-          selectMode = {this.selectTraceMode}
-          modes = {this.traceModes}
-        />
-      </Toolbar>
-    );
-  }
-  setWidthL = (width) => {
-    this.setState({
-      showLeftPanel: width!=0,
-      widthL: Math.max(200, width)
-    });
-  }
-  setWidthR = (width) => {
-    this.setState({
-      showRightPanel: width!=0,
-      widthR: Math.max(200, width)
-    });
-  }
-  makeRightPanel() {
-    var selection = this.state.selection;
-    if (selection) {
-      var prototypeselected = selection.match(/P([0-9]+)/);
-      if (prototypeselected) {
-        var index = prototypeselected[1];
-        /* may become invalid after reload */
-        if (this.state.response.prototypes[index])
-          return (
-            <FuncProtoDetailPanel
-              mode={this.state.protoMode}
-              toolbar={this.makeProtoDetailToolbar()}
-              data={this.state.response.prototypes[index]}
-              panelWidth={this.state.widthR}
-              setPanelWidth={this.setWidthR}
-            />
-          );
-      }
-      var traceSelected = selection.match(/T([0-9]+)/);
-      if (traceSelected) {
-        var index = traceSelected[1];
-        /* may become invalid after reload */
-        if (this.state.response.traces[index])
-          return (
-            <TraceDetailPanel
-              mode={this.state.traceMode}
-              toolbar={this.makeTraceDetailToolbar()}
-              data={this.state.response.traces[index]}
-              panelWidth={this.state.widthR}
-              setPanelWidth={this.setWidthR}
-            />
-          );
-      }
-    }
-    return (
-      <AppPanel
-        className="right-pane"
-        toolbar={<Toolbar state={this.state} dispatch={this.dispatch}/>}
-        placeholder="No Selection"
-        panelWidth={this.state.widthR}
-        setPanelWidth={this.setWidthR}
-      />
-    );
   }
   render () {
     var selection = this.state.selection;
@@ -588,6 +461,7 @@ class App extends React.Component {
         }
       }
     }
+    const layout = this.state["inspectorPanel.paneLayout"];
     return (
       <div
         className={
@@ -614,18 +488,15 @@ class App extends React.Component {
         }
         <div className="app-main">
           {
-            !this.state.showLeftPanel ? null :
-            <TraceBrowserPanel
-              toolbar={this.makeTraceBrowserToolbar()}
-              data={data.traces}
-              dotJSON={this.state.dotJSON}
-              selection={selection}
-              selectItem={this.selectItem}
-              selectTransient={this.selectTransient}
-              panelWidth={this.state.widthL}
-              setPanelWidth={this.setWidthL}
-            />
+            !layout.tracePaneIsVisible ? null :
+            <div className="left-pane" style={{ width: layout.tracePaneWidth + "px" }}>
+              <TracePane state={this.state} dispatch={this.dispatch}/>
+            </div>
           }
+          <PaneDivider
+           type="v" layoutId="inspectorPanel.paneLayout"
+           paneId="tracePane" dispatch={this.dispatch}
+          />
           <PrimaryPanel
             mode={this.state.mode}
             data={prototypes}
@@ -635,8 +506,15 @@ class App extends React.Component {
             toolbar={<PrimaryToolbar state={this.state} dispatch={this.dispatch} />}
             lineDecorator={lineDecorator}
           />
+          <PaneDivider
+           type="v" layoutId="inspectorPanel.paneLayout"
+           paneId="detailsPane" dispatch={this.dispatch}
+          />
           {
-            !this.state.showRightPanel ? null : this.makeRightPanel()
+            !layout.detailsPaneIsVisible ? null :
+            <div className="right-pane" style={{ width: layout.detailsPaneWidth + "px" }}>
+              <DetailsPane state={this.state} dispatch={this.dispatch}/>
+            </div>
           }
         </div>
       </div>

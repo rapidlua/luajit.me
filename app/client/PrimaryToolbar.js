@@ -21,15 +21,16 @@ export class PrimaryToolbar extends React.PureComponent {
     Action.propertySet({ mode })
   );
   toggleTopPanel = () => this.props.dispatch(
-    Action.propertySet({ showTopPanel: !this.props.state.showTopPane })
+    Action.propertySet({ showTopPanel: !this.props.state.showTopPanel })
   );
-  toggleLeftPanel = () => this.props.dispatch(
-    Action.propertySet({ showLeftPanel: !this.props.state.showLeftPane })
+  toggleTracePane = () => this.props.dispatch(
+    Action.paneVisibilityToggle("inspectorPanel.paneLayout", "tracePane")
   );
-  toggleRightPanel = () => this.props.dispatch(
-    Action.propertySet({ showRightPanel: !this.props.state.showRightPane })
+  toggleDetailsPane = () => this.props.dispatch(
+    Action.paneVisibilityToggle("inspectorPanel.paneLayout", "detailsPane")
   );
   render() {
+    const layout = this.props.state["inspectorPanel.paneLayout"];
     return (
       <Toolbar {...this.props}>
         <ToolbarGroupLeft>
@@ -43,8 +44,8 @@ export class PrimaryToolbar extends React.PureComponent {
         />
         <ToolbarGroupRight className="pane-toggle">
           <ToggleButton
-            isOn    = {this.props.state.showLeftPanel}
-            onClick = {this.toggleLeftPanel}
+            isOn    = {layout.tracePaneIsVisible}
+            onClick = {this.toggleTracePane}
             label   = {<span className="pane-toggle-icon">&#x258f;</span>}
           />
           <ToggleButton
@@ -53,8 +54,8 @@ export class PrimaryToolbar extends React.PureComponent {
             label   = {<span className="pane-toggle-icon">&#x2594;</span>}
           />
           <ToggleButton
-            isOn    = {this.props.state.showRightPanel}
-            onClick = {this.toggleRightPanel}
+            isOn    = {layout.detailsPaneIsVisible}
+            onClick = {this.toggleDetailsPane}
             label   = {<span className="pane-toggle-icon">&#x2595;</span>}
           />
         </ToolbarGroupRight>

@@ -6,7 +6,7 @@
   height: 28px;
   background-color: #303030;
   position: relative;
-  z-index: 4000;
+  z-index: 1000;
   overflow: hidden;
 }
 
