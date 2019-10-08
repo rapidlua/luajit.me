@@ -14,33 +14,122 @@ import * as Action from "./Action.js";
 
 import "./styles.css";
 
-const SELECTION_AUTO = 'selection-auto';
-
-function initial() {
-  const state = {
-    response: { prototypes: [], traces: [] },
-    selection: SELECTION_AUTO,
-    _input: {
-      text: require("./snippets/help.lua"),
-      target: targets[targets.length - 1]
-    },
-    enablePmode: false,
-    showTopPanel: false,
-    enableFilter: true,
-    mode: "lua",
-    protoMode: "info",
-    traceMode: "info"
-  };
-  return Action.apply(
-    state, Action.windowResize(
+class AppMain extends React.Component {
+  componentDidMount() {
+    this.syncWindowSize();
+    window.addEventListener("resize", this.syncWindowSize);
+    document.body.addEventListener("keydown", this.handleKeyDown);
+  }
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.syncWindowSize);
+    document.body.removeEventListener("keydown", this.handleKeyDown);
+  }
+  syncWindowSize = () => {
+    this.props.dispatch(Action.windowResize(
       document.documentElement.clientWidth,
       document.documentElement.clientHeight
-    )
-  );
+    ));
+  }
+  handleKeyDown = (e) => {
+    if (e.metaKey || e.target.tagName == "INPUT" ||
+        e.target.tagName == "TEXTAREA")
+    {
+      return;
+    }
+    const dispatch = this.props.dispatch;
+    if (e.keyCode == 13 /* Enter */)
+      dispatch(Action.propertyToggle("_showEditorOverlay"));
+    if (e.keyCode == 48 /* 0 */)
+      dispatch(Action.propertyToggle("showTopPanel"));
+    if (e.keyCode == 49 /* 1 */)
+      dispatch(
+        Action.paneVisibilityToggle("inspectorPanel.paneLayout", "tracePane")
+      );
+    if (e.keyCode == 50 /* 2 */)
+      dispatch(
+        Action.paneVisibilityToggle("inspectorPanel.paneLayout", "detailsPane")
+      );
+    if (e.keyCode == 66 /* B */)
+      dispatch(Action.propertySet({
+        mode: this.props.state.mode != "luabc" ? "luabc" : "lua"
+      }));
+    if (e.keyCode == 70 /* F */)
+      dispatch(Action.propertyToggle("enableFilter"));
+    if (e.keyCode == 76 /* L */)
+      dispatch(Action.propertySet({ mode: "lua" }));
+    if (e.keyCode == 77 /* M */)
+      dispatch(Action.propertySet({ mode: "mixed" }));
+    if (e.keyCode == 80 /* P */)
+      dispatch(Action.propertyToggle("enablePmode"));
+    if (e.keyCode == 82 /* R */)
+      dispatch(Action.inputPropertySet({}));
+  }
+  handleTextChange = (e) => {
+    this.props.dispatch(Action.inputPropertySet({
+      text: e.target.value, _delay: true
+    }));
+  }
+  render() {
+    const state = this.props.state;
+    return (
+      <div
+        className={
+          "app-container" +
+          (state.enablePmode ? " presentation" : "")
+        }
+      >
+        <EditorOverlay {...this.props}/>
+        {
+          !state.showTopPanel ? null :
+          <ToolbarHoverTrigger className="top-pane"
+           dispatch={this.props.dispatch}
+          >
+            <textarea
+              rows="5" onChange={this.handleTextChange}
+              value={state._input.text}
+            />
+          </ToolbarHoverTrigger>
+        }
+        <div className="app-main">
+          <InspectorPanel {...this.props}/>
+        </div>
+      </div>
+    );
+  }
+};
+
+const SELECTION_AUTO = 'selection-auto';
+
+const initialState = {
+  response: { prototypes: [], traces: [] },
+  selection: SELECTION_AUTO,
+  _input: {
+    text: require("./snippets/help.lua"),
+    target: targets[targets.length - 1]
+  },
+  enablePmode: false,
+  showTopPanel: false,
+  enableFilter: true,
+  mode: "lua",
+  protoMode: "info",
+  traceMode: "info"
+};
+
+function hydrateState(state) {
+  state = Action.apply(state, Action.windowResize(100000, 100000));
+  if (state._input === undefined)
+    state._input = state.response.input;
+  return state;
 }
 
+// State store + input processing initiator
+// Sends input to server for processing if it no longer matches
+// (last) response.
 class App extends React.Component {
-  state = initial();
+  static getDerivedStateFromProps(props, state) {
+    if (state) return null;
+    return hydrateState(props.initialState || initialState);
+  }
   componentDidMount() {
     const installResponse = (response) => {
       response = importData(response);
@@ -83,6 +172,8 @@ class App extends React.Component {
     }, 500);
 
     let lastInput = this.state._input;
+    submitRequest(lastInput);
+
     this.componentDidUpdate = () => {
       if (this.state._showEditorOverlay
         || this.state._input === lastInput) return;
@@ -95,16 +186,9 @@ class App extends React.Component {
       }
     }
 
-    document.body.addEventListener("keydown", this.handleKeyDown);
-    window.addEventListener("resize", this.handleWindowResize);
-
     this.componentWillUnmount = () => {
-      document.body.removeEventListener("keydown", this.handleKeyDown);
-      window.removeEventListener("resize", this.handleWindowResize);
       submitRequestDebounced.clear();
     }
-
-    submitRequest(this.state._input);
   }
   dispatch = (action) => {
     this.setState(state => {
@@ -113,88 +197,15 @@ class App extends React.Component {
       return result;
     });
   }
-  handleWindowResize = () => {
-    this.dispatch(Action.windowResize(
-      document.documentElement.clientWidth,
-      document.documentElement.clientHeight
-    ));
-  }
-  handleKeyDown = (e) => {
-    if (e.metaKey || e.target.tagName == "INPUT" ||
-        e.target.tagName == "TEXTAREA")
-    {
-      return;
-    }
-    var editorActive = this.state._showEditorOverlay;
-    if (e.keyCode == 13 /* Enter */)
-      this.toggleOption(e, "_showEditorOverlay");
-    if (editorActive)
-      return;
-    if (e.keyCode == 48 /* 0 */)
-      this.toggleOption(e, "showTopPanel");
-    if (e.keyCode == 49 /* 1 */)
-      this.dispatch(
-        Action.paneVisibilityToggle("inspectorPanel.paneLayout", "tracePane")
-      );
-    if (e.keyCode == 50 /* 2 */)
-      this.dispatch(
-        Action.paneVisibilityToggle("inspectorPanel.paneLayout", "detailsPane")
-      );
-    if (e.keyCode == 66 /* B */)
-      this.setState({
-        mode: this.state.mode != "luabc" ? "luabc" : "lua"
-      });
-    if (e.keyCode == 70 /* F */)
-      this.toggleOption(e, "enableFilter");
-    if (e.keyCode == 76 /* L */)
-      this.setState({ mode: "lua" });
-    if (e.keyCode == 77 /* M */)
-      this.setState({ mode: "mixed" });
-    if (e.keyCode == 80 /* P */)
-      this.toggleOption(e, "enablePmode");
-    if (e.keyCode == 82 /* R */)
-      this.dispatch(Action.inputPropertySet({}));
-  }
-  toggleOption = (e, option) => {
-    e.stopPropagation();
-    var upd = {};
-    upd[option] = !this.state[option];
-    this.setState(upd);
-  }
-  handleTextChange = (e) => {
-    this.dispatch(Action.inputPropertySet({
-      text: e.target.value, _delay: true
-    }));
-  }
   render () {
     return (
-      <div
-        className={
-          "app-container" +
-          (this.state.enablePmode ? " presentation" : "")
-        }
-      >
+      <React.Fragment>
         <ProgressIndicator
          activity={this.state._inputSubmitted !== this.state.response.input
            ? this.state._inputSubmitted : null
          }/>
-        <EditorOverlay dispatch={this.dispatch} state={this.state}/>
-        {
-          !this.state.showTopPanel ? null :
-          <ToolbarHoverTrigger
-            className="top-pane"
-            state={this.state} dispatch={this.dispatch}
-          >
-            <textarea
-              rows="5" onChange={this.handleTextChange}
-              value={this.state._input.text}
-            />
-          </ToolbarHoverTrigger>
-        }
-        <div className="app-main">
-          <InspectorPanel state={this.state} dispatch={this.dispatch}/>
-        </div>
-      </div>
+        <AppMain state={this.state} dispatch={this.dispatch}/>
+      </React.Fragment>
     );
   }
 }
