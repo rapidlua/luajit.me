@@ -305,7 +305,10 @@ function initial() {
     traceMode: "info"
   };
   return Action.apply(
-    state, Action.windowResize(window.innerWidth, window.innerHeight)
+    state, Action.windowResize(
+      document.documentElement.clientWidth,
+      document.documentElement.clientHeight
+    )
   );
 }
 
@@ -384,7 +387,10 @@ class App extends React.Component {
     });
   }
   handleWindowResize = () => {
-    this.dispatch(Action.windowResize(window.innerWidth, window.innerHeight));
+    this.dispatch(Action.windowResize(
+      document.documentElement.clientWidth,
+      document.documentElement.clientHeight
+    ));
   }
   handleKeyDown = (e) => {
     if (e.metaKey || e.target.tagName == "INPUT" ||
