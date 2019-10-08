@@ -1,5 +1,5 @@
 import React from "react";
-import {CodeView} from "./codeView.js";
+import {CodeView} from "./CodeView.js";
 import {ModeSwitcher} from "./ModeSwitcher.js";
 import {Placeholder} from "./Placeholder.js";
 import {PropListItem} from "./PropListView.js";
