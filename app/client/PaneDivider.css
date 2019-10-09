@@ -1,9 +1,10 @@
 .pane-divider {
-  z-index: 2000;
+  z-index: 500;
 }
 
 .pane-divider.active {
   background-color: rgba(0,0,0,.15);
+  z-index: 2000;
 }
 
 .pane-divider.active::after {
