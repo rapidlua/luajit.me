@@ -23,7 +23,7 @@ function TraceInfoView(props) {
         info.parent
       }</PropListItem>
       <PropListItem label="Parent Exit">{
-        info.parentexit
+        info.parentexit >= 0 ? info.parentexit : undefined
       }</PropListItem>
       <PropListItem label="Link">{
         info.link
