@@ -67,7 +67,7 @@ class TraceBrowser extends React.PureComponent {
             console.error(error);
             return;
           }
-          this.setState({graph: result});
+          this.setState({graph: result, data: traceList});
       });
     }
     updateGraph(this.props.data);
@@ -106,7 +106,7 @@ class TraceBrowser extends React.PureComponent {
   render() {
     const graph = this.state.graph;
     if (!graph) return <Placeholder>No Traces</Placeholder>;
-    const data = this.props.data;
+    const data = this.state.data;
     const selection = this.props.selection;
     const [width, height] = gv.jsonGetExtents(graph);
     const swapAxes = width > 250 && height < width || height < 250 && width < height;
