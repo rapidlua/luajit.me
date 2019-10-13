@@ -155,8 +155,9 @@ class TraceBrowser extends React.PureComponent {
               if (edge._hdraw_) edge._hdraw_.forEach(cmd=>render(cmd, arrowHeadStyle));
               if (edge._tdraw_) edge._tdraw_.forEach(cmd=>render(cmd, arrowHeadStyle));
               let className = "g-trace-link";
-              const initiator = data[edge.id.substr(1).split(":")[0]];
-              if (initiator && initiator.info.linktype==="stitch") className += " stitch";
+              const [pindex,index] = edge.id.split(":");
+              if (data[+pindex.substr(1)].info.linktype==="stitch"
+                  && !(data[+index.substr(1)].info.parentexit > -1)) className += " stitch";
               return (
                 <g
                   key={edge.id}
