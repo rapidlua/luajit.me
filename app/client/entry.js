@@ -3,7 +3,6 @@ import {debounce} from "./debounce";
 import React from "react";
 import {render} from "react-dom";
 
-import {importData} from "./importData.js";
 import {targets} from "../server/targets.js";
 import {InspectorPanel} from "./InspectorPanel.js"; 
 import {ProgressIndicator} from "./ProgressIndicator.js";
@@ -51,14 +50,14 @@ class AppMain extends React.Component {
       );
     if (e.keyCode == 66 /* B */)
       dispatch(Action.propertySet({
-        mode: this.props.state.mode != "luabc" ? "luabc" : "lua"
+        mode: this.props.state.mode !== "b" ? "b" : "l"
       }));
     if (e.keyCode == 70 /* F */)
       dispatch(Action.propertyToggle("enableFilter"));
     if (e.keyCode == 76 /* L */)
-      dispatch(Action.propertySet({ mode: "lua" }));
+      dispatch(Action.propertySet({ mode: "l" }));
     if (e.keyCode == 77 /* M */)
-      dispatch(Action.propertySet({ mode: "mixed" }));
+      dispatch(Action.propertySet({ mode: "m" }));
     if (e.keyCode == 80 /* P */)
       dispatch(Action.propertyToggle("enablePmode"));
     if (e.keyCode == 82 /* R */)
@@ -98,19 +97,14 @@ class AppMain extends React.Component {
   }
 };
 
-const SELECTION_AUTO = 'selection-auto';
-
 const initialState = {
-  response: { prototypes: [], traces: [] },
-  selection: SELECTION_AUTO,
+  response: { type: "response"},
   _input: {
     text: require("./snippets/help.lua"),
     target: targets[targets.length - 1]
   },
-  enablePmode: false,
-  showTopPanel: false,
   enableFilter: true,
-  mode: "lua",
+  mode: "l",
   protoMode: "info",
   traceMode: "info"
 };
@@ -131,16 +125,6 @@ class App extends React.Component {
     return hydrateState(props.initialState || initialState);
   }
   componentDidMount() {
-    const installResponse = (response) => {
-      response = importData(response);
-      const update = { response };
-      /* auto-select first trace or prototype - performed for the very
-       * first request only; this is to ensure that right pane is
-       * populated hence the App looks better on the first glance :) */
-      if (this.state.selection == SELECTION_AUTO)
-        update.selection = response.traces && response.traces[0] ? 'T0' : 'P0';
-      this.setState(update);
-    }
     const submitRequest = (input) => {
       const req = new XMLHttpRequest();
       req.open("POST", "run");
@@ -150,16 +134,16 @@ class App extends React.Component {
           const response = req.status === 200
             ? JSON.parse(req.responseText) : { error: req.responseText };
           response.input = input;
-          installResponse(response);
+          this.setState({ response });
         } catch (e) {
           console.error(e);
-          installResponse({ error: "Bad response", input });
+          this.setState({ response: { error: "Bad response", input }, objects: [] });
         }
       });
       req.addEventListener("error", (e) => {
         console.error(e);
         if (this.state._input !== input) return;
-        installResponse({ error: "Network error", input });
+        this.setState({ response: { error: "Network error", input }, objects: [] });
       });
       req.send(JSON.stringify(input));
       this.setState({ _inputSubmitted: this.state._input });

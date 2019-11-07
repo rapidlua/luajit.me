@@ -36,7 +36,7 @@ actionMap[inputPropertySet] = (state, action) => {
 /* Layout management */
 const layoutMap = {
   ["inspectorPanel.paneLayout"]:
-    require("./InspectorPanelPaneLayout.js").default
+    require("./InspectorPanel_PaneLayout.js").default
 };
 
 export function windowResize(width, height) {
@@ -74,3 +74,22 @@ actionMap[paneVisibilityToggle] = (state, action) => apply(
     !state[action.layoutId][action.paneId + "IsVisible"]
   )
 );
+
+export function inspectorPanelExpandToggle(objectId, subObjectId) {
+  return { id: inspectorPanelExpandToggle, objectId, subObjectId };
+}
+actionMap[inspectorPanelExpandToggle] = (state, action) => {
+  const expand = state["inspectorPanel.expand"] ?
+    state["inspectorPanel.expand"].slice() : [];
+  if (action.subObjectId === undefined) {
+    expand[action.objectId] = !expand[action.objectId];
+  } else {
+    const subExpand = expand[action.objectId] ?
+      expand[action.objectId].slice() : [];
+    subExpand[action.subObjectId] = !subExpand[action.subObjectId];
+    expand[action.objectId] = subExpand;
+  }
+  state = Object.assign({}, state);
+  state["inspectorPanel.expand"] = expand;
+  return state;
+};

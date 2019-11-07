@@ -57,6 +57,47 @@ function runInSandbox(options, callback) {
     });
 }
 
+function massage(output) {
+    // JSON coming out of Lua has keys ordered arbitrary which hurts
+    // readability.  ES6 requires object keys to be enumerated in
+    // assignment order, but Node is not quite ES6.
+    //
+    // Still, it helps a lot.
+    const result = Object.assign({
+        type: undefined,
+        description: undefined,
+        objects: undefined
+    }, output);
+    result.objects = output.objects.map((object) => {
+        switch (object.type) {
+        case "file":
+            return Object.assign({
+                type: undefined,
+                name: undefined
+            }, object);
+        case "prototype":
+            return Object.assign({
+                type: undefined,
+                file: undefined,
+                info: undefined
+            }, object);
+        case "trace":
+        case "trace.aborted":
+            return Object.assign({
+                type: undefined,
+                reason: undefined,
+                parent: undefined,
+                link: undefined,
+                trace: undefined,
+                info: undefined
+            }, object);
+        default:
+            return Object.assign({ type: undefined }, object);
+        }
+    });
+    return result;
+}
+
 function runLuaCode(code, options, callback) {
     const sourceFile = new TmpFile(code);
     const outputFile = new TmpFile();
@@ -78,6 +119,7 @@ function runLuaCode(code, options, callback) {
             {type: 'bind', dest: '/tmp/source.lua', src: sourceFile.path, ro: true}
         ],
         pipes: [
+            // {file: "/dev/stderr", stderr: true},
             {file: outputFile.path, fifo: '/tmp/instrument.out', limit: 2*1024*1024}
         ],
         seccompPolicy: `
@@ -93,7 +135,13 @@ function runLuaCode(code, options, callback) {
             DEFAULT LOG
         `
     }, function(error, response) {
-        const output = error ? undefined : fs.readFileSync(outputFile.fd);
+        let output;
+        try {
+            if (!error)
+                output = massage(JSON.parse(fs.readFileSync(outputFile.fd)));
+        } catch(e) {
+            error = e;
+        }
         sourceFile.destroy();
         outputFile.destroy();
         callback(error, output);

@@ -5,9 +5,9 @@ import {ToggleButton} from "./ToggleButton.js";
 import {ModeSwitcher} from "./ModeSwitcher.js";
 
 const modes = [
-  {key:"lua",   label:"Lua"},
-  {key:"luabc", label:"Bytecode"},
-  {key:"mixed", label:"Mixed"}
+  { key:"l", label:"Lua" },
+  { key:"b", label:"Bytecode" },
+  { key:"m", label:"Mixed" }
 ];
 
 export class PrimaryToolbar extends React.PureComponent {

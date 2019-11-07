@@ -6,83 +6,91 @@ import {ScrollView} from "./ScrollView.js";
 import {ToggleButton} from "./ToggleButton.js";
 import {Toolbar, ToolbarGroupRight} from "./Toolbar.js";
 import {Placeholder} from "./Placeholder.js";
+import {getSelection, getObjects} from "./processing.js";
 
-import "./TracePane.css";
+import "./InspectorPanel_TracePane.css";
 
-function createDot(traces) {
-  let dot = "digraph{ranksep=.32;edge[arrowsize=.9];node[shape=circle,margin=.007,height=.41,width=0]";
-  // do nodes
-  traces.forEach((trace) => {
-    if (trace) {
-      dot = dot + ";" + trace.index + "[id=" + trace.id + (
-        trace.info.parent === undefined ? ",shape=doublecircle" : ""
-      ) + "]";
+function createDot(objects) {
+  let dot = [
+    "digraph{ranksep=.32;edge[arrowsize=.9]",
+    ";node[shape=circle,margin=.007,height=.41,width=0]"
+  ];
+  const edgesCount = new Array(objects.length);
+  edgesCount.fill(0);
+  objects.forEach((object, index) => {
+    if ((object.type === "trace" || object.type === "trace.abort")
+      && object.id === index
+    ) {
+      if (object.link !== undefined) ++edgesCount[object.link];
+      if (object.parent !== undefined) ++edgesCount[object.link];
     }
   });
-  // do edges
-  traces.forEach((trace) => {
-    if (trace) {
-      const info = trace.info;
-      // if the trace links back to its parent, output
-      // single bi-directional edge, unless the total
-      // number of nodes is low (2 separate edges look better) or
-      // if link types are different
-      if (traces.length > 3 && info.link !== undefined &&
-          info.link == info.parent &&
-          traces[info.parent].info.linktype != "stitch")
-      {
-        dot = dot + ";" + info.parent + "->" + trace.index + (
-          "[id=\"T"+info.parent + ":"+trace.id+"\", dir=both]"
-        );
+  objects.forEach((object, index) => {
+    if ((object.type === "trace" || object.type === "trace.abort")
+      && object.id === index
+    ) {
+      dot.push(";" + index + "[label=" + object.name + (
+        object.parent === undefined ? ",shape=doublecircle" : ""
+      ) + "]");
+      // to declutter the drawing, output a single bi-directional edge iff:
+      //  * the trace links back to its parent
+      //  * the parent connection is not a stitch
+      //  * the number of outgoing and incoming edges in either the trace
+      //    or its parent is "high"
+      // (still, two separate edges look better)
+      if (object.link !== undefined &&
+          object.link === object.parent &&
+          (objects[object.parent].info.linktype !== "stitch"
+            || object.parentexit > -1) &&
+          (edgesCount[object.parent] > 3 || edgesCount[index] > 3)
+      ) {
+        dot.push(";" + object.parent + "->" + index + "[dir=both]");
       } else {
-        if (info.link !== undefined) {
-          dot = dot + ";" + trace.index + "->" + info.link + (
-            "[id=\""+trace.id + ":T"+info.link+"\"]"
-          );
-        }
-        if (info.parent !== undefined) {
-          dot = dot + ";" + info.parent + "->" + trace.index + (
-            "[id=\"T"+info.parent + ":"+trace.id+"\"]"
-          );
-        }
+        if (object.link !== undefined)
+          dot.push(";" + index + "->" + object.link);
+        if (object.parent !== undefined)
+          dot.push(";" + object.parent + "->" + index);
       }
     }
   });
-  return dot + "}";
+  dot.push("}");
+  if (dot.length === 3) return;
+  return dot.join("");
 }
 
 class TraceBrowser extends React.PureComponent {
   state = {graph: null};
   componentDidMount() {
-    const updateGraph = (traceList) => {
-      if (!traceList.length) {
+    const updateGraph = (objects) => {
+      const dot = createDot(objects);
+      if (!dot) {
         this.setState({graph: null});
         return;
       }
       gv.renderJSON(
-        createDot(traceList), (error, result) => {
-          if (traceList !== this.props.data) return;
+        dot, (error, result) => {
+          if (objects !== this.props.objects) return;
           if (error) {
             this.setState({graph: null});
             console.error(error);
             return;
           }
-          this.setState({graph: result, data: traceList});
+          this.setState({ graph: result, objects });
       });
     }
-    updateGraph(this.props.data);
-    const updateGraphDebounced = debounce((traceList) => {
-      if (!traceList) return;
+    updateGraph(this.props.objects);
+    const updateGraphDebounced = debounce((objects) => {
+      if (!objects) return;
       if (!updateGraphDebounced.isPending) updateGraphDebounced();
-      updateGraph(traceList);
+      updateGraph(objects);
     }, 250);
     this.componentWillUnmount = () => updateGraphDebounced.clear();
     this.componentDidUpdate = (prevProps) => {
-      if (this.props.data === prevProps.data) return;
+      if (this.props.objects === prevProps.objects) return;
       if (updateGraphDebounced.isPending)
-        updateGraphDebounced(this.props.data);
+        updateGraphDebounced(this.props.objects);
       else {
-        updateGraph(this.props.data);
+        updateGraph(this.props.objects);
         updateGraphDebounced();
       }
     }
@@ -90,12 +98,16 @@ class TraceBrowser extends React.PureComponent {
   handleClick = (e) => {
     e.stopPropagation();
     this.props.dispatch(
-      Action.propertySet({ selection: e.currentTarget.getAttribute("data-id") })
+      Action.propertySet({
+        selection: +e.currentTarget.getAttribute("data-id")
+      })
     );
   }
   handleMouseOver = (e) => {
     this.props.dispatch(
-      Action.propertySet({ transientSelection: e.currentTarget.getAttribute("data-id") })
+      Action.propertySet({
+        transientSelection: +e.currentTarget.getAttribute("data-id")
+      })
     );
   }
   handleMouseOut = (e) => {
@@ -106,7 +118,7 @@ class TraceBrowser extends React.PureComponent {
   render() {
     const graph = this.state.graph;
     if (!graph) return <Placeholder>No Traces</Placeholder>;
-    const data = this.state.data;
+    const objects = this.state.objects;
     const selection = this.props.selection;
     const [width, height] = gv.jsonGetExtents(graph);
     const swapAxes = width > 250 && height < width || height < 250 && width < height;
@@ -116,7 +128,7 @@ class TraceBrowser extends React.PureComponent {
         <svg {...gv.jsonGetSVGAttrs(graph, {units:"px", swapAxes})}>
           <g transform={swapAxes ? "matrix(0,1,1,0,0,0)" : null}>
           {
-            (graph.objects||[]).map(node=>{
+            (graph.objects||[]).map(node => {
               const innerHTML = [];
               const render = gv.jsonCreateSVGRenderer(innerHTML);
               node._draw_.filter(cmd=>cmd.op==="e").forEach((cmd,index)=>{
@@ -131,14 +143,14 @@ class TraceBrowser extends React.PureComponent {
               if (node._ldraw_)
                 node._ldraw_.forEach(cmd=>render(cmd, labelStyle));
               let className = "g-trace-thumb";
-              if (this.props.selection===node.id) className += " active";
-              const trace = data[+node.id.substr(1)];
-              if (trace && trace.info.error) className += " error";
+              if (this.props.selection === +node.name) className += " active";
+              if (objects[+node.name].type === "trace.abort")
+                className += " error";
               return (
                 <g
-                  key={node.id}
+                  key={node.name}
                   className={className}
-                  data-id={node.id}
+                  data-id={node.name}
                   onClick={this.handleClick}
                   onMouseOver={this.handleMouseOver}
                   onMouseOut={this.handleMouseOut}
@@ -148,19 +160,22 @@ class TraceBrowser extends React.PureComponent {
             })
           }
           {
-            (graph.edges||[]).map(edge=>{
+            (graph.edges||[]).map((edge, index)=>{
               const innerHTML = [];
               const render = gv.jsonCreateSVGRenderer(innerHTML);
               if (edge._draw_) edge._draw_.forEach(render);
-              if (edge._hdraw_) edge._hdraw_.forEach(cmd=>render(cmd, arrowHeadStyle));
-              if (edge._tdraw_) edge._tdraw_.forEach(cmd=>render(cmd, arrowHeadStyle));
+              if (edge._hdraw_)
+                edge._hdraw_.forEach(cmd=>render(cmd, arrowHeadStyle));
+              if (edge._tdraw_)
+                edge._tdraw_.forEach(cmd=>render(cmd, arrowHeadStyle));
               let className = "g-trace-link";
-              const [pindex,index] = edge.id.split(":");
-              if (data[+pindex.substr(1)].info.linktype==="stitch"
-                  && !(data[+index.substr(1)].info.parentexit > -1)) className += " stitch";
+              const tail = objects[+graph.objects[edge.tail].name];
+              const head = objects[+graph.objects[edge.head].name];
+              if (tail.info.linktype === "stitch" && !(head.parentexit > -1))
+                className += " stitch";
               return (
                 <g
-                  key={edge.id}
+                  key={index}
                   className={className}
                   dangerouslySetInnerHTML={{__html: innerHTML.join("")}}
                 />
@@ -194,16 +209,18 @@ class TraceToolbar extends React.Component {
 
 export class TracePane extends React.PureComponent {
   clearSelection = () => this.props.dispatch(
-    Action.propertySet({ selection: undefined })
+    Action.propertySet({ selection: -1 })
   );
   render() {
+    const objects = getObjects(this.props.state);
+    const selection = getSelection(this.props.state);
     return (
       <React.Fragment>
         <TraceToolbar {...this.props}/>
         <ScrollView className="g-wrapper" onClick={this.clearSelection}>
           <TraceBrowser
-           data={this.props.state.response.traces}
-           selection={this.props.state.selection}
+           objects={objects}
+           selection={objects[selection] && objects[selection].id || selection}
            dispatch={this.props.dispatch}/>
         </ScrollView>
       </React.Fragment>

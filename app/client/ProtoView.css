@@ -1,0 +1,123 @@
+.code-view {
+  display: table;
+  table-layout: fixed;
+  background-color: inherit;
+}
+.code-linegroup {
+  display: table-row-group;
+  background-color: inherit;
+}
+.code-line {
+  display: table-row;
+  white-space: pre;
+  font-family: Menlo, monospace;
+  background-color: inherit;
+}
+.code-linecell {
+  display: table-cell;
+  position: relative;
+  padding-left: 6px;
+  padding-right: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background-color: inherit;
+}
+.gutter {
+  width: 56px;
+  text-align: right;
+  color: rgba(0,0,0,.35);
+  padding-right: 18px;
+}
+.gutter::after {
+  position: absolute;
+  font-size: 80%;
+  top: 0;
+  bottom: 0;
+  left: 6px;
+  color: rgba(0,0,0,.75);
+}
+.code-linegroup.collapsed:hover > .code-line > .gutter::after {
+  content: "\25b6";
+}
+.code-linegroup.expanded:hover > .code-line:first-child > .gutter::after {
+  content: "\25bc";
+}
+.code-view.hover-em .code-line:hover,
+.code-line.em {
+  filter: invert(100%);
+}
+
+.proto-view {
+  overflow: hidden;
+  border-radius: .25rem;
+  border: 1px solid rgba(0,0,0,.125);
+  margin-bottom: 24px;
+  background-color: #ffffb0;
+}
+.proto-view.active {
+  box-shadow: 0 0 0 4px #2786f3;
+  border: solid 1px #2786f3;;
+}
+.proto-view .header {
+  padding: 7px;
+  text-align: center;
+  font-size: 15px;
+  font-family: Menlo, monospace;
+}
+.proto-view .code-view {
+  width: 100%;
+}
+.proto-view .code-line.tr {
+  background-color: #e0ff30;
+}
+.proto-view .code-line.tr-abort {
+  background-color: #ff7060;
+}
+.code-linegroup .code-line.bytecode {
+  background-color: #ffffd0;
+}
+.code-linegroup .code-line.bytecode.tr {
+  background-color: #e0ff78;
+}
+.code-linegroup .code-line.bytecode.tr-abort {
+  background-color: #ffa080;
+}
+.code-linegroup > .code-line.bytecode:nth-child(2) > .code-linecell {
+  padding-top: 4px;
+}
+.code-linegroup > .code-line.bytecode:last-child > .code-linecell {
+  padding-bottom: 4px;
+}
+.code-linegroup.dead.expanded .code-linecell:nth-child(2) {
+  background: linear-gradient(
+    270deg,
+    rgba(0,0,0,.125),
+    rgba(0,0,0,.125) 1px,
+    transparent 1px,
+    transparent
+  );
+  background-size: 10px auto;
+  background-repeat: repeat-y;
+}
+.slugs-overlay {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  max-width: 90%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: inherit;
+  padding-right: 2px;
+}
+.slug {
+  background-color: #000030;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 90%;
+  font-weight: 300;
+  margin-left: 2px;
+  color: #ffffff;
+  font-family: Helvetica;
+}
