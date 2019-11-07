@@ -4,14 +4,6 @@ body {
     font-size: 13px !important;
 }
 
-.card-title {
-    margin-bottom: 0px !important;
-}
-
-.card {
-    margin-bottom: 24px;
-}
-
 /* end hack */
 
 .app-container {
@@ -51,32 +43,6 @@ body {
     background-color: #f6f6f6;
 }
 
-
-.primary-pane .card {
-    overflow: hidden; /* curved corners protrusion */
-}
-
-.primary-pane .card-header {
-    padding: 7px 8px;
-}
-
-.primary-pane .card-header .card-title {
-    font-size: 15px;
-    letter-spacing: .7px;
-    font-weight: 500;
-    line-height: 1;
-    border-color: #c8c8c8;
-}
-
-.primary-pane .card > .card-header {
-    background-color: #efefef;
-}
-
-.primary-pane .card.active > .card-header {
-    background-color: #337ab7;
-    color: #fff
-}
-
 .pane-toggle-icon {
     display: inline-block;
     border: solid 1px;
@@ -108,9 +74,6 @@ body {
 .xcode-view {
     display: table;
 }
-.xcode-line-group {
-    display: table-row-group;
-}
 .xcode-line {
     display: table-row;
 }
@@ -127,30 +90,6 @@ body {
     background-color: inherit;
 }
 
-.xcode-overlay {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    max-width: 90%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    background-color: inherit;
-    padding-right: 2px;
-}
-
-.xcode-overlay > span {
-    background-color: #000030;
-    padding: 0 6px;
-    border-radius: 4px;
-    font-size: 90%;
-    font-weight: 300;
-    margin-left: 2px;
-    color: #ffffff;
-    font-family: Helvetica;
-}
-
 .xcode-line > .xcode {
     font-family: Menlo, monospace;
     width: 100%;
@@ -161,89 +100,8 @@ body {
 }
 
 /***********************************************************************/
-.xcode-view.primary {
-    width:100%;
-    table-layout:fixed;
-}
-.xcode-view.primary .xgutter {
-    width: 46px;
-    padding: 0 6px;
-    text-align: right;
-    border-right: solid rgba(0,0,0,.25) 1px;
-}
-.xcode-view.primary .xcode > div {
-    width: 100%;
-    padding: 0 6px;
-}
-.xcode-view.lua .xcode-line-group.luabc,
-.xcode-view.luabc .xcode-line-group.lua {
-    display: none;
-}
-.xcode-view.lua .xcode-line-group.luabc.expanded {
-    display: table-row-group;
-}
-.xcode-line-group.lua > .xcode-line {
-    background-color: #ffffb0;
-}
-.xcode-line-group.luabc > .xcode-line {
-    background-color: #ffffd0;
-}
-.xcode-view.mixed .xcode-line-group.lua > .xcode-line {
-    background-color: #ffffa0;
-}
-.xcode-view.lua   .xcode-line-group.luabc .xcode-line:first-child .xgutter,
-.xcode-view.mixed .xcode-line-group.luabc .xcode-line:first-child .xgutter {
-    padding-top: 4px;
-}
-.xcode-view.lua   .xcode-line-group.luabc .xcode-line:last-child .xgutter,
-.xcode-view.mixed .xcode-line-group.luabc .xcode-line:last-child .xgutter {
-    padding-bottom: 4px;
-}
-
 .xcode-view.primary .xcode-line:hover {
     filter: invert(100%);
-}
-
-/* increase comment visibility on inverted background */
-.xcode-view.primary .xcode-line:hover .hljs-comment {
-    color: #333;
-}
-
-.xgutter > .shevron {
-    float: left;
-}
-.xgutter > .shevron:before {
-    content: "▶";
-    font-size: 80%;
-}
-.xgutter > .shevron.expanded:before {
-    content: "▼";
-}
-.xgutter > .shevron:after {
-    content: "\200B";
-}
-
-.xcode-view.primary .shevron {
-    display: none;
-}
-
-.xcode-view.lua .xcode-line:hover .shevron {
-    display: inline-block;
-}
-
-.xcode-line-group.lua .xcode-line.active-trace {
-    /* !important: override background for lua/mixed line (higher precedence) */
-    background-color: #e0ff30 !important;
-}
-.xcode-line-group.luabc .xcode-line.active-trace {
-    background-color: #e0ff78;
-}
-.xcode-line-group.lua .xcode-line.active-trace.error {
-    /* !important: overrude another .active-trace rule */
-    background-color: #ff7060 !important;
-}
-.xcode-line-group.luabc .xcode-line.active-trace.error {
-    background-color: #ffa080;
 }
 
 /***********************************************************************/
