@@ -24,7 +24,7 @@ end
 local _dissect
 _dissect = function(func, fileindex, objects, M)
     local bc, bc_map = {}, {}
-    local k_number,  k_gc = {}, {}
+    local ktable,  gcktable = {}, {}
     local proto_id = #objects
     local info = funcinfo(func)
     M[info.proto or info.linedefined] = proto_id
@@ -33,8 +33,8 @@ _dissect = function(func, fileindex, objects, M)
         type      = "proto",
         bc        = bc,
         bcmap     = bc_map,
-        consts    = k_number,
-        gcconsts  = k_gc,
+        ktable    = ktable,
+        gcktable  = gcktable,
         info      = info,
         file      = fileindex
     }
@@ -47,7 +47,7 @@ _dissect = function(func, fileindex, objects, M)
     for i = 0, HUGE_VAL do
         local k = funck(func, i)
         if not k then break end
-        k_number[i+1] = k
+        ktable[i+1] = { type = type(k), value = k }
     end
     for i = -1,-HUGE_VAL,-1 do
         local k = funck(func, i)
@@ -67,7 +67,7 @@ _dissect = function(func, fileindex, objects, M)
         else
             e.value = tostring(k)
         end
-        k_gc[-i] = e
+        gcktable[-i] = e
     end
     return proto_id
 end

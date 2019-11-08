@@ -1,5 +1,4 @@
 import React from "react";
-import {CodeView} from "./CodeView.js";
 import {ModeSwitcher} from "./ModeSwitcher.js";
 import {Placeholder} from "./Placeholder.js";
 import {PropListItem} from "./PropListView.js";
@@ -8,6 +7,9 @@ import {Toolbar} from "./Toolbar.js";
 import {getSelection} from "./processing.js";
 
 import * as Action from "./Action.js";
+
+import "./CodeView.css";
+import "./InspectorPanel_ProtoDetailsPane.css";
 
 function formatBool(v) {
   if (v === true) return "Yes";
@@ -46,46 +48,49 @@ function ProtoInfoView(props) {
   );
 }
 
-function formatGcConst(gck) {
-  switch (gck.type) {
+function formatConst(k) {
+  switch (k.type) {
   case "number":
-    return '<span class="hljs-number">' + gck.value + "</span>";
+    return '<span class="hljs-number">' + k.value + "</span>";
   case "string":
-    return '<span class="hljs-string">' + JSON.stringify(gck.value) + "</span>";
+    return '<span class="hljs-string">' + JSON.stringify(k.value) + "</span>";
   case "proto":
-    return '<span class="proto-ref">Proto #' + gck.value + "</span>";
+    return "Proto #" + k.value;
   case "table":
-    return "{" + gck.value.map(kv =>
-      "[" + formatGcConst(kv[0]) + "] = " + formatGcConst(kv[1])
+    return "{" + k.value.map(kv =>
+      "[" + formatConst(kv[0]) + "] = " + formatConst(kv[1])
     ).join(", ") + "}";
   default:
-    return gck.value;
+    return k.value;
   }
 }
 
 function ProtoConstTableView(props) {
+  if (props.consts.length === 0) return null;
+  return (
+    <div className="proto-ktable-view code-view">{
+      props.consts.map((k, index) => (
+        <div className="code-line">
+          <div className="code-linecell gutter">{index}</div>
+          <div
+           className="code-linecell"
+           dangerouslySetInnerHTML={{ __html: formatConst(k) }}
+          />
+        </div>
+      ))
+    }</div>
+  );
+}
+
+function ProtoConstsView(props) {
   const proto = props.proto;
-  const noConsts = proto.consts.length === 0;
-  const noGcConsts = proto.gcconsts.length === 0;
-  if (noConsts && noGcConsts)
+  if (proto.ktable.length === 0 && proto.gcktable.length === 0)
     return <Placeholder>No Consts</Placeholder>;
   return (
-    <React.Fragment> {
-      noConsts ? null : <CodeView className="xcode-view consts" data={
-        proto.consts.map((k, index) => ({
-          key: index,
-          lineno: index,
-          codeHi: '<span class="hljs-number">' + k + "</span>"
-        }))
-      }/>}{
-      noGcConsts ? null : <CodeView className="xcode-view consts" data={
-        proto.gcconsts.map((gck, index) => ({
-          key: index,
-          lineno: index,
-          codeHi: formatGcConst(gck)
-        }))
-      }/>
-    }</React.Fragment>
+    <React.Fragment>
+      <ProtoConstTableView consts={proto.ktable}/>
+      <ProtoConstTableView consts={proto.gcktable}/>
+    </React.Fragment>
   );
 }
 
@@ -128,7 +133,7 @@ export function ProtoDetailsPane(props) {
       <React.Fragment>
         <ProtoDetailsToolbar {...props}/>
         <ScrollView>
-          <ProtoConstTableView proto={proto}/>
+          <ProtoConstsView proto={proto}/>
         </ScrollView>
       </React.Fragment>
     );

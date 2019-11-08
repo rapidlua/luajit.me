@@ -1,6 +1,5 @@
 import memoizeOne from "memoize-one";
 import React from "react";
-import {CodeView} from "./CodeView.js";
 import {ModeSwitcher} from "./ModeSwitcher.js";
 import {number4} from "./number4.js";
 import {Placeholder} from "./Placeholder.js";
@@ -10,6 +9,9 @@ import {Toolbar} from "./Toolbar.js";
 import {getSelection, getObjects} from "./processing.js";
 
 import * as Action from "./Action.js";
+
+import "./CodeView.css";
+import "./InspectorPanel_TraceDetailsPane.css";
 
 function TraceInfoView(props) {
   const trace = props.trace;
@@ -55,19 +57,12 @@ const getIr = memoizeOne((trace) => {
 });
 
 class TraceIrView extends React.PureComponent {
-  state = {};
-  irLineOnMouseEnter = (e) => {
-    this.setState({activeIrLine: e.currentTarget.getAttribute('data-lineno')-1});
-  }
-  irLineOnMouseLeave = (e) => {
-    this.setState({activeIrLine: undefined})
-  }
-  render() {
-    const ir = getIr(this.props.trace);
-    if (ir.length === 0)
-      return <Placeholder>No IR</Placeholder>;
-    const activeLine = ir[this.state.activeIrLine];
-    const emphasize = {};
+  state = { emphasize: [] };
+  handleMouseEnter = (e) => {
+    const activeLine = getIr(this.props.trace)[
+      +e.currentTarget.getAttribute('data-lineno')
+    ];
+    const emphasize = [];
     if (activeLine) {
       const re = /[0-9]{4,}/g;
       let m;
@@ -75,18 +70,31 @@ class TraceIrView extends React.PureComponent {
         emphasize[m[0]-1] = true;
       }
     }
+    this.setState({ emphasize })
+  }
+  handleMouseLeave = (e) => {
+    this.setState({ emphasize: [] })
+  }
+  render() {
+    const ir = getIr(this.props.trace);
+    if (ir.length === 0)
+      return <Placeholder>No IR</Placeholder>;
     return (
-      <CodeView
-        className="xcode-view ir"
-        data={ir.map((line, index) => ({
-          className: emphasize[index] ? "xcode-line em" : "xcode-line",
-          key: index,
-          lineno: number4(index+1),
-          code: line,
-          onMouseEnter: this.irLineOnMouseEnter,
-          onMouseLeave: this.irLineOnMouseLeave
-        }))}
-      />
+      <div
+        className="trace-ir-view code-view hover-em"
+      >{
+        ir.map((line, index) => (
+          <div
+           key={index} data-lineno={index}
+           className={"code-line" + (this.state.emphasize[index] ? " em" : "")}
+           onMouseEnter={this.handleMouseEnter}
+           onMouseLeave={this.handleMouseLeave}
+          >
+            <div className="code-linecell gutter">{number4(index + 1)}</div>
+            <div className="code-linecell">{line}</div>
+          </div>
+        ))
+      }</div>
     );
   }
 }
@@ -104,12 +112,16 @@ function TraceAsmView(props) {
   if (asm.length === 0)
     return <Placeholder>No Asm</Placeholder>;
   return (
-    <CodeView
-      data={asm.map((line, index) => ({
-        key: index,
-        codeHi: line
-      }))}
-    />
+    <div className="code-view">{
+      asm.map((line, index) => (
+        <div key={index} className="code-line">
+          <div
+           className="code-linecell"
+           dangerouslySetInnerHTML={{ __html: line }}
+          />
+        </div>
+      ))
+    }</div>
   );
 }
 

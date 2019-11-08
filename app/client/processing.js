@@ -66,7 +66,7 @@ function transformObjects(response) {
           lineMap.push(object.bcmap.length);
         // segments
         const holeMap = new Array(nlines).fill(false);
-        for (let gck of object.gcconsts) {
+        for (let gck of object.gcktable) {
           if (gck.type === "proto") {
             const childInfo = response.objects[gck.value].info;
             holeMap.fill(

@@ -1,6 +1,5 @@
 import memoizeOne from "memoize-one";
 import React from "react";
-import {CodeView} from "./CodeView.js";
 import {PrimaryToolbar} from "./InspectorPanel_PrimaryToolbar.js";
 import {ScrollView} from "./ScrollView.js";
 import {getSelection, getObjects} from "./processing.js";
