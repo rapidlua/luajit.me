@@ -1,10 +1,9 @@
 import React from "react";
-import {ModeSwitcher} from "./ModeSwitcher.js";
-import {Placeholder} from "./Placeholder.js";
+import {ModeSwitcher, Mode} from "./ModeSwitcher.js";
 import {PropListItem} from "./PropListView.js";
 import {ScrollView} from "./ScrollView.js";
 import {Toolbar} from "./Toolbar.js";
-import {getSelection} from "./processing.js";
+import {getSelectedObject} from "./processing.js";
 
 import * as Action from "./Action.js";
 
@@ -70,7 +69,7 @@ function ProtoConstTableView(props) {
   return (
     <div className="proto-ktable-view code-view">{
       props.consts.map((k, index) => (
-        <div className="code-line">
+        <div className="code-line" key={index}>
           <div className="code-linecell gutter">{index}</div>
           <div
            className="code-linecell"
@@ -82,43 +81,36 @@ function ProtoConstTableView(props) {
   );
 }
 
-function ProtoConstsView(props) {
-  const proto = props.proto;
-  if (proto.ktable.length === 0 && proto.gcktable.length === 0)
-    return <Placeholder>No Consts</Placeholder>;
-  return (
-    <React.Fragment>
-      <ProtoConstTableView consts={proto.ktable}/>
-      <ProtoConstTableView consts={proto.gcktable}/>
-    </React.Fragment>
-  );
-}
-
-const modes = [
-  { key: "info",   label: "Info"},
-  { key: "consts", label: "Consts"},
-];
-
-class ProtoDetailsToolbar extends React.PureComponent {
-  selectMode = (_, mode) => this.props.dispatch(
-    Action.propertySet({ protoMode: mode })
-  );
-  render() {
-    return (
-      <Toolbar {...this.props}>
-        <ModeSwitcher
-          currentMode={this.props.state.protoMode}
-          selectMode={this.selectMode}
-          modes={modes}
-        />
-      </Toolbar>
-    );
+function requestMode(state, mode) {
+  switch (mode) {
+  case "k":
+    const proto = getSelectedObject(state);
+    if (proto.ktable.length !== 0 || proto.gcktable.length !== 0)
+      return "k";
+  default:
+    return "i";
   }
 }
 
+function ProtoDetailsToolbar(props) {
+  return (
+    <Toolbar {...props}>
+      <ModeSwitcher
+       scope="inspectorPanel.protoDetailsPane.mode"
+       requestMode={requestMode}
+       {...props}
+      >
+        <Mode id="i">Info</Mode>
+        <Mode id="k">Consts</Mode>
+      </ModeSwitcher>
+    </Toolbar>
+  );
+}
+
 export function ProtoDetailsPane(props) {
-  const proto = props.state.response.objects[getSelection(props.state)];
-  switch (props.state.protoMode) {
+  const proto = getSelectedObject(props.state);
+  switch (requestMode(
+    props.state, props.state["inspectorPanel.protoDetailsPane.mode"])) {
   default:
     return (
       <React.Fragment>
@@ -128,12 +120,13 @@ export function ProtoDetailsPane(props) {
         </ScrollView>
       </React.Fragment>
     );
-  case "consts":
+  case "k":
     return (
       <React.Fragment>
         <ProtoDetailsToolbar {...props}/>
         <ScrollView>
-          <ProtoConstsView proto={proto}/>
+          <ProtoConstTableView consts={proto.ktable}/>
+          <ProtoConstTableView consts={proto.gcktable}/>
         </ScrollView>
       </React.Fragment>
     );

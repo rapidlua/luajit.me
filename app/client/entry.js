@@ -50,14 +50,15 @@ class AppMain extends React.Component {
       );
     if (e.keyCode == 66 /* B */)
       dispatch(Action.propertySet({
-        mode: this.props.state.mode !== "b" ? "b" : "l"
+        "inspectorPanel.mode":
+          this.props.state["inspectorPanel.mode"] !== "b" ? "b" : "l"
       }));
     if (e.keyCode == 70 /* F */)
       dispatch(Action.propertyToggle("enableFilter"));
     if (e.keyCode == 76 /* L */)
-      dispatch(Action.propertySet({ mode: "l" }));
+      dispatch(Action.propertySet({ "inspectorPanel.mode": "l" }));
     if (e.keyCode == 77 /* M */)
-      dispatch(Action.propertySet({ mode: "m" }));
+      dispatch(Action.propertySet({ "inspectorPanel.mode": "m" }));
     if (e.keyCode == 80 /* P */)
       dispatch(Action.propertyToggle("enablePmode"));
     if (e.keyCode == 82 /* R */)
@@ -103,10 +104,7 @@ const initialState = {
     text: require("./snippets/help.lua"),
     target: targets[targets.length - 1]
   },
-  enableFilter: true,
-  mode: "l",
-  protoMode: "info",
-  traceMode: "info"
+  enableFilter: true
 };
 
 function hydrateState(state) {
@@ -120,6 +118,7 @@ function hydrateState(state) {
 // Sends input to server for processing if it no longer matches
 // (last) response.
 class App extends React.Component {
+  state = null
   static getDerivedStateFromProps(props, state) {
     if (state) return null;
     return hydrateState(props.initialState || initialState);

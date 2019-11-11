@@ -95,7 +95,7 @@ export class PrimaryPane extends React.PureComponent {
   );
   render() {
     const response = this.props.state.response;
-    const mode = this.props.state.mode;
+    const mode = this.props.state["inspectorPanel.mode"] || "l";
     const selection = getSelection(this.props.state);
     const expand = this.props.state["inspectorPanel.expand"];
     const objects = getObjects(this.props.state);

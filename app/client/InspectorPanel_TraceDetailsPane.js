@@ -1,12 +1,11 @@
 import memoizeOne from "memoize-one";
 import React from "react";
-import {ModeSwitcher} from "./ModeSwitcher.js";
+import {ModeSwitcher, Mode} from "./ModeSwitcher.js";
 import {number4} from "./number4.js";
-import {Placeholder} from "./Placeholder.js";
 import {PropListItem} from "./PropListView.js";
 import {ScrollView} from "./ScrollView.js";
 import {Toolbar} from "./Toolbar.js";
-import {getSelection, getObjects} from "./processing.js";
+import {getSelection, getObjects, getSelectedObject} from "./processing.js";
 
 import * as Action from "./Action.js";
 
@@ -77,8 +76,6 @@ class TraceIrView extends React.PureComponent {
   }
   render() {
     const ir = getIr(this.props.trace);
-    if (ir.length === 0)
-      return <Placeholder>No IR</Placeholder>;
     return (
       <div
         className="trace-ir-view code-view hover-em"
@@ -109,8 +106,6 @@ const getAsm = memoizeOne((trace) => {
 
 function TraceAsmView(props) {
   const asm = getAsm(props.trace);
-  if (asm.length === 0)
-    return <Placeholder>No Asm</Placeholder>;
   return (
     <div className="code-view">{
       asm.map((line, index) => (
@@ -125,33 +120,27 @@ function TraceAsmView(props) {
   );
 }
 
-const modes = [
-  { key:"info", label: "Info" },
-  { key:"ir",   label: "IR" },
-  { key:"asm",  label: "Asm" }
-];
-
-class TraceDetailsToolbar extends React.PureComponent {
-  selectMode = (_, mode) => this.props.dispatch(
-    Action.propertySet({ traceMode: mode })
+function TraceDetailsToolbar(props) {
+  return (
+    <Toolbar {...props}>
+      <ModeSwitcher
+       scope="inspectorPanel.traceDetailsPane.mode"
+       requestMode={requestMode}
+       {...props}
+      >
+        <Mode id="i">Info</Mode>
+        <Mode id="ir">IR</Mode>
+        <Mode id="asm">Asm</Mode>
+      </ModeSwitcher>
+    </Toolbar>
   );
-  render() {
-    return (
-      <Toolbar {...this.props}>
-        <ModeSwitcher
-          currentMode={this.props.state.traceMode}
-          selectMode={this.selectMode}
-          modes={modes}
-        />
-      </Toolbar>
-    );
-  }
 }
 
 export function TraceDetailsPane(props) {
   const objects = getObjects(props.state);
   const trace = objects[getSelection(props.state)];
-  switch (props.state.traceMode) {
+  switch (requestMode(
+    props.state, props.state["inspectorPanel.traceDetailsPane.mode"])) {
   default:
     return (
       <React.Fragment>
@@ -179,5 +168,16 @@ export function TraceDetailsPane(props) {
         </ScrollView>
       </React.Fragment>
     );
+  }
+}
+
+function requestMode(state, mode) {
+  switch (mode) {
+  default:
+    return "i";
+  case "ir":
+    return getIr(getSelectedObject(state)).length === 0 ? "i": "ir";
+  case "asm":
+    return getAsm(getSelectedObject(state)).length === 0 ? "i": "asm";
   }
 }

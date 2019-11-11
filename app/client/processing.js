@@ -161,3 +161,7 @@ export function getObjects(state) {
   return state.response._objects ||
     (state.response._objects = coalesceAborts(transformObjects(state.response)));
 }
+
+export function getSelectedObject(state) {
+	return getObjects(state)[getSelection(state)];
+}

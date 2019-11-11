@@ -2,6 +2,7 @@ import {debounce} from "./debounce.js";
 import * as gv from "./gv.js";
 import * as Action from "./Action.js";
 import React from "react";
+import {ModeSwitcher, Mode} from "./ModeSwitcher.js";
 import {ScrollView} from "./ScrollView.js";
 import {ToggleButton} from "./ToggleButton.js";
 import {Toolbar, ToolbarGroupRight} from "./Toolbar.js";
@@ -195,12 +196,12 @@ class TraceToolbar extends React.Component {
   render() {
     return (
       <Toolbar {...this.props}>
+        <ModeSwitcher {...this.props}><Mode>Traces</Mode></ModeSwitcher>
         <ToolbarGroupRight>
           <ToggleButton
             isOn    = {this.props.state.enableFilter}
             onClick = {this.toggleFilter}
-            label   = "&#x25d2;"
-          />
+          >&#x25d2;</ToggleButton>
         </ToolbarGroupRight>
       </Toolbar>
     );
