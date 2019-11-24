@@ -2,7 +2,6 @@ import React from "react";
 import {ModeSwitcher, Mode} from "./ModeSwitcher.js";
 import {PropListItem} from "./PropListView.js";
 import {ScrollView} from "./ScrollView.js";
-import {Toolbar} from "./Toolbar.js";
 import {getSelectedObject} from "./processing.js";
 
 import * as Action from "./Action.js";
@@ -92,18 +91,16 @@ function requestMode(state, mode) {
   }
 }
 
-function ProtoDetailsToolbar(props) {
+export function ProtoDetailsToolbar(props) {
   return (
-    <Toolbar {...props}>
-      <ModeSwitcher
-       scope="inspectorPanel.protoDetailsPane.mode"
-       requestMode={requestMode}
-       {...props}
-      >
-        <Mode id="i">Info</Mode>
-        <Mode id="k">Consts</Mode>
-      </ModeSwitcher>
-    </Toolbar>
+    <ModeSwitcher
+      scope="inspectorPanel.protoDetailsPane.mode"
+      requestMode={requestMode}
+      {...props}
+    >
+      <Mode id="i">Info</Mode>
+      <Mode id="k">Consts</Mode>
+    </ModeSwitcher>
   );
 }
 
@@ -113,22 +110,16 @@ export function ProtoDetailsPane(props) {
     props.state, props.state["inspectorPanel.protoDetailsPane.mode"])) {
   default:
     return (
-      <React.Fragment>
-        <ProtoDetailsToolbar {...props}/>
-        <ScrollView className="prop-list-view">
-          <ProtoInfoView proto={proto}/>
-        </ScrollView>
-      </React.Fragment>
+      <ScrollView className="prop-list-view">
+        <ProtoInfoView proto={proto}/>
+      </ScrollView>
     );
   case "k":
     return (
-      <React.Fragment>
-        <ProtoDetailsToolbar {...props}/>
-        <ScrollView>
-          <ProtoConstTableView consts={proto.ktable}/>
-          <ProtoConstTableView consts={proto.gcktable}/>
-        </ScrollView>
-      </React.Fragment>
+      <ScrollView>
+        <ProtoConstTableView consts={proto.ktable}/>
+        <ProtoConstTableView consts={proto.gcktable}/>
+      </ScrollView>
     );
   }
 }

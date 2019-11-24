@@ -4,7 +4,6 @@ import {ModeSwitcher, Mode} from "./ModeSwitcher.js";
 import {number4} from "./number4.js";
 import {PropListItem} from "./PropListView.js";
 import {ScrollView} from "./ScrollView.js";
-import {Toolbar} from "./Toolbar.js";
 import {getSelection, getObjects, getSelectedObject} from "./processing.js";
 
 import * as Action from "./Action.js";
@@ -120,19 +119,17 @@ function TraceAsmView(props) {
   );
 }
 
-function TraceDetailsToolbar(props) {
+export function TraceDetailsToolbar(props) {
   return (
-    <Toolbar {...props}>
-      <ModeSwitcher
-       scope="inspectorPanel.traceDetailsPane.mode"
-       requestMode={requestMode}
-       {...props}
-      >
-        <Mode id="i">Info</Mode>
-        <Mode id="ir">IR</Mode>
-        <Mode id="asm">Asm</Mode>
-      </ModeSwitcher>
-    </Toolbar>
+    <ModeSwitcher
+      scope="inspectorPanel.traceDetailsPane.mode"
+      requestMode={requestMode}
+      {...props}
+    >
+      <Mode id="i">Info</Mode>
+      <Mode id="ir">IR</Mode>
+      <Mode id="asm">Asm</Mode>
+    </ModeSwitcher>
   );
 }
 
@@ -143,30 +140,21 @@ export function TraceDetailsPane(props) {
     props.state, props.state["inspectorPanel.traceDetailsPane.mode"])) {
   default:
     return (
-      <React.Fragment>
-        <TraceDetailsToolbar {...props}/>
-        <ScrollView className="prop-list-view">
-          <TraceInfoView trace={trace} objects={objects}/>
-        </ScrollView>
-      </React.Fragment>
+      <ScrollView className="prop-list-view">
+        <TraceInfoView trace={trace} objects={objects}/>
+      </ScrollView>
     );
   case "ir":
     return (
-      <React.Fragment>
-        <TraceDetailsToolbar {...props}/>
-        <ScrollView>
-          <TraceIrView trace={trace}/>
-        </ScrollView>
-      </React.Fragment>
+      <ScrollView>
+        <TraceIrView trace={trace}/>
+      </ScrollView>
     );
   case "asm":
     return (
-      <React.Fragment>
-        <TraceDetailsToolbar {...props}/>
-        <ScrollView>
-          <TraceAsmView trace={trace}/>
-        </ScrollView>
-      </React.Fragment>
+      <ScrollView>
+        <TraceAsmView trace={trace}/>
+      </ScrollView>
     );
   }
 }

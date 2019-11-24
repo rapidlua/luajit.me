@@ -1,12 +1,13 @@
 import React from "react";
 import {Placeholder} from "./Placeholder.js";
 import {ProtoDetailsPane} from "./InspectorPanel_ProtoDetailsPane.js";
-import {Toolbar} from "./Toolbar.js";
+import {ProtoDetailsToolbar} from "./InspectorPanel_ProtoDetailsPane.js";
 import {TraceDetailsPane} from "./InspectorPanel_TraceDetailsPane.js";
-import {getSelection, getObjects} from "./processing.js";
+import {TraceDetailsToolbar} from "./InspectorPanel_TraceDetailsPane.js";
+import {getSelectedObject} from "./processing.js";
 
 export function DetailsPane(props) {
-  const selection = getObjects(props.state)[getSelection(props.state)];
+  const selection = getSelectedObject(props.state);
   if (selection) {
     switch (selection.type) {
     case "proto":
@@ -17,9 +18,20 @@ export function DetailsPane(props) {
     }
   }
   return (
-    <React.Fragment>
-      <Toolbar {...props}/>
-      <Placeholder>No Selection</Placeholder>
-    </React.Fragment>
+    <Placeholder>No Selection</Placeholder>
   );
+}
+
+export function DetailsToolbar(props) {
+  const selection = getSelectedObject(props.state);
+  if (selection) {
+    switch (selection.type) {
+    case "proto":
+      return <ProtoDetailsToolbar {...props}/>;
+    case "trace":
+    case "trace.abort":
+      return <TraceDetailsToolbar {...props}/>;
+    }
+  }
+  return null;
 }

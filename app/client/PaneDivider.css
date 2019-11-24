@@ -1,5 +1,6 @@
 .pane-divider {
   z-index: 500;
+  position: relative;
 }
 
 .pane-divider.active {

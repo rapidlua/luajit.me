@@ -1,13 +1,14 @@
 import React from "react";
-import {ToggleButton} from "./ToggleButton.js";
+import {ToggleButton} from "./ToolbarButton.js";
 import * as Action from "./Action.js";
+import "./Toolbar.css";
 
 const ModeSwitcherContext = React.createContext({});
 
 export function ModeSwitcher(props) {
   const { children, ...contextProps } = props;
   return (
-    <div className="toolbar-group toolbar-em">
+    <div className="toolbar-group">
       <ModeSwitcherContext.Provider value={contextProps}>{
         children
       }</ModeSwitcherContext.Provider>
@@ -31,6 +32,7 @@ export class Mode extends React.Component {
     }
     return (
       <ToggleButton
+       className="toggle-alt"
        isOn={currentMode === this.props.id}
        onClick={this.handleClick}
       >{this.props.children}</ToggleButton>

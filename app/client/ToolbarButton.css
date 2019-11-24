@@ -1,32 +1,45 @@
 .toolbar-btn {
   display: inline-block;
-  padding: 3px 9px;
-  border-radius: 4px;
-  font-size: 13px;
-  color: #a0a0a0;
-  border-color: #555;
-  cursor: default;
-  line-height: 1;
-  margin: 0px 2px;
   vertical-align: middle;
-  font-weight: 400;
+  line-height: 1;
+  padding: 4px 11px;
+  border-radius: 2px;
+  cursor: default;
+  /* bottom margin (4px) is needed to inflate enclosing toolbar-group,
+   * so that the pane divider near controls is obscured and the user is
+   * not confused by row-resize cursor */
+  margin: 4px 2px;
 }
 
-.toolbar-btn:first-child {
-  margin-left: 0px;
+.toolbar-btn.cmd {
+  color: #a0a0a0;
 }
 
-.toolbar-btn:last-child {
-  margin-right: 0px;
+.toolbar-btn.cmd:hover {
+  color: #f0f0f0;
 }
 
-.toolbar-btn:hover {
-  background-color: #eee;
-  color: #000;
+.toolbar-btn.toggle, .toolbar-btn.toggle-alt {
+  color: #a0a0a0;
 }
 
-.toolbar-btn:active {
-  background-color: #ddd;
-  color: #000;
-  border-color: #000;
+.toolbar-btn.toggle:hover, .toolbar-btn.toggle-alt:hover {
+  color: #f0f0f0;
+}
+
+.toolbar-btn.toggle.on {
+  color: rgb(39, 134, 243);
+}
+
+.toolbar-btn.toggle.on:hover {
+  color: #05b2e0;
+}
+
+.toolbar-btn.toggle-alt.on {
+  color: #e8e8e8;
+  background-color: rgba(87,97,108);
+}
+
+.toolbar-btn.toggle-alt.on:hover {
+  color: #ffffff;
 }

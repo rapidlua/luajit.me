@@ -6,41 +6,8 @@ body {
 
 /* end hack */
 
-.app-container {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-}
-
-.top-pane {
-    background-color: #303030;
-}
-
-.app-main {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
+.flex {
     flex: 1;
-}
-
-.primary-pane, .secondary-pane {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    position: relative;
-}
-
-.primary-pane {
-    flex: 1;
-}
-
-.secondary-pane {
-    background-color: #f6f6f6;
 }
 
 .pane-toggle-icon {
@@ -50,7 +17,7 @@ body {
     font-size: 10px;
 }
 
-.top-pane textarea {
+.pane-top textarea {
     min-width: calc(100% - 20px);
     max-width: calc(100% - 20px);
     padding: 8px;

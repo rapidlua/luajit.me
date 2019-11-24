@@ -4,8 +4,7 @@ import * as Action from "./Action.js";
 import React from "react";
 import {ModeSwitcher, Mode} from "./ModeSwitcher.js";
 import {ScrollView} from "./ScrollView.js";
-import {ToggleButton} from "./ToggleButton.js";
-import {Toolbar, ToolbarGroupRight} from "./Toolbar.js";
+import {ToggleButton} from "./ToolbarButton.js";
 import {Placeholder} from "./Placeholder.js";
 import {getSelection, getObjects} from "./processing.js";
 
@@ -189,21 +188,21 @@ class TraceBrowser extends React.PureComponent {
   }
 }
 
-class TraceToolbar extends React.Component {
+export class TraceToolbar extends React.Component {
   toggleFilter = () => this.props.dispatch(
     Action.propertyToggle("enableFilter")
   );
   render() {
     return (
-      <Toolbar {...this.props}>
+      <React.Fragment>
         <ModeSwitcher {...this.props}><Mode>Traces</Mode></ModeSwitcher>
-        <ToolbarGroupRight>
+        <div className="toolbar-group right">
           <ToggleButton
             isOn    = {this.props.state.enableFilter}
             onClick = {this.toggleFilter}
           >&#x25d2;</ToggleButton>
-        </ToolbarGroupRight>
-      </Toolbar>
+        </div>
+      </React.Fragment>
     );
   }
 }
@@ -216,15 +215,13 @@ export class TracePane extends React.PureComponent {
     const objects = getObjects(this.props.state);
     const selection = getSelection(this.props.state);
     return (
-      <React.Fragment>
-        <TraceToolbar {...this.props}/>
-        <ScrollView className="g-wrapper" onClick={this.clearSelection}>
-          <TraceBrowser
-           objects={objects}
-           selection={objects[selection] && objects[selection].id || selection}
-           dispatch={this.props.dispatch}/>
-        </ScrollView>
-      </React.Fragment>
+      <ScrollView className="g-wrapper" onClick={this.clearSelection}>
+        <TraceBrowser
+         objects={objects}
+         selection={objects[selection] && objects[selection].id || selection}
+         dispatch={this.props.dispatch}
+        />
+      </ScrollView>
     );
   }
 }

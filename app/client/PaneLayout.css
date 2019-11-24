@@ -1,0 +1,24 @@
+.pane-layout {
+  display: flex;
+  align-items: stretch;
+}
+.pane-layout.h {
+  flex-direction: row;
+}
+.pane-layout.v {
+  flex-direction: column;
+}
+.pane {
+	position: relative;
+}
+.pane-secondary {
+  background-color: #f6f6f6;
+}
+.pane-root {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+	overflow: hidden;
+}

@@ -163,5 +163,5 @@ export function getObjects(state) {
 }
 
 export function getSelectedObject(state) {
-	return getObjects(state)[getSelection(state)];
+  return getObjects(state)[getSelection(state)];
 }

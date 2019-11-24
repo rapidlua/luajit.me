@@ -6,12 +6,14 @@ import {render} from "react-dom";
 import {targets} from "../server/targets.js";
 import {InspectorPanel} from "./InspectorPanel.js"; 
 import {ProgressIndicator} from "./ProgressIndicator.js";
-import {ToolbarHoverTrigger} from "./Toolbar.js";
+import {Toolbar, ToolbarGroupLeft, ToolbarHoverTrigger} from "./Toolbar.js";
 import {EditorOverlay} from "./EditorOverlay.js";
+import {ControlPanel} from "./ControlPanel.js";
 
 import * as Action from "./Action.js";
 
 import "./styles.css";
+import "./PaneLayout.css";
 
 class AppMain extends React.Component {
   componentDidMount() {
@@ -72,27 +74,10 @@ class AppMain extends React.Component {
   render() {
     const state = this.props.state;
     return (
-      <div
-        className={
-          "app-container" +
-          (state.enablePmode ? " presentation" : "")
-        }
-      >
+      <div className="pane-root pane-layout v">
         <EditorOverlay {...this.props}/>
-        {
-          !state.showTopPanel ? null :
-          <ToolbarHoverTrigger className="top-pane"
-           dispatch={this.props.dispatch}
-          >
-            <textarea
-              rows="5" onChange={this.handleTextChange}
-              value={state._input.text}
-            />
-          </ToolbarHoverTrigger>
-        }
-        <div className="app-main">
-          <InspectorPanel {...this.props}/>
-        </div>
+        <ControlPanel {...this.props}/>
+        <InspectorPanel {...this.props}/>
       </div>
     );
   }

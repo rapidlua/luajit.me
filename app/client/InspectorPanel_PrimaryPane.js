@@ -1,9 +1,9 @@
 import memoizeOne from "memoize-one";
 import React from "react";
-import {PrimaryToolbar} from "./InspectorPanel_PrimaryToolbar.js";
 import {ScrollView} from "./ScrollView.js";
 import {getSelection, getObjects} from "./processing.js";
 import {ProtoView} from "./ProtoView.js";
+import {ModeSwitcher, Mode} from "./ModeSwitcher.js";
 
 import * as Action from "./Action.js";
 
@@ -113,7 +113,6 @@ export class PrimaryPane extends React.PureComponent {
     }
     return (
       <React.Fragment>
-        <PrimaryToolbar {...this.props}/>
         <ScrollView className="proto-list-view" onClick={this.clearSelection}>{
           response.error ? (
             <div className="alert alert-danger" role="alert">
@@ -144,3 +143,19 @@ export class PrimaryPane extends React.PureComponent {
     );
   }
 }
+
+export function PrimaryToolbar(props) {
+  return (
+    <ModeSwitcher
+     scope="inspectorPanel.mode"
+     requestMode={requestMode}
+     {...props}
+    >
+      <Mode id="l">Lua</Mode>
+      <Mode id="b">Bytecode</Mode>
+      <Mode id="m">Mixed</Mode>
+    </ModeSwitcher>
+  );
+}
+
+function requestMode(state, mode) { return mode || "l"; }
