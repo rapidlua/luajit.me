@@ -6,23 +6,35 @@ import "./PaneLayout.css";
 import "./ControlPanel.css";
 
 export function ControlPanel(props) {
-	return (
-		<div className="control-panel pane-layout v">
+  const layout = props.state["root.paneLayout"];
+  console.log(layout);
+  return (
+    <div className="control-panel pane-layout v">
+      { !layout.inlineEditorIsVisible ? null :
+        <div
+         className="inline-editor-pane"
+         style={{ height: layout.inlineEditorHeight + "px"}}
+        />
+      }
       <div className="toolbar primary">
-				<div className="toolbar-group left">
-					<CmdButton>Edit</CmdButton>
-					<CmdButton>Share</CmdButton>
-					<CmdButton>About</CmdButton>
-				</div>
-			</div>
-			<InspectorToolbar {...props}/>
-			<PaneDivider type="h"/>
-		</div>
-	);
+        <div className="toolbar-group left">
+          <CmdButton>Edit</CmdButton>
+          <CmdButton>Share</CmdButton>
+          <CmdButton>About</CmdButton>
+        </div>
+      </div>
+      <InspectorToolbar {...props}/>
+      <PaneDivider
+       type="h" layoutId="root.paneLayout"
+       paneSize={layout.inlineEditorIsVisible ? layout.inlineEditorHeight : 0}
+       paneId="inlineEditor" dispatch={props.dispatch}
+      />
+    </div>
+  );
 }
 
 function _() {
-	return (
+  return (
           !state.showTopPanel ? null :
           <ToolbarHoverTrigger className="pane-top"
            dispatch={this.props.dispatch}
@@ -32,5 +44,5 @@ function _() {
               value={state._input.text}
             />
           </ToolbarHoverTrigger>
-	);
+  );
 }

@@ -36,7 +36,9 @@ actionMap[inputPropertySet] = (state, action) => {
 /* Layout management */
 const layoutMap = {
   ["inspectorPanel.paneLayout"]:
-    require("./InspectorPanel_PaneLayout.js").default
+    require("./InspectorPanel_PaneLayout.js").default,
+  ["root.paneLayout"]:
+    require("./RootPaneLayout.js").default
 };
 
 export function windowResize(width, height) {
@@ -51,8 +53,8 @@ actionMap[windowResize] = (state, action) => {
   return state2;
 }
 
-export function paneResize(layoutId, paneId, size) {
-  return { id: paneResize, layoutId, paneId, size };
+export function paneResize(layoutId, paneId, size, commit) {
+  return { id: paneResize, layoutId, paneId, size, commit: commit || false };
 }
 
 export function paneVisibilitySet(layoutId, paneId, isVisible) {

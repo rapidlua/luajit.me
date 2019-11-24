@@ -9,7 +9,7 @@
   flex-direction: column;
 }
 .pane {
-	position: relative;
+  position: relative;
 }
 .pane-secondary {
   background-color: #f6f6f6;
@@ -20,5 +20,5 @@
   right: 0;
   top: 0;
   bottom: 0;
-	overflow: hidden;
+  overflow: hidden;
 }

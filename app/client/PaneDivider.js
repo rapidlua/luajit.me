@@ -3,7 +3,7 @@ import React from "react";
 
 import "./PaneDivider.css";
 
-export class PaneDivider extends React.PureComponent {
+export class PaneDivider extends React.Component {
   state = {};
   componentWillUnmount() {
     window.removeEventListener("mouseup", this.handleMouseUp);
@@ -15,10 +15,14 @@ export class PaneDivider extends React.PureComponent {
     const myHostRect = e.target.parentNode.getBoundingClientRect();
     switch (this.props.type) {
     case "v":
-      this.pivot = myRect.left - myHostRect.left + myRect.width/2 - e.clientX;
+      this.pivot = (this.props.paneSize === undefined ?
+        myRect.left - myHostRect.left + myRect.width/2 : this.props.paneSize
+      ) - e.clientX;
       break;
     default:
-      this.pivot = myRect.top - myHostRect.top + myRect.height/2 - e.clientY;
+      this.pivot = (this.props.paneSize === undefined ?
+        myRect.top - myHostRect.top + myRect.height/2 : this.props.paneSize
+      ) - e.clientY;
       break;
     }
     this.setState({resizing: true});
@@ -32,15 +36,20 @@ export class PaneDivider extends React.PureComponent {
     this.setState({resizing: false});
     window.removeEventListener("mouseup", this.handleMouseUp);
     window.removeEventListener("mousemove", this.handleMouseMove);
-    this.dispatchPaneResizeAction(e);
+    this.dispatchPaneResizeAction(e, true);
   }
-  dispatchPaneResizeAction(e) {
+  dispatchPaneResizeAction(e, commit) {
     const props = this.props;
     props.dispatch(Action.paneResize(
       props.layoutId,
       props.paneId,
-      this.pivot + (props.type === "v" ? e.clientX : e.clientY)
+      this.pivot + (props.type === "v" ? e.clientX : e.clientY),
+      commit
     ));
+  }
+  shouldComponentUpdate(nextProps, nextState) {
+    return this.props.type !== nextProps.type
+      || this.state.resizing !== nextState.resizing;
   }
   render() {
     return (
