@@ -2,6 +2,9 @@ import React from "react";
 import {PaneDivider} from "./PaneDivider.js";
 import {InspectorToolbar} from "./InspectorPanel.js";
 import {CmdButton} from "./ToolbarButton.js";
+
+import * as Action from "./Action.js";
+
 import "./Toolbar.css";
 import "./PaneLayout.css";
 import "./ControlPanel.css";
@@ -10,24 +13,20 @@ export class ControlPanel extends React.PureComponent {
   state = { hover: false }
   hover = () => this.setState({ hover: true });
   unhover = () => this.setState({ hover: false });
+  handleTextChange = (e) => {
+    this.props.dispatch(Action.inputPropertySet({
+      text: e.target.value, _delay: true
+    }));
+  }
   render() {
-    const layout = this.props.state["root.paneLayout"];
     const pmode = this.props.state["root.presentationMode"];
     const style = {};
-    if (pmode)
-      style.height = (layout.inlineEditorIsVisible
-        ? layout.inlineEditorHeight : 0) + 16 + "px";
+    if (pmode) style.height = "16px";
     return (
       <div
        className="control-panel" style={style}
        onMouseEnter={this.hover} onMouseLeave={this.unhover}
       >
-        { !layout.inlineEditorIsVisible ? null :
-          <div
-           className="inline-editor-pane"
-           style={{ height: layout.inlineEditorHeight + "px"}}
-          />
-        }
         { pmode && !this.state.hover ? null : <ToolbarArea {...this.props}/> }
       </div>
     );
@@ -52,19 +51,5 @@ function ToolbarArea(props) {
        paneId="inlineEditor" dispatch={props.dispatch}
       />
     </div>
-  );
-}
-
-function _() {
-  return (
-          !state.showTopPanel ? null :
-          <ToolbarHoverTrigger className="pane-top"
-           dispatch={this.props.dispatch}
-          >
-            <textarea
-              rows="5" onChange={this.handleTextChange}
-              value={state._input.text}
-            />
-          </ToolbarHoverTrigger>
   );
 }

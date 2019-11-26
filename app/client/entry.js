@@ -7,6 +7,7 @@ import {targets} from "../server/targets.js";
 import {InspectorPanel} from "./InspectorPanel.js"; 
 import {ProgressIndicator} from "./ProgressIndicator.js";
 import {EditorOverlay} from "./EditorOverlay.js";
+import {InlineEditor} from "./InlineEditor.js";
 import {ControlPanel} from "./ControlPanel.js";
 
 import * as Action from "./Action.js";
@@ -67,16 +68,12 @@ class AppMain extends React.Component {
     if (e.keyCode == 82 /* R */)
       dispatch(Action.inputPropertySet({}));
   }
-  handleTextChange = (e) => {
-    this.props.dispatch(Action.inputPropertySet({
-      text: e.target.value, _delay: true
-    }));
-  }
   render() {
     const state = this.props.state;
     return (
       <div className="pane-root pane-layout v">
         <EditorOverlay {...this.props}/>
+        <InlineEditor {...this.props}/>
         <ControlPanel {...this.props}/>
         <InspectorPanel {...this.props}/>
       </div>

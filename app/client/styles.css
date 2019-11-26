@@ -16,17 +16,3 @@ body {
     padding: 1px;
     font-size: 10px;
 }
-
-.pane-top textarea {
-    min-width: calc(100% - 20px);
-    max-width: calc(100% - 20px);
-    padding: 8px;
-    margin: 10px 10px 2px 10px;
-    /* white-space: nowrap; */
-    color: #ffffff;
-    overflow: auto;
-    border: 1px #303030 solid;
-    font-family: Menlo, monospace;
-    background-color: #303030;
-}
-

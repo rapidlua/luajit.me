@@ -1,9 +1,6 @@
 .control-panel {
   background-color: #303030;
 }
-.inline-editor-pane {
-  background-color: #343a40;
-}
 .control-panel .toolbar-area {
   background-color: inherit;
   z-index: 501;
