@@ -1,3 +1,4 @@
+import React from "react";
 import {PaneDivider} from "./PaneDivider.js";
 import {InspectorToolbar} from "./InspectorPanel.js";
 import {CmdButton} from "./ToolbarButton.js";
@@ -5,17 +6,38 @@ import "./Toolbar.css";
 import "./PaneLayout.css";
 import "./ControlPanel.css";
 
-export function ControlPanel(props) {
+export class ControlPanel extends React.PureComponent {
+  state = { hover: false }
+  hover = () => this.setState({ hover: true });
+  unhover = () => this.setState({ hover: false });
+  render() {
+    const layout = this.props.state["root.paneLayout"];
+    const pmode = this.props.state["root.presentationMode"];
+    const style = {};
+    if (pmode)
+      style.height = (layout.inlineEditorIsVisible
+        ? layout.inlineEditorHeight : 0) + 16 + "px";
+    return (
+      <div
+       className="control-panel" style={style}
+       onMouseEnter={this.hover} onMouseLeave={this.unhover}
+      >
+        { !layout.inlineEditorIsVisible ? null :
+          <div
+           className="inline-editor-pane"
+           style={{ height: layout.inlineEditorHeight + "px"}}
+          />
+        }
+        { pmode && !this.state.hover ? null : <ToolbarArea {...this.props}/> }
+      </div>
+    );
+  }
+}
+
+function ToolbarArea(props) {
   const layout = props.state["root.paneLayout"];
-  console.log(layout);
   return (
-    <div className="control-panel pane-layout v">
-      { !layout.inlineEditorIsVisible ? null :
-        <div
-         className="inline-editor-pane"
-         style={{ height: layout.inlineEditorHeight + "px"}}
-        />
-      }
+    <div className="toolbar-area">
       <div className="toolbar primary">
         <div className="toolbar-group left">
           <CmdButton>Edit</CmdButton>

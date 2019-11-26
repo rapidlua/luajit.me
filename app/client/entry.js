@@ -6,7 +6,6 @@ import {render} from "react-dom";
 import {targets} from "../server/targets.js";
 import {InspectorPanel} from "./InspectorPanel.js"; 
 import {ProgressIndicator} from "./ProgressIndicator.js";
-import {Toolbar, ToolbarGroupLeft, ToolbarHoverTrigger} from "./Toolbar.js";
 import {EditorOverlay} from "./EditorOverlay.js";
 import {ControlPanel} from "./ControlPanel.js";
 
@@ -41,7 +40,9 @@ class AppMain extends React.Component {
     if (e.keyCode == 13 /* Enter */)
       dispatch(Action.propertyToggle("_showEditorOverlay"));
     if (e.keyCode == 48 /* 0 */)
-      dispatch(Action.propertyToggle("showTopPanel"));
+      dispatch(
+        Action.paneVisibilityToggle("root.paneLayout", "inlineEditor")
+      );
     if (e.keyCode == 49 /* 1 */)
       dispatch(
         Action.paneVisibilityToggle("inspectorPanel.paneLayout", "tracePane")
@@ -62,7 +63,7 @@ class AppMain extends React.Component {
     if (e.keyCode == 77 /* M */)
       dispatch(Action.propertySet({ "inspectorPanel.mode": "m" }));
     if (e.keyCode == 80 /* P */)
-      dispatch(Action.propertyToggle("enablePmode"));
+      dispatch(Action.propertyToggle("root.presentationMode"));
     if (e.keyCode == 82 /* R */)
       dispatch(Action.inputPropertySet({}));
   }

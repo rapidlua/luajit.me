@@ -29,15 +29,14 @@ function updateInternal(layout, action, wh) {
   // Apply constraints
   if (ieVisible) {
     ieHeight = Math.min(ieHeight,  wh - CONTENT_AREA_HEIGHT_MIN);
-    if (action.id !== Action.paneResize ||
+    if (ieHeight < INLINE_EDITOR_HEIGHT_MIN) {
+      ieVisible = false;
+      ieHeight = ieHeightInitial;
+    } else if (action.id !== Action.paneResize ||
        action.paneId !== 'inlineEditor' || action.commit
     ) {
       ieHeight += INLINE_EDITOR_LINE_HEIGHT/2+1;
       ieHeight -= (ieHeight - 2*INLINE_EDITOR_MARGIN) % INLINE_EDITOR_LINE_HEIGHT;
-    }
-    if (ieHeight < INLINE_EDITOR_HEIGHT_MIN) {
-      ieVisible = false;
-      ieHeight = ieHeightInitial;
     }
   }
   

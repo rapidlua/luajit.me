@@ -4,3 +4,11 @@
 .inline-editor-pane {
   background-color: #343a40;
 }
+.control-panel .toolbar-area {
+  background-color: inherit;
+  z-index: 501;
+  position: relative;
+  /* otherwize pane-divider's negative margin wreacks havoc */
+  display: flex;
+  flex-direction: column;
+}
