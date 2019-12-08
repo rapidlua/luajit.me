@@ -3,6 +3,7 @@ import * as gv from "./gv.js";
 import * as Action from "./Action.js";
 import React from "react";
 import {ModeSwitcher, Mode} from "./ModeSwitcher.js";
+import {Icon} from "./Icon.js";
 import {ScrollView} from "./ScrollView.js";
 import {ToggleButton} from "./ToolbarButton.js";
 import {Placeholder} from "./Placeholder.js";
@@ -200,7 +201,7 @@ export class TraceToolbar extends React.Component {
           <ToggleButton
             isOn    = {this.props.state.enableFilter}
             onClick = {this.toggleFilter}
-          >&#x25d2;</ToggleButton>
+          ><Icon id="filter"/></ToggleButton>
         </div>
       </React.Fragment>
     );

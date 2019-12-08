@@ -33,6 +33,17 @@ module.exports = {
             },
             { test: /\.css$/, use: [ { loader: ExtractCssChunks.loader }, "css-loader" ] },
             {
+                test: /\.font\.js/,
+                use: [
+                    { loader: ExtractCssChunks.loader },
+                    "css-loader",
+                    {
+                        loader: "webfonts-loader",
+                        options: { fileName: "[fontname].[contenthash].[ext]" }
+                    }
+                ]
+            },
+            {
                 test: /\.worker\.js/,
                 loader: "worker-loader",
                 options: { name: '[name].[contenthash].js' }

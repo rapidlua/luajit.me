@@ -30,16 +30,17 @@
 }
 .gutter::after {
   position: absolute;
-  font-size: 80%;
   top: 0;
   bottom: 0;
   left: 6px;
   color: rgba(0,0,0,.75);
 }
 .code-linegroup.collapsed:hover > .code-line > .gutter::after {
+  font-family: icons, Menlo, monospace;
   content: "\25b6";
 }
 .code-linegroup.expanded:hover > .code-line:first-child > .gutter::after {
+  font-family: icons, Menlo, monospace;
   content: "\25bc";
 }
 .code-view.hover-em .code-line:hover,

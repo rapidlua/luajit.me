@@ -2,6 +2,7 @@ import React from "react";
 import {PaneDivider} from "./PaneDivider.js";
 import {InspectorToolbar} from "./InspectorPanel.js";
 import {CmdButton} from "./ToolbarButton.js";
+import {Icon} from "./Icon.js";
 
 import * as Action from "./Action.js";
 
@@ -40,7 +41,7 @@ function ToolbarArea(props) {
       <div className="toolbar primary">
         <div className="toolbar-group left">
           <CmdButton>Edit</CmdButton>
-          <CmdButton>Share</CmdButton>
+          <CmdButton><Icon id="share"/> Share</CmdButton>
           <CmdButton>About</CmdButton>
         </div>
       </div>

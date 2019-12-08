@@ -12,6 +12,8 @@ import {ControlPanel} from "./ControlPanel.js";
 
 import * as Action from "./Action.js";
 
+import "./icons.font.js";
+
 import "./styles.css";
 import "./PaneLayout.css";
 
