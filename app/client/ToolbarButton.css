@@ -42,4 +42,5 @@
 
 .toolbar-btn.toggle-alt.on:hover {
   color: #ffffff;
+  background-color: rgba(104,115,129);
 }
