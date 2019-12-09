@@ -36,6 +36,7 @@
     "memoize-one": "^5.1.1",
     "optimize-css-assets-webpack-plugin": "^5.0.3",
     "raw-loader": "^0.5.1",
+    "reactstrap": "^8.2.0",
     "string-replace-loader": "^2.2.0",
     "webfonts-loader": "^5.1.1",
     "webpack": "^4.16.4",

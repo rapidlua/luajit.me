@@ -11,6 +11,10 @@
   margin: 4px 2px;
 }
 
+.toolbar-btn.icon {
+  padding: 4px;
+}
+
 .toolbar-btn.cmd {
   color: #a0a0a0;
 }

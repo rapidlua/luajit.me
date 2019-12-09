@@ -126,16 +126,16 @@ export class PrimaryPane extends React.PureComponent {
               && !decoration[index] && !bytecodeDecoration[index] ?
             null :
             <ProtoView
-              key={index}
-              mode={mode}
-              selection={selection === index ? selection : -1}
-              proto={proto}
-              expand={expand && expand[proto.id]}
-              selectItem={this.selectItem}
-              expandToggle={this.expandToggle}
-              decoration={decoration[index]}
-              bytecodeDecoration={bytecodeDecoration[index]}
-              {...highlightSource(objects[proto.file])}
+             key={index}
+             mode={mode}
+             selection={selection === index ? selection : -1}
+             proto={proto}
+             expand={expand && expand[proto.id]}
+             selectItem={this.selectItem}
+             expandToggle={this.expandToggle}
+             decoration={decoration[index]}
+             bytecodeDecoration={bytecodeDecoration[index]}
+             {...highlightSource(objects[proto.file])}
             />
           ))
         }</ScrollView>
@@ -159,3 +159,4 @@ export function PrimaryToolbar(props) {
 }
 
 function requestMode(state, mode) { return mode || "l"; }
+

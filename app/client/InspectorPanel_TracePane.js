@@ -194,12 +194,19 @@ export class TraceToolbar extends React.Component {
     Action.propertyToggle("enableFilter")
   );
   render() {
+    const filterOn = this.props.state.enableFilter;
     return (
       <React.Fragment>
         <ModeSwitcher {...this.props}><Mode>Traces</Mode></ModeSwitcher>
         <div className="toolbar-group right">
           <ToggleButton
-            isOn    = {this.props.state.enableFilter}
+            className = "icon"
+            tooltip = {
+              filterOn ?
+              "Disable prototype filter" :
+              "Enable filter: prototypes visited by selected trace"
+            }
+            isOn    = {filterOn}
             onClick = {this.toggleFilter}
           ><Icon id="filter"/></ToggleButton>
         </div>

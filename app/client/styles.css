@@ -1,18 +1,14 @@
 /* ported to bootstrap 4.0, quick-and-dirty style */
 
 body {
-    font-size: 13px !important;
+  font-size: 13px !important;
 }
 
 /* end hack */
 
-.flex {
-    flex: 1;
-}
+.flex { flex: 1; }
 
-.pane-toggle-icon {
-    display: inline-block;
-    border: solid 1px;
-    padding: 1px;
-    font-size: 10px;
+.icon-pane-show-left, .icon-pane-hide-left,
+.icon-pane-show-right, .icon-pane-hide-right {
+  font-size: 125%;
 }
