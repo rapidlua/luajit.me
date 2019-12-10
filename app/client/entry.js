@@ -89,7 +89,7 @@ const initialState = {
     text: require("./snippets/help.lua"),
     target: targets[targets.length - 1]
   },
-  enableFilter: true
+  "inspectorPanel.protoFilter": true
 };
 
 function hydrateState(state) {

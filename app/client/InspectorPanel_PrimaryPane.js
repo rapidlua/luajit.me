@@ -107,7 +107,7 @@ export class PrimaryPane extends React.PureComponent {
       || selected.type === "trace.abort")
     ) {
       const bundle = createDecoration(selected, objects, mode, expand);
-      filter = this.props.state.enableFilter;
+      filter = this.props.state["inspectorPanel.protoFilter"];
       decoration = bundle.decoration;
       bytecodeDecoration = bundle.bytecodeDecoration;
     }

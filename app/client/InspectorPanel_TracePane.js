@@ -191,10 +191,10 @@ class TraceBrowser extends React.PureComponent {
 
 export class TraceToolbar extends React.Component {
   toggleFilter = () => this.props.dispatch(
-    Action.propertyToggle("enableFilter")
+    Action.propertyToggle("inspectorPanel.protoFilter")
   );
   render() {
-    const filterOn = this.props.state.enableFilter;
+    const filterOn = this.props.state["inspectorPanel.protoFilter"];
     return (
       <React.Fragment>
         <ModeSwitcher {...this.props}><Mode>Traces</Mode></ModeSwitcher>
@@ -204,7 +204,7 @@ export class TraceToolbar extends React.Component {
             tooltip = {
               filterOn ?
               "Disable prototype filter" :
-              "Enable filter: prototypes visited by selected trace"
+              "Enable filter: prototypes in active trace"
             }
             isOn    = {filterOn}
             onClick = {this.toggleFilter}
