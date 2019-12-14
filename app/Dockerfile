@@ -46,12 +46,9 @@ RUN apk update && apk upgrade && apk add libgcc
 
 # create a copy of the filesystem tree in /root/dist;
 # NB: captures lua runtime dependencies;
-# NB: includes empty /etc/ld.so.preload file, sandbox uses it as a more
-#     robust alternative for LD_PRELOAD environment variable.
 RUN find / -xdev | sed -e '/[/]\(root\|run\)[/]/d' > /root/system-files.list && \
     mkdir /root/dist && \
-    (cat /root/system-files.list | cpio -p /root/dist) && \
-    touch /root/dist/etc/ld.so.preaload
+    (cat /root/system-files.list | cpio -p /root/dist)
 
 #######################################################################
 #
@@ -83,7 +80,7 @@ RUN cd root && git clone https://github.com/LuaJIT/LuaJIT.git luajit && \
 
 # pull sandals
 RUN cd root && git clone https://github.com/rapidlua/sandals.git \
-    -c advice.detachedHead=false -b v1.0-beta
+    -c advice.detachedHead=false -b v1.0
 
 #######################################################################
 #
@@ -101,9 +98,6 @@ RUN cd /root/sandals && make && DESTDIR=/root/dist make install
 FROM c-src-builder AS lua-img-builder
 
 COPY --from=lua-img-base root/dist /root/dist 
-
-# build sandals and add to dist (stdstreams_helper.so)
-RUN cd /root/sandals && DESTDIR=/root/dist make install_helper
 
 COPY runner /root
 

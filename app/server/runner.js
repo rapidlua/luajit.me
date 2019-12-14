@@ -119,8 +119,8 @@ function runLuaCode(code, options, callback) {
             {type: 'bind', dest: '/tmp/source.lua', src: sourceFile.path, ro: true}
         ],
         pipes: [
-            // {file: "/dev/stderr", stderr: true},
-            {file: outputFile.path, fifo: '/tmp/instrument.out', limit: 2*1024*1024}
+            // {dest: "/dev/stderr", stderr: true},
+            {dest: outputFile.path, src: '/tmp/instrument.out', limit: 2*1024*1024}
         ],
         seccompPolicy: `
             ALLOW {
