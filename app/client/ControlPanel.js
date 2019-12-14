@@ -16,8 +16,40 @@ import "./ControlPanel.css";
 
 export class ControlPanel extends React.PureComponent {
   state = { hover: false }
-  hover = () => this.setState({ hover: true });
-  unhover = () => this.setState({ hover: false });
+  toolbarRef = React.createRef();
+  componentWillUnmount() {
+    document.removeEventListener("mousemove", this.handleMouseMove);
+  }
+  componentDidUpdate() {
+    // not 100% bullet-proof, but working for our current use case:
+    //   * the mouse pointer is on top of a toolbar's decendant;
+    //   * hence handleHover was executed for the toolbar;
+    //   * now due to a state change this intermediary element is
+    //     removed from the DOM tree and the mouse pointer is no longer
+    //     on top of the toolbar or it's descendant;
+    //   * mouse leave event not reported and toolbar is stuck!
+    // This scenario is excercised when 'Enter presentation mode' is
+    // requested from the dropdown menu.
+    if (this.state.hover && this.toolbarRef.current) {
+      if (!this.toolbarRef.current.contains(
+        document.elementFromPoint(this.mouseX, this.mouseY)
+      )) this.handleUnhover();
+    }
+  }
+  handleHover = (e) => {
+    this.setState({ hover: true });
+    document.addEventListener("mousemove", this.handleMouseMove);
+    this.mouseX = e.clientX;
+    this.mouseY = e.clientY;
+  }
+  handleUnhover = () => {
+    this.setState({ hover: false });
+    document.removeEventListener("mousemove", this.handleMouseMove);
+  }
+  handleMouseMove = (e) => {
+    this.mouseX = e.clientX;
+    this.mouseY = e.clientY;
+  }
   handleTextChange = (e) => {
     this.props.dispatch(Action.inputPropertySet({
       text: e.target.value, _delay: true
@@ -29,8 +61,8 @@ export class ControlPanel extends React.PureComponent {
     if (pmode) style.height = "16px";
     return (
       <div
-       className="control-panel" style={style}
-       onMouseEnter={this.hover} onMouseLeave={this.unhover}
+       className="control-panel" style={style} ref={this.toolbarRef}
+       onMouseEnter={this.handleHover} onMouseLeave={this.handleUnhover}
       >
         { pmode && !this.state.hover ? null : <ToolbarArea {...this.props}/> }
       </div>
