@@ -11,6 +11,7 @@ export class PaneDivider extends React.Component {
   }
   handleMouseDown = (e) => {
     e.preventDefault();
+    e.target.click(); // simulate click so that dropdown (if any) will close
     const myRect = e.target.getBoundingClientRect();
     const myHostRect = e.target.parentNode.getBoundingClientRect();
     switch (this.props.type) {
