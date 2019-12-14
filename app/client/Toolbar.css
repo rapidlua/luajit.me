@@ -4,7 +4,6 @@
   justify-content: center;
   align-items: center;
   position: relative;
-  overflow: hidden;
 }
 
 .toolbar.primary {
@@ -21,6 +20,9 @@
   /* necessary to make controls appear on top of the pane divider */
   position: relative;
   z-index: 1000;
+}
+.toolbar.primary .toolbar-group {
+  z-index: 1001;
 }
 
 .toolbar-group.left {
