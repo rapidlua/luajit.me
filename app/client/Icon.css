@@ -1,0 +1,10 @@
+/* fixes icons alignmanet in Bootstrap's dropdowns */
+.icon {
+  display: inline-block;
+}
+
+/* looks better at 125% */
+.icon-pane-show-left, .icon-pane-hide-left,
+.icon-pane-show-right, .icon-pane-hide-right {
+  font-size: 125%;
+}

@@ -7,8 +7,3 @@ body {
 /* end hack */
 
 .flex { flex: 1; }
-
-.icon-pane-show-left, .icon-pane-hide-left,
-.icon-pane-show-right, .icon-pane-hide-right {
-  font-size: 125%;
-}
