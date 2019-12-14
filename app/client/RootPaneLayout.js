@@ -54,7 +54,7 @@ export default function update(layout, action, appState) {
   }, action, wh);
   if (!newLayout.inlineEditorIsVisible)
     newLayout._inlineEditorCanShow = updateInternal(
-      newLayout, Action.paneVisibilitySet(undefined, 'inlineEditor', true)
+      newLayout, Action.paneVisibilitySet(undefined, 'inlineEditor', true), wh
     ).inlineEditorIsVisible;
   return newLayout;
 }
