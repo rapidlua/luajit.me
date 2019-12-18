@@ -57,6 +57,7 @@ resource "digitalocean_droplet" "deploy" {
       "add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
       "apt-get update",
       "mkdir -p /etc/docker",
+      "echo '{\"userns-remap\":\"default\"}' > /etc/docker/daemon.json",
       "apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io",
 
       // DO agent

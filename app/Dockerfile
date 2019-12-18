@@ -7,6 +7,10 @@
 #######################################################################
 FROM node:10-alpine AS luajit.me.builder
 
+# As of Docker 19.03.5, DOCKER_BUILDKIT=1 and userns_remap enabled,
+# if a directory was created during COPY, it won't be writable in RUN.
+RUN mkdir -p /root/luajit.me/server/public
+
 # build dependencies are massive (almost 100MiB);
 # take advantage of the Docker cache
 COPY package.json /root/luajit.me/package.json
