@@ -88,6 +88,12 @@ function ToolbarArea(props) {
           <CmdButton><Icon id="share"/> Share</CmdButton>
           <CmdButton>About</CmdButton>
         </div>
+        <div className="toolbar-group right">
+          <TargetPicker
+           dispatch={props.dispatch}
+           target={props.state._input.target}
+          />
+        </div>
       </div>
       <InspectorToolbar {...props}/>
       {paneDivider}
@@ -137,6 +143,38 @@ class EditButton extends React.PureComponent {
             }
           </DropdownItem>
         </DropdownMenu>
+      </UncontrolledButtonDropdown>
+    );
+  }
+}
+
+import {engines, targets} from "../server/targets.js";
+
+class TargetPicker extends React.PureComponent {
+  setTarget = (e) => {
+    const id = e.currentTarget.getAttribute("data-id");
+    const target = { id: targets[id].id, name: targets[id].name };
+    this.props.dispatch(Action.inputPropertySet({ target }));
+  };
+  render() {
+    return (
+      <UncontrolledButtonDropdown size="cp-size" id="cp-target-picker">
+        <DropdownToggle caret size="cp-size" color="cp-color">
+          {this.props.target.name}
+        </DropdownToggle>
+        <DropdownMenu>{engines.map((engine, index) => (
+          <React.Fragment key={index}>
+            { index ? <DropdownItem separator/> : null }
+            { engine.versions.map((ver, i) => (
+                <DropdownItem
+                 key={i} active={ver.id === this.props.target.id}
+                 data-id={ver.id} onClick={this.setTarget}
+                >
+                  {engine.name} {ver.name}
+                </DropdownItem>
+            ))}
+          </React.Fragment>
+        ))}</DropdownMenu>
       </UncontrolledButtonDropdown>
     );
   }

@@ -62,25 +62,6 @@ class SnippetList extends React.PureComponent {
   }
 }
 
-import {targets} from "../server/targets.js";
-
-class TargetPicker extends React.PureComponent {
-  setTarget = (e) => this.props.dispatch(
-    Action.inputPropertySet({ target: e.target.value })
-  );
-  render() {
-    const currentTarget = this.props.state._input.target;
-    return (
-      <select class="form-control" onChange={this.setTarget}>{
-        targets.map((target, index) => (
-          <option key={index} selected={target===currentTarget}
-          >{target}</option>
-        ))
-      }</select>
-    );
-  }
-}
-
 function eventStopPropagation(e) {
   e.stopPropagation();
 }
@@ -109,7 +90,6 @@ export class EditorOverlay extends React.PureComponent {
               type="button" className="btn btn-primary"
               onClick={this.killEditor}
             >Apply</button>
-            <TargetPicker {...this.props}/>
           </div>
         </div>
       </div>

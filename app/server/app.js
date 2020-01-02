@@ -2,6 +2,7 @@ const fs = require('fs');
 const express = require('express');
 const bodyParser = require('body-parser');
 const { runLuaCode } = require('./runner');
+const { targets } = require('./targets');
 
 const app = express();
 const jsonParser = bodyParser.json({ type: '*/*' });
@@ -17,7 +18,9 @@ app.set('etag', false);
 const runQueue = new require('async-limiter')({ concurrency: CONCURRENCY });
 app.post('/run', jsonParser, function(req, res) {
 
-    if (typeof req.body.text !== 'string')
+    if (typeof req.body.text !== 'string' || typeof req.body.target != 'object'
+        || !targets[req.body.target.id]
+    )
         return res.status(400).send('Bad request');
 
     if (runQueue.length > JOBS_MAX)
@@ -37,7 +40,7 @@ app.post('/run', jsonParser, function(req, res) {
     function doRun(onJobDone) {
         res.socket.removeListener('close', socketOnClose);
         runLuaCode(
-            source, { timeout: TIMEOUT, target: req.body.target },
+            source, { timeout: TIMEOUT, target: req.body.target.id },
             function(error, result) {
                 if (error) {
                     res.status(500).send(error.message);
