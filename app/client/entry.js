@@ -3,7 +3,7 @@ import {debounce} from "./debounce";
 import React from "react";
 import {render} from "react-dom";
 
-import {targets} from "../server/targets.js";
+import {targets, defaultTargetID} from "../server/targets.js";
 import {InspectorPanel} from "./InspectorPanel.js"; 
 import {ProgressIndicator} from "./ProgressIndicator.js";
 import {EditorOverlay} from "./EditorOverlay.js";
@@ -87,10 +87,21 @@ class AppMain extends React.Component {
 const initialState = {
   response: { type: "response"},
   _input: {
-    text: require("./snippets/help.lua"),
-    target: targets[targets.length - 1]
+    text: (
+      "-- Type your code here or try samples.\n" +
+      "-- Hot loops are JIT-compiled.\n" +
+      require("./snippets/fizzbuzz.lua")
+    ),
+    target: {
+      id: targets[defaultTargetID].id,
+      name: targets[defaultTargetID].name
+    }
   },
-  "inspectorPanel.protoFilter": true
+  "inspectorPanel.protoFilter": true,
+  "inspectorPanel.mode": "m",
+  "inspectorPanel.traceDetailsPane.mode": "ir",
+  "inspectorPanel.paneLayout": { "detailsPaneWidth": 350 },
+  "root.paneLayout": { "inlineEditorIsVisible": true }
 };
 
 function hydrateState(state) {

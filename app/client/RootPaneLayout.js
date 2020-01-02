@@ -6,14 +6,16 @@ const INLINE_EDITOR_HEIGHT_MIN         = 2*INLINE_EDITOR_MARGIN
   + 3*INLINE_EDITOR_LINE_HEIGHT;
 const INLINE_EDITOR_VISIBILITY_DEFAULT = false;
 const INLINE_EDITOR_HEIGHT_DEFAULT     = 2*INLINE_EDITOR_MARGIN
-  + 5*INLINE_EDITOR_LINE_HEIGHT;
+  + 7*INLINE_EDITOR_LINE_HEIGHT;
 const CONTENT_AREA_HEIGHT_MIN          = 200;
 
 function updateInternal(layout, action, wh) {
   // Inline Editor
-  const ieHeightInitial = layout.inlineEditorHeight;
+  const ieHeightInitial = layout.inlineEditorHeight || INLINE_EDITOR_HEIGHT_DEFAULT;
   let ieHeight = ieHeightInitial;
   let ieVisible = layout.inlineEditorIsVisible;
+  if (ieVisible === undefined)
+    ieVisible = INLINE_EDITOR_VISIBILITY_DEFAULT;
 
   // Apply PaneVisibilitySet action
   if (action.id === Action.paneVisibilitySet && action.paneId === 'inlineEditor') {
@@ -48,10 +50,7 @@ function updateInternal(layout, action, wh) {
 
 export default function update(layout, action, appState) {
   const wh = appState._windowHeight || 0;
-  let newLayout = updateInternal(layout || {
-    inlineEditorIsVisible: INLINE_EDITOR_VISIBILITY_DEFAULT,
-    inlineEditorHeight: INLINE_EDITOR_HEIGHT_DEFAULT
-  }, action, wh);
+  let newLayout = updateInternal(layout || {}, action, wh);
   if (!newLayout.inlineEditorIsVisible)
     newLayout._inlineEditorCanShow = updateInternal(
       newLayout, Action.paneVisibilitySet(undefined, 'inlineEditor', true), wh

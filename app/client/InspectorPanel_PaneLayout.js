@@ -10,13 +10,17 @@ const DETAILS_PANE_WIDTH_DEFAULT      = 300;
 
 function updateInternal(layout, action, ww) {
   // TracePane
-  const tpWidthInitial = layout.tracePaneWidth;
+  const tpWidthInitial = layout.tracePaneWidth || TRACE_PANE_WIDTH_DEFAULT;
   let tpWidth = tpWidthInitial;
   let tpVisible = layout.tracePaneIsVisible;
+  if (tpVisible === undefined)
+    tpVisible = TRACE_PANE_VISIBILITY_DEFAULT;
   // DetailsPane
-  const dpWidthInitial = layout.detailsPaneWidth;
+  const dpWidthInitial = layout.detailsPaneWidth || DETAILS_PANE_WIDTH_DEFAULT;
   let dpWidth = dpWidthInitial;
   let dpVisible = layout.detailsPaneIsVisible;
+  if (dpVisible === undefined)
+    dpVisible = DETAILS_PANE_VISIBILITY_DEFAULT;
   // Apply PaneVisibilitySet action
   if (action.id === Action.paneVisibilitySet) {
     switch (action.paneId) {
@@ -78,12 +82,7 @@ function updateInternal(layout, action, ww) {
 
 export default function update(layout, action, appState) {
   const ww = appState._windowWidth || 0;
-  const newLayout = updateInternal(layout || {
-    tracePaneIsVisible: TRACE_PANE_VISIBILITY_DEFAULT,
-    tracePaneWidth: TRACE_PANE_WIDTH_DEFAULT,
-    detailsPaneIsVisible: DETAILS_PANE_VISIBILITY_DEFAULT,
-    detailsPaneWidth: DETAILS_PANE_WIDTH_DEFAULT
-  }, action, ww);
+  const newLayout = updateInternal(layout || {}, action, ww);
   if (!newLayout.tracePaneIsVisible)
     newLayout._tracePaneCanShow = updateInternal(
       newLayout, Action.paneVisibilitySet(undefined, 'tracePane', true), ww

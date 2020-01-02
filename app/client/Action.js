@@ -33,6 +33,20 @@ actionMap[inputPropertySet] = (state, action) => {
   );
 }
 
+export function snippetInstall(text) {
+  return { id: snippetInstall, text };
+}
+actionMap[snippetInstall] = (state, action) => {
+  const text = action.text;
+  state = apply(state, inputPropertySet({ text }));
+  if (text.split("\n").length > 6) {
+    /* hide inline editor and switch to Lua mode */
+    state["inspectorPanel.mode"] = "l";
+    return apply(state, paneVisibilitySet("root.paneLayout", "inlineEditor", false));
+  }
+  return state;
+}
+
 /* Layout management */
 const layoutMap = {
   ["inspectorPanel.paneLayout"]:

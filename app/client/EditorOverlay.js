@@ -18,12 +18,12 @@ function GithubUrl() {
 
 const snippets = [
   { label: "blank",      text: "" },
-  { label: "help",       text: require("./snippets/help.lua") },
   { label: "loops",      text: require("./snippets/loops.lua") },
   { label: "recursion",  text: require("./snippets/recursion.lua") },
   { label: "table",      text: require("./snippets/table.lua") },
   { label: "reduce",     text: require("./snippets/reduce.lua") },
   { label: "reduce2",    text: require("./snippets/reduce2.lua") },
+  { label: "fizzbuzz",   text: require("./snippets/fizzbuzz.lua") },
   { label: "mandelbrot", text: require("./snippets/mandelbrot.lua") },
   { label: "jit.off",    text: require("./snippets/jit.off.lua") },
   { label: "stitching",  text: require("./snippets/stitching.lua") },
@@ -32,7 +32,6 @@ const snippets = [
 function getSnippetStyle(snippet) {
   switch (snippet.label) {
   default: return "btn-warning";
-  case "help": return "btn-info";
   case "blank": return "btn-danger";
   }
 }
@@ -43,7 +42,7 @@ class SnippetList extends React.PureComponent {
       +e.target.getAttribute("data-id")
     ];
     if (snippet)
-      this.props.dispatch(Action.inputPropertySet({ text: snippet.text }));
+      this.props.dispatch(Action.snippetInstall(snippet.text));
   }
   render() {
     return (
