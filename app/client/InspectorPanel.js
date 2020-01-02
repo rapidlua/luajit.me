@@ -88,7 +88,7 @@ class TracePaneToggleButton extends React.PureComponent {
     const isVisible = layout.tracePaneIsVisible;
     if (!isVisible && !layout._tracePaneCanShow) return null;
     return (
-      <CmdButton className="icon" onClick={this.togglePane}
+      <CmdButton onClick={this.togglePane}
        tooltip={ isVisible ? "Hide trace pane" : "Show trace pane" }>
         <Icon id={ isVisible ? "pane-hide-left" : "pane-show-left"}/>
       </CmdButton>
@@ -105,7 +105,7 @@ class DetailsPaneToggleButton extends React.PureComponent {
     const isVisible = layout.detailsPaneIsVisible;
     if (!isVisible && !layout._detailsPaneCanShow) return null;
     return (
-      <CmdButton className="icon" onClick={this.togglePane}
+      <CmdButton onClick={this.togglePane}
        tooltip={ isVisible ? "Hide details pane" : "Show details pane" }>
         <Icon id={ isVisible ? "pane-hide-right" : "pane-show-right"}/>
       </CmdButton>

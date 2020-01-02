@@ -200,7 +200,6 @@ export class TraceToolbar extends React.Component {
         <ModeSwitcher {...this.props}><Mode>Traces</Mode></ModeSwitcher>
         <div className="toolbar-group right">
           <ToggleButton
-            className = "icon"
             tooltip = {
               filterOn ?
               "Disable prototype filter" :

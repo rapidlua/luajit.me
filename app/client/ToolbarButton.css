@@ -2,21 +2,27 @@
   display: inline-block;
   vertical-align: middle;
   line-height: 1;
-  padding: 4px 11px;
   border-radius: 2px;
   cursor: default;
   /* bottom margin (4px) is needed to inflate enclosing toolbar-group,
    * so that the pane divider near controls is obscured and the user is
    * not confused by row-resize cursor */
+  margin: 4px 2px 4px 8px;
+  padding: 4px;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out;
+}
+
+.toolbar-btn:first-child {
   margin: 4px 2px;
 }
 
-.toolbar.primary .toolbar-btn {
-  padding: 5px 14px;
+.toolbar-btn.toggle-alt {
+  padding: 4px 10px;
+  margin: 4px 2px;
 }
 
-.toolbar-btn.icon {
-  padding: 4px;
+.toolbar.primary .toolbar-btn.toggle-alt {
+  padding: 6px 10px;
 }
 
 .toolbar-btn.cmd {

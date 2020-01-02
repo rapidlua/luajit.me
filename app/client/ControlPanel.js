@@ -72,8 +72,16 @@ export class ControlPanel extends React.PureComponent {
 
 function ToolbarArea(props) {
   const layout = props.state["root.paneLayout"];
+  const paneDivider = (
+    <PaneDivider
+     type="h" layoutId="root.paneLayout"
+     paneSize={layout.inlineEditorIsVisible ? layout.inlineEditorHeight : 0}
+     paneId="inlineEditor" dispatch={props.dispatch}
+    />
+  );
   return (
     <div className="toolbar-area">
+      {paneDivider}
       <div className="toolbar primary">
         <div className="toolbar-group left">
           <EditButton {...props}/>
@@ -82,11 +90,7 @@ function ToolbarArea(props) {
         </div>
       </div>
       <InspectorToolbar {...props}/>
-      <PaneDivider
-       type="h" layoutId="root.paneLayout"
-       paneSize={layout.inlineEditorIsVisible ? layout.inlineEditorHeight : 0}
-       paneId="inlineEditor" dispatch={props.dispatch}
-      />
+      {paneDivider}
     </div>
   );
 }
@@ -107,10 +111,14 @@ class EditButton extends React.PureComponent {
   render() {
     const layout = this.props.state["root.paneLayout"];
     const presentationMode = this.props.state["root.presentationMode"];
+    // Note cp-size: custom size defined in our Bootstrap buid to match
+    // other control panel controls
     return (
-      <UncontrolledButtonDropdown>
-        <Button id="caret" color="primary" onClick={this.spawnEditor}>Edit</Button>
-        <DropdownToggle caret color="primary"/>
+      <UncontrolledButtonDropdown size="cp-size" id="cp-edit-btn">
+        <Button color="primary" size="cp-size"
+         onClick={this.spawnEditor}
+        >{layout.inlineEditorIsVisible ? "Samples" : "Edit"}</Button>
+        <DropdownToggle split color="primary" size="cp-size"/>
         <DropdownMenu>
           <DropdownItem onClick={this.doRefresh}>
             <Icon id="refresh"/> Refresh

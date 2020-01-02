@@ -5,7 +5,11 @@
   background-color: inherit;
   z-index: 501;
   position: relative;
-  /* otherwize pane-divider's negative margin wreacks havoc */
+  /* otherwize pane-divider's negative margin wreaks havoc */
   display: flex;
   flex-direction: column;
+}
+#cp-edit-btn {
+  margin-left: 6px;
+  margin-right: 6px;
 }
