@@ -85,8 +85,6 @@ function ToolbarArea(props) {
       <div className="toolbar primary">
         <div className="toolbar-group left">
           <EditButton {...props}/>
-          <CmdButton><Icon id="share"/> Share</CmdButton>
-          <CmdButton>About</CmdButton>
         </div>
         <div className="toolbar-group right">
           <TargetPicker
