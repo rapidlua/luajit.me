@@ -1,0 +1,39 @@
+{
+  "variables": {
+    "version": "",
+    "digitalocean_token": ""
+  },
+  "builders": [
+    {
+      "type": "digitalocean",
+      "api_token": "{{user `digitalocean_token`}}",
+      "image": "ubuntu-18-04-x64",
+      "region": "ams3",
+      "size": "s-1vcpu-1gb",
+      "snapshot_name": "image-{{user `version`}}",
+      "ssh_username": "root"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "apt-get update",
+        "DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends",
+
+        "apt-get install -y --no-install-recommends apt-transport-https curl",
+        "apt-get install -y --no-install-recommends ca-certificates gnupg-agent software-properties-common",
+        "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -",
+        "add-apt-repository \"deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
+        "apt-get update",
+        "mkdir -p /etc/docker",
+        "echo '{\"userns-remap\":\"default\"}' > /etc/docker/daemon.json",
+        "apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io",
+        "docker pull node:10-alpine",
+
+        "apt-get install -y --no-install-recommends nginx",
+        "systemctl disable nginx"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+name: Build and Trigger Deploy
+
+on:
+  push:
+    branches:
+      - master
+  create:
+    tags:
+      - 'v*'
+
+env:
+  IMAGEID: rapidlua/luajit.me
+  PACKERV: 1.5.1
+
+jobs:
+
+  cloud-images:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install packer
+      run: >
+        curl https://releases.hashicorp.com/packer/${PACKERV}/packer_${PACKERV}_linux_$(dpkg --print-architecture).zip > packer.zip &&
+        unzip packer.zip &&
+        sudo install packer /usr/bin &&
+        rm packer.zip packer
+    - uses: actions/checkout@v1
+    - name: Build cloud images
+      run: >
+        VERSION=$(git describe --tags | sed -e s/^v//);
+        packer build -var "version=${VERSION}" -var "digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}" deploy/cloud-images.json
+
+  docker-image-amd64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build Docker image
+      run: >
+        VERSION=$(git describe --tags | sed -e s/^v//);
+        mkdir -p build &&
+        (cd app && DOCKER_BUILDKIT=1 docker build . --tag "${IMAGEID}:${VERSION}-amd64") &&
+        docker save "${IMAGEID}:${VERSION}-amd64" | gzip > build/image.tar.gz &&
+        echo "$VERSION" > build/version
+    - uses: actions/upload-artifact@v1.0.0
+      with: { name: docker-image-amd64, path: build }
+
+  postprocess-and-trigger-deploy:
+    runs-on: ubuntu-latest
+    needs: [cloud-images, docker-image-amd64]
+    steps:
+      - uses: actions/download-artifact@v1.0.0
+        with: { name: docker-image-amd64 }
+      - name: Configure Docker client / login
+        run: >
+          mkdir -p ~/.docker &&
+          echo '{"experimental":"enabled"}' > ~/.docker/config.json &&
+          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u mejedi --password-stdin
+      - name: Upload Docker images
+        run: >
+          VERSION=$(cat docker-image-amd64/version);
+          IID=${IMAGEID}:${VERSION};
+          zcat docker-image-amd64/image.tar.gz | docker image load &&
+          docker push "${IID}-amd64" &&
+          docker manifest create "${IID}" "${IID}-amd64" &&
+          docker manifest push "${IID}"
+      - name: Trigger deploy
+        run: >
+          if cat docker-image-amd64/version | grep -q -- -g; then
+            ENV=staging
+          else
+            ENV=production
+          fi;
+          curl -sd "{\"ref\":\"${GITHUB_SHA}\",\"required_contexts\":[],\"environment\":\"${ENV}\"}" https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"
