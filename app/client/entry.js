@@ -16,6 +16,7 @@ import "./icons.font.js";
 
 import "./styles.css";
 import "./PaneLayout.css";
+import "./bootstrap.min.css";
 
 class AppMain extends React.Component {
   componentDidMount() {
