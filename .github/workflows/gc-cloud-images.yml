@@ -2,7 +2,7 @@ name: GC Cloud Images
 
 on:
   schedule:
-    - cron: '* */3 * * *'
+    - cron: '0 */3 * * *'
 
 jobs:
   gc-cloud-images:
