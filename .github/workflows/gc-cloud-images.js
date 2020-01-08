@@ -121,11 +121,14 @@ getDeployedHashes(githubHeaders, [ 'production' ], (err, hashes) => {
   listDigitalOceanPrivateImages(digitalOceanHeaders, (err, images) => {
     if (err) fatal('list DigitalOcean private images:', err);
     for (let image of images) {
-      if (image.type === 'snapshot' && Date.now() - new Date(image.created_at) > hourToMSec(3) && isOrphanedImage(image.name, hashes)) {
-        apiCall('https://api.digitalocean.com/v2/images/' + image.id, 'DELETE', digitalOceanHeaders, (err) => {
-          if (err) fatal('removing ' + image.name + ':', err);
-          console.log('removed', image.name);
-        });
+      if (image.type === 'snapshot') {
+        if (isOrphanedImage(image.name, hashes) && Date.now() - new Date(image.created_at) > hourToMSec(3))
+          apiCall('https://api.digitalocean.com/v2/images/' + image.id, 'DELETE', digitalOceanHeaders, (err) => {
+            if (err) fatal('[DO] DELETE ' + image.name + ':', err);
+            console.log('[DO] DELETE', image.name);
+          });
+        else
+          console.log('[DO] KEEP  ', image.name);
       }
     }
   });
