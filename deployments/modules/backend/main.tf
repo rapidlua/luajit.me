@@ -34,7 +34,6 @@ resource "digitalocean_droplet" "web" {
       "mkdir -p /data/nginx/cache",
       "chown www-data: /data/nginx/cache",
       "sed '-es/<SELF_IPV4_ADDRESS>/${self.ipv4_address_private}/' /root/app.nginx.conf > /etc/nginx/sites-available/luajit.me",
-      "for IPV4_ADDRESS in ${join(" ", values(digitalocean_droplet.compute_amd64).*.ipv4_address_private)}; do sed -i /etc/nginx/sites-available/luajit.me -e \"/COMPUTE_IPV4_ADDRESS/a\\ \\ server $${IPV4_ADDRESS}:80;\"; done",
       "ln -s /etc/nginx/sites-available/luajit.me /etc/nginx/sites-enabled/luajit.me",
       "rm /etc/nginx/sites-enabled/default",
       "systemctl enable nginx",
@@ -71,7 +70,7 @@ resource "digitalocean_droplet" "compute_amd64" {
   }
 }
 
-resource "null_resource" "update_compute_cluster_user" {
+resource "null_resource" "configure_compute_cluster_user" {
   count = length(digitalocean_droplet.web)
   triggers = {
     compute_cluster_amd64_ips = join(" ", values(digitalocean_droplet.compute_amd64).*.ipv4_address_private)
@@ -84,9 +83,14 @@ resource "null_resource" "update_compute_cluster_user" {
   }
   provisioner "remote-exec" {
     inline = [
-      "sed -e '/COMPUTE_IPV4_ADDRESS/,/}/{/server/d}' -i /etc/nginx/sites-available/luajit.me",
-      "for IPV4_ADDRESS in ${join(" ", values(digitalocean_droplet.compute_amd64).*.ipv4_address_private)}; do sed -i /etc/nginx/sites-available/luajit.me -e \"/COMPUTE_IPV4_ADDRESS/a\\ \\ server $${IPV4_ADDRESS}:80;\"; done",
-      "service nginx reload"
+      <<EOT
+(echo '/COMPUTE_AMD64_IPV4_ADDRESS/,/}/{/server/d};/COMPUTE_AMD64_IPV4_ADDRESS/{';
+%{ for ip in values(digitalocean_droplet.compute_amd64).*.ipv4_address_private }
+echo 'a\ \ server ${ip}:80;';
+%{ endfor }
+echo '}' ) | sed -f /dev/stdin -i /etc/nginx/sites-available/luajit.me
+EOT
+      , "service nginx reload"
     ]
   }
 }

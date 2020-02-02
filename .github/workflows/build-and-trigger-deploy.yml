@@ -36,7 +36,7 @@ jobs:
     - uses: actions/download-artifact@v1.0.0
       with: { name: version }
     - name: Build cloud images
-      run: packer build -var "version=$(cat version/version)" -var "digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}" deploy/cloud-images.json
+      run: packer build -var "version=$(cat version/version)" -var "digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}" deployments/cloud-images.json
 
   docker-image-amd64:
     runs-on: ubuntu-latest
