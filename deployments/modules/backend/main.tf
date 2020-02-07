@@ -1,5 +1,11 @@
 data "digitalocean_image" "base_image" {
+  count = (var.app_version == "" ? 0 : 1)
   name = "image-${var.app_version}"
+}
+
+# terraform destroy workaround
+locals {
+  image_id = var.app_version == "" ? 0 : data.digitalocean_image.base_image[0].id
 }
 
 resource "digitalocean_droplet" "web" {
@@ -7,7 +13,7 @@ resource "digitalocean_droplet" "web" {
   lifecycle { create_before_destroy = true }
   tags = [ "luajit-me" ]
 
-  image = data.digitalocean_image.base_image.id
+  image = local.image_id
   name = "${var.prefix}web-${count.index+1}"
   region = "ams3"
   size = "s-1vcpu-1gb"
@@ -47,7 +53,7 @@ resource "digitalocean_droplet" "compute_amd64" {
   lifecycle { create_before_destroy = true }
   tags = [ "luajit-me" ]
 
-  image = data.digitalocean_image.base_image.id
+  image = local.image_id
   name = "${var.prefix}compute-amd64-${each.key}"
   region = "ams3"
   size = "s-1vcpu-1gb"
