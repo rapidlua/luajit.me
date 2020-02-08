@@ -31,6 +31,8 @@
         "apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io",
         "docker pull node:10-alpine",
 
+        "if [ \"${PACKER_BUILDER_TYPE}\" = 'digitalocean' ]; then (curl -sSL https://repos.insights.digitalocean.com/install.sh | bash); fi",
+
         "apt-get install -y --no-install-recommends nginx",
         "systemctl disable nginx"
       ]
