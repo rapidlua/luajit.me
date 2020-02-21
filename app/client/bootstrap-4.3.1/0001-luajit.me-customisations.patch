@@ -1,0 +1,271 @@
+From 83398845a90161ae8e94dbee31bbbae1652fd014 Mon Sep 17 00:00:00 2001
+From: Nick Zavaritsky <mejedi@gmail.com>
+Date: Sun, 15 Dec 2019 23:26:02 +0000
+Subject: [PATCH] luajit.me customisations
+
+---
+ Gemfile.lock            |  2 +-
+ scss/_button-group.scss |  6 ++++++
+ scss/_buttons.scss      | 34 ++++++++++++++++++++++++-----
+ scss/_variables.scss    | 33 ++++++++++++-----------------
+ scss/bootstrap.scss     | 47 +++++++++++++++++++++--------------------
+ 5 files changed, 74 insertions(+), 48 deletions(-)
+
+diff --git a/Gemfile.lock b/Gemfile.lock
+index 6a308fcd9..cfc78c963 100644
+--- a/Gemfile.lock
++++ b/Gemfile.lock
+@@ -79,4 +79,4 @@ DEPENDENCIES
+   wdm (~> 0.1.1)
+ 
+ BUNDLED WITH
+-   1.17.3
++   2.1.2
+diff --git a/scss/_button-group.scss b/scss/_button-group.scss
+index d7220029a..fe33129b1 100644
+--- a/scss/_button-group.scss
++++ b/scss/_button-group.scss
+@@ -60,6 +60,7 @@
+ 
+ .btn-group-sm > .btn { @extend .btn-sm; }
+ .btn-group-lg > .btn { @extend .btn-lg; }
++.btn-group-cp-size > .btn { @extend .btn-cp-size; }
+ 
+ 
+ //
+@@ -91,6 +92,11 @@
+   padding-left: $btn-padding-x-lg * .75;
+ }
+ 
++.btn-cp-size + .dropdown-toggle-split {
++  padding-right: $btn-padding-x-cp-size * .75;
++  padding-left: $btn-padding-x-cp-size * .75;
++}
++
+ 
+ // The clickable button for toggling the menu
+ // Set the same inset shadow as the :active state
+diff --git a/scss/_buttons.scss b/scss/_buttons.scss
+index 2a7d94ad2..31e835212 100644
+--- a/scss/_buttons.scss
++++ b/scss/_buttons.scss
+@@ -62,11 +62,11 @@ fieldset:disabled a.btn {
+   }
+ }
+ 
+-@each $color, $value in $theme-colors {
+-  .btn-outline-#{$color} {
+-    @include button-outline-variant($value);
+-  }
+-}
++//@each $color, $value in $theme-colors {
++//  .btn-outline-#{$color} {
++//    @include button-outline-variant($value);
++//  }
++//}
+ 
+ 
+ //
+@@ -99,6 +99,26 @@ fieldset:disabled a.btn {
+   // No need for an active state here
+ }
+ 
++.btn-cp-color {
++  font-weight: $font-weight-normal;
++  color: #a0a0a0;
++
++  @include hover() {
++    color: #f0f0f0;
++  }
++
++  &:focus,
++  &.focus {
++    box-shadow: none;
++  }
++
++  &:not(:disabled):not(.disabled):active,
++  &:not(:disabled):not(.disabled).active,
++  .show > &.dropdown-toggle {
++    color: #f0f0f0;
++  }
++}
++
+ 
+ //
+ // Button Sizes
+@@ -112,6 +132,10 @@ fieldset:disabled a.btn {
+   @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $btn-font-size-sm, $btn-line-height-sm, $btn-border-radius-sm);
+ }
+ 
++.btn-cp-size {
++  @include button-size($btn-padding-y-cp-size, $btn-padding-x-cp-size, $btn-font-size-cp-size, $btn-line-height-cp-size, $btn-border-radius-cp-size);
++}
++
+ 
+ //
+ // Block button
+diff --git a/scss/_variables.scss b/scss/_variables.scss
+index d9e88df9a..ed7c3a055 100644
+--- a/scss/_variables.scss
++++ b/scss/_variables.scss
+@@ -81,12 +81,8 @@ $theme-colors: map-merge(
+   (
+     "primary":    $primary,
+     "secondary":  $secondary,
+-    "success":    $success,
+-    "info":       $info,
+     "warning":    $warning,
+     "danger":     $danger,
+-    "light":      $light,
+-    "dark":       $dark
+   ),
+   $theme-colors
+ );
+@@ -113,11 +109,11 @@ $enable-gradients:                            false !default;
+ $enable-transitions:                          true !default;
+ $enable-prefers-reduced-motion-media-query:   true !default;
+ $enable-hover-media-query:                    false !default; // Deprecated, no longer affects any compiled CSS
+-$enable-grid-classes:                         true !default;
++$enable-grid-classes:                         false !default;
+ $enable-pointer-cursor-for-buttons:           true !default;
+-$enable-print-styles:                         true !default;
++$enable-print-styles:                         false !default;
+ $enable-responsive-font-sizes:                false !default;
+-$enable-validation-icons:                     true !default;
++$enable-validation-icons:                     false !default;
+ $enable-deprecation-messages:                 true !default;
+ 
+ 
+@@ -189,15 +185,10 @@ $paragraph-margin-bottom:   1rem !default;
+ // adapting to different screen sizes, for use in media queries.
+ 
+ $grid-breakpoints: (
+-  xs: 0,
+-  sm: 576px,
+-  md: 768px,
+-  lg: 992px,
+-  xl: 1200px
+ ) !default;
+ 
+-@include _assert-ascending($grid-breakpoints, "$grid-breakpoints");
+-@include _assert-starts-at-zero($grid-breakpoints, "$grid-breakpoints");
++//@include _assert-ascending($grid-breakpoints, "$grid-breakpoints");
++//@include _assert-starts-at-zero($grid-breakpoints, "$grid-breakpoints");
+ 
+ 
+ // Grid containers
+@@ -205,10 +196,6 @@ $grid-breakpoints: (
+ // Define the maximum width of `.container` for different screen sizes.
+ 
+ $container-max-widths: (
+-  sm: 540px,
+-  md: 720px,
+-  lg: 960px,
+-  xl: 1140px
+ ) !default;
+ 
+ @include _assert-ascending($container-max-widths, "$container-max-widths");
+@@ -218,7 +205,7 @@ $container-max-widths: (
+ //
+ // Set the number of columns and specify the width of the gutters.
+ 
+-$grid-columns:                12 !default;
++$grid-columns:                1 !default;
+ $grid-gutter-width:           30px !default;
+ 
+ 
+@@ -235,6 +222,7 @@ $border-color:                $gray-300 !default;
+ $border-radius:               .25rem !default;
+ $border-radius-lg:            .3rem !default;
+ $border-radius-sm:            .2rem !default;
++$border-radius-cp-size:       2px !default;
+ 
+ $rounded-pill:                50rem !default;
+ 
+@@ -423,6 +411,12 @@ $btn-padding-x-lg:            $input-btn-padding-x-lg !default;
+ $btn-font-size-lg:            $input-btn-font-size-lg !default;
+ $btn-line-height-lg:          $input-btn-line-height-lg !default;
+ 
++$btn-padding-y-cp-size:       5px;
++$btn-padding-x-cp-size:       9px;
++$btn-font-size-cp-size:       15px;
++$btn-line-height-cp-size:     1;
++
++
+ $btn-border-width:            $input-btn-border-width !default;
+ 
+ $btn-font-weight:             $font-weight-normal !default;
+@@ -440,6 +434,7 @@ $btn-block-spacing-y:         .5rem !default;
+ $btn-border-radius:           $border-radius !default;
+ $btn-border-radius-lg:        $border-radius-lg !default;
+ $btn-border-radius-sm:        $border-radius-sm !default;
++$btn-border-radius-cp-size:   $border-radius-cp-size !default;
+ 
+ $btn-transition:              color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out !default;
+ 
+diff --git a/scss/bootstrap.scss b/scss/bootstrap.scss
+index 9f15c2a8b..d0bf64fff 100644
+--- a/scss/bootstrap.scss
++++ b/scss/bootstrap.scss
+@@ -11,34 +11,35 @@
+ @import "root";
+ @import "reboot";
+ @import "type";
+-@import "images";
+-@import "code";
+-@import "grid";
+-@import "tables";
+-@import "forms";
++//@import "images";
++//@import "code";
++//@import "grid";
++//@import "tables";
++//@import "forms";
+ @import "buttons";
+-@import "transitions";
++//@import "transitions";
+ @import "dropdown";
+ @import "button-group";
+-@import "input-group";
+-@import "custom-forms";
+-@import "nav";
+-@import "navbar";
+-@import "card";
+-@import "breadcrumb";
+-@import "pagination";
+-@import "badge";
+-@import "jumbotron";
++//@import "input-group";
++//@import "custom-forms";
++//@import "nav";
++//@import "navbar";
++//@import "card";
++//@import "breadcrumb";
++//@import "pagination";
++//@import "badge";
++//@import "jumbotron";
+ @import "alert";
+-@import "progress";
+-@import "media";
++//@import "progress";
++//@import "media";
+ @import "list-group";
+ @import "close";
+-@import "toasts";
+-@import "modal";
++//@import "toasts";
++//@import "modal";
+ @import "tooltip";
+ @import "popover";
+-@import "carousel";
+-@import "spinners";
+-@import "utilities";
+-@import "print";
++//@import "carousel";
++//@import "spinners";
++//@import "utilities";
++@import "utilities/screenreaders";
++//@import "print";
+-- 
+2.17.1
+
