@@ -50,7 +50,7 @@ function restAPICall(method, url, headers, cb) {
   req.end();
 }
 
-function getDeployedHashes(environments, cb) {
+function getDeployedVersions(environments, cb) {
   const hashes = [];
   const envFound  = new Array(environments ? environments.length : 2).fill(false);
   let pending = 1;
@@ -72,7 +72,7 @@ function getDeployedHashes(environments, cb) {
               return;
             }
             if (statuses[0] && statuses[0].state == 'success') {
-              hashes.push(deployment.sha);
+              hashes.push(deployment.payload.version);
               envFound[index] = true;
             }
             if (!--pending && cb) {
@@ -128,16 +128,12 @@ function maybeDeleteDroplet(providerTag, name, birthDate, del) {
 // Why: every build produces an image
 let maybeDeleteImage = (function() {
   const pending = [];
-  getDeployedHashes([ 'production' ], (err, hashes) => {
+  getDeployedVersions([ 'production' ], (err, versions) => {
     if (err) fatal('get deployed hashes:', err);
     function isOrphanedImage(name) {
       if (!name.startsWith('image-'))
         return false;
-      const res = child_process.spawnSync(
-        'git', [ 'rev-parse', '--verify', 'v' + name.substr(6) ],
-        { encoding: 'utf8' }
-      );
-      return res.status || !hashes.includes(res.stdout.trim());
+      return !versions.includes(name.substr(6));
     }
     maybeDeleteImage = function(providerTag, name, birthDate, del) {
       if (isOrphanedImage(name) && ageInHours(birthDate) > .5) {
