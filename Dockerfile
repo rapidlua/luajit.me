@@ -141,7 +141,7 @@ COPY --from=luajit-2.1.0-beta3-gc64.builder root/dist /root/dist/usr/lib/luajit.
 COPY --from=luajit.me.builder root/dist /root/dist
 
 # replace duplicate files with hardlinks
-RUN fdupes -r1 /root/dist | \
+RUN fdupes -q -r1 /root/dist | \
     sed -e 's/^/TGT=/;s/ /; for SRC in /;s/$/; do ln -f $TGT $SRC; done/' | sh
 
 ###########
