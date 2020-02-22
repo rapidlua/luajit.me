@@ -78,7 +78,9 @@ jobs:
         run: >
           if [ "${GITHUB_EVENT_NAME}" = push ]; then
             ENV=staging
+            REF=${GITHUB_SHA}
           else
             ENV=production
+            REF=${GITHUB_REF}
           fi;
-          curl -sd "{\"ref\":\"${GITHUB_SHA}\",\"required_contexts\":[],\"environment\":\"${ENV}\",\"payload\":{\"version\":\"$(cat version/version)\"}}" https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"
+          curl -sd "{\"ref\":\"${REF}\",\"required_contexts\":[],\"environment\":\"${ENV}\",\"payload\":{\"version\":\"$(cat version/version)\"}}" https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"
