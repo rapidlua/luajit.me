@@ -35,7 +35,7 @@ resource "digitalocean_droplet" "web" {
   provisioner "remote-exec" {
     inline = [
       "set -eux",
-      "docker pull rapidlua/luajit.me:${var.app_version}",
+      "docker pull -q rapidlua/luajit.me:${var.app_version}",
       "docker run --detach --restart=unless-stopped --init --publish=127.0.0.1:8000:8000 -e GA_MEASUREMENT_ID=UA-143778823-2 rapidlua/luajit.me:${var.app_version}",
       "mkdir -p /data/nginx/cache",
       "chown www-data: /data/nginx/cache",
@@ -70,7 +70,7 @@ resource "digitalocean_droplet" "compute_amd64" {
   provisioner "remote-exec" {
     inline = [
       "set -eux",
-      "docker pull rapidlua/luajit.me:${var.app_version}",
+      "docker pull -q rapidlua/luajit.me:${var.app_version}",
       "docker run --detach --restart=unless-stopped --init --publish=${self.ipv4_address_private}:80:8000 --security-opt seccomp=unconfined --security-opt apparmor:unconfined rapidlua/luajit.me:${var.app_version}"
     ]
   }
