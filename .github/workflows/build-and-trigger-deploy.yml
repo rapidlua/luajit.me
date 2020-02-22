@@ -73,7 +73,11 @@ jobs:
           zcat docker-image-amd64/image.tar.gz | docker image load &&
           docker push "${IID}-amd64" &&
           docker manifest create "${IID}" "${IID}-amd64" &&
-          docker manifest push "${IID}"
+          docker manifest push "${IID}" &&
+          if [ "${GITHUB_EVENT_NAME}" = create ]; then
+            docker manifest create "${IMAGEID}:latest" "${IID}-amd64" &&
+            docker manifest push "${IMAGEID}:latest"
+          fi
       - name: Trigger deploy
         run: >
           if [ "${GITHUB_EVENT_NAME}" = push ]; then
