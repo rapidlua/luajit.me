@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-  create:
     tags:
       - 'v*'
 
@@ -74,17 +73,15 @@ jobs:
           docker push "${IID}-amd64" &&
           docker manifest create "${IID}" "${IID}-amd64" &&
           docker manifest push "${IID}" &&
-          if [ "${GITHUB_EVENT_NAME}" = create ]; then
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             docker manifest create "${IMAGEID}:latest" "${IID}-amd64" &&
             docker manifest push "${IMAGEID}:latest"
           fi
       - name: Trigger deploy
         run: >
-          if [ "${GITHUB_EVENT_NAME}" = push ]; then
-            ENV=staging
-            REF=${GITHUB_SHA}
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            ENV=production; REF=${GITHUB_REF}
           else
-            ENV=production
-            REF=${GITHUB_REF}
+            ENV=staging; REF=${GITHUB_SHA}
           fi;
           curl -sd "{\"ref\":\"${REF}\",\"required_contexts\":[],\"environment\":\"${ENV}\",\"payload\":{\"version\":\"$(cat version/version)\"}}" https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"
