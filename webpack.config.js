@@ -101,7 +101,8 @@ module.exports = {
             minify: {
                 collapseWhitespace: true,
                 removeComments: true
-            }
+            },
+            graphvizWasmAsset: GRAPHVIZ_WASM_DEST
         }),
         new CssChunksHtmlPlugin({ inject: false })
     ]

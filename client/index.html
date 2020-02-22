@@ -48,6 +48,18 @@
      integrity="sha384-WtUWHyk39lfUpZQVgokNfSKCJaKAeD6adgLduBLrKTMUuPzFhLtL23y1guFy6lZn"
      crossorigin
     >
+    <!-- preloading -->
+    <link
+     href="<%= (()=>{
+       for (let k in compilation.assets)
+         if (k.startsWith("graphviz.worker.")) return "/static/"+k;
+       })() %>"
+     rel="preload" as="worker"
+    >
+    <link
+     href="/static/<%= htmlWebpackPlugin.options.graphvizWasmAsset %>"
+     rel="preload" as="fetch"
+    >
     <title>LuaJIT web inspector – explore the internals</title>
   </head>
   <body>
