@@ -48,7 +48,7 @@ jobs:
     - name: Build Docker image
       run: >
         VERSION=$(cat version/version);
-        (cd app && DOCKER_BUILDKIT=1 docker build . --tag "${IMAGEID}:${VERSION}-amd64") &&
+        DOCKER_BUILDKIT=1 docker build . --tag "${IMAGEID}:${VERSION}-amd64" &&
         docker save "${IMAGEID}:${VERSION}-amd64" | gzip > image.tar.gz
     - uses: actions/upload-artifact@v1.0.0
       with: { name: docker-image-amd64, path: image.tar.gz }

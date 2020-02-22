@@ -1,6 +1,5 @@
 #! /bin/bash
 set -euxo pipefail
-cd app
 docker build  --iidfile .dockerid . 
 docker run \
     --init --rm -p8000:8000 \
