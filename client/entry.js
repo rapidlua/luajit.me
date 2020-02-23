@@ -1,3 +1,5 @@
+window.version = __VERSION__;
+
 import {debounce} from "./debounce";
 
 import React from "react";

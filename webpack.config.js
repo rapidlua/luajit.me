@@ -75,6 +75,9 @@ module.exports = {
         ]
     },
     plugins: [
+        new webpack.DefinePlugin({
+          __VERSION__: JSON.stringify(process.env.VERSION || 'VERSIONUNKNOWN')
+        }),
         // contenthash presumably depends on the module id, hence stable
         // module ids are paramount
         new webpack.HashedModuleIdsPlugin({

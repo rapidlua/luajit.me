@@ -6,6 +6,7 @@
 #
 #######################################################################
 FROM node:10-alpine AS luajit.me.builder
+ARG VERSION
 
 # As of Docker 19.03.5, DOCKER_BUILDKIT=1 and userns_remap enabled,
 # if a directory was created during COPY, it won't be writable in RUN.
@@ -21,7 +22,7 @@ COPY webpack.config.js /root/luajit.me
 COPY client /root/luajit.me/client
 COPY server/targets.js /root/luajit.me/server/
 RUN cd /root/luajit.me && npm config set unsafe-perm true \
-    && npm install
+    && VERSION=$VERSION npm install
 
 COPY server /root/luajit.me/server
 
