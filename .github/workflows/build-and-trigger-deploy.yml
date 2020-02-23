@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Version stamp
-      run: git describe --tags | sed -e s/^v// > version
+      run: git describe --tags '--match=v*' | sed -e s/^v// > version
     - uses: actions/upload-artifact@v1.0.0
       with: { name: version, path: version }
 
