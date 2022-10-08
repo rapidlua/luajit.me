@@ -29,6 +29,9 @@ cd /root/luarocks
 ./configure --with-lua-interpreter=$LUAJIT --prefix=/usr
 make && make install
 
+# certain lua rocks use git:// URLs which are often blocked
+git config --global url."https://".insteadOf git://
+
 cd /
 luarocks install lua-cjson
 luarocks install luasocket

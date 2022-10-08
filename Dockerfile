@@ -40,7 +40,7 @@ RUN mkdir -p /root/dist/usr/src/luajit.me \
 #   Lua runtime dependencies
 #
 #######################################################################
-FROM alpine AS lua-img-base
+FROM alpine:3.9 AS lua-img-base
 
 # install lua runtime dependencies
 RUN apk update && apk upgrade && apk add libgcc
@@ -59,7 +59,7 @@ RUN find / -xdev | sed -e '/[/]\(root\|run\)[/]/d' > /root/system-files.list && 
 #   also includes some of the source code to build
 #
 #######################################################################
-FROM alpine AS c-src-builder
+FROM alpine:3.9 AS c-src-builder
 
 # install build dependencies
 RUN apk update && apk upgrade && \
@@ -128,7 +128,7 @@ RUN REV=v2.1.0-beta3 GC64=1 /root/dist-build.sh
 #   combines bits and pieces together
 #
 #######################################################################
-FROM alpine AS luajit.me.staging
+FROM alpine:3.9 AS luajit.me.staging
 RUN apk add fdupes
 
 RUN mkdir -p /root/dist/usr/lib/luajit.me/images/dev/shm
@@ -151,4 +151,5 @@ FROM node:10-alpine AS luajit.me
 COPY --from=luajit.me.staging root/dist /
 
 EXPOSE 8000
+USER nobody
 CMD ["node", "/usr/src/luajit.me/server/app.js"]

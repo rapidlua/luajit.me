@@ -120,7 +120,7 @@ function runLuaCode(code, options, callback) {
         ],
         seccompPolicy: `
             ALLOW {
-                access, arch_prctl, brk, clock_gettime, clone, close,
+                access, arch_prctl, brk, clock_gettime, /* clone, */ close,
                 dup, dup2, execve, exit_group, fcntl, getcwd, getegid,
                 geteuid, getgid, getgroups, getpid, getppid, getuid,
                 ioctl, lseek, madvise, mmap, mprotect, munmap, newfstat,
@@ -128,7 +128,7 @@ function runLuaCode(code, options, callback) {
                 rt_sigaction, rt_sigprocmask, rt_sigreturn,
                 set_tid_address, wait4, write, writev
             }
-            DEFAULT LOG
+            DEFAULT DENY
         `
     }, function(error, response) {
         let output;

@@ -9,7 +9,6 @@ on:
 
 env:
   IMAGEID: rapidlua/luajit.me
-  PACKERV: 1.5.1
 
 jobs:
   version-stamp:
@@ -20,22 +19,6 @@ jobs:
       run: git describe --tags '--match=v*' | sed -e s/^v// > version
     - uses: actions/upload-artifact@v1.0.0
       with: { name: version, path: version }
-
-  cloud-images:
-    runs-on: ubuntu-latest
-    needs: version-stamp
-    steps:
-    - name: Install packer
-      run: >
-        curl https://releases.hashicorp.com/packer/${PACKERV}/packer_${PACKERV}_linux_$(dpkg --print-architecture).zip > packer.zip &&
-        unzip packer.zip &&
-        sudo install packer /usr/bin &&
-        rm packer.zip packer
-    - uses: actions/checkout@v1
-    - uses: actions/download-artifact@v1.0.0
-      with: { name: version }
-    - name: Build cloud images
-      run: packer build -var "version=$(cat version/version)" -var "digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}" deployments/cloud-images.json
 
   docker-image-amd64:
     runs-on: ubuntu-latest
@@ -54,7 +37,7 @@ jobs:
 
   postprocess-and-trigger-deploy:
     runs-on: ubuntu-latest
-    needs: [version-stamp, cloud-images, docker-image-amd64]
+    needs: [version-stamp, docker-image-amd64]
     steps:
       - uses: actions/download-artifact@v1.0.0
         with: { name: version }
@@ -77,11 +60,3 @@ jobs:
             docker manifest create "${IMAGEID}:latest" "${IID}-amd64" &&
             docker manifest push "${IMAGEID}:latest"
           fi
-      - name: Trigger deploy
-        run: >
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            ENV=production; REF=${GITHUB_REF}
-          else
-            ENV=staging; REF=${GITHUB_SHA}
-          fi;
-          curl -sd "{\"ref\":\"${REF}\",\"required_contexts\":[],\"environment\":\"${ENV}\",\"payload\":{\"version\":\"$(cat version/version)\"}}" https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"
